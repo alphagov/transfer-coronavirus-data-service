@@ -1,0 +1,9 @@
+---
+applications:
+- name: corona-backend-consumer
+  buildpacks:
+    - python_buildpack
+  command: python main.py
+  health-check-type: process
+  memory: 512M
+  instances: 1
