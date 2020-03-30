@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 import base64
 import os
+from functools import wraps
 
 import boto3
 import requests
@@ -9,29 +12,92 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     send_from_directory,
     session,
 )
+from flask_talisman import Talisman
 from requests.auth import HTTPBasicAuth
 
+import admin
+import cognito
 from logger import LOG
 
 app = Flask(__name__)
+app.cf_space = os.getenv("CF_SPACE", "testing")
 app.logger = LOG
+
+
+def setup_talisman(app):
+    if app.cf_space == "testing":
+        print("loading Talisman for testing - no HTTPS")
+        return Talisman(
+            app,
+            force_https=False,
+            strict_transport_security=False,
+            session_cookie_secure=False,
+        )
+    else:
+        print("loading Talisman with HTTPS")
+        return Talisman(
+            app,
+            force_https=True,
+            strict_transport_security=True,
+            session_cookie_secure=True,
+        )
 
 
 def load_environment(app):
     """
     Load environment vars into flask app attributes
     """
+    app.is_admin_interface = os.getenv("ADMIN", "false")
     app.secret_key = os.getenv("APPSECRET", "secret")
-    app.client_id = os.getenv("CLIENT_ID")
-    app.cognito_domain = os.getenv("COGNITO_DOMAIN")
-    app.client_secret = os.getenv("CLIENT_SECRET")
+    app.client_id = os.getenv("CLIENT_ID", None)
+    app.cognito_domain = os.getenv("COGNITO_DOMAIN", None)
+    app.client_secret = os.getenv("CLIENT_SECRET", None)
     app.redirect_host = os.getenv("REDIRECT_HOST")
     app.bucket_name = os.getenv("BUCKET_NAME")
     app.region = os.getenv("REGION")
     app.page_title = os.getenv("PAGE_TITLE", "GOV.UK")
+    set_app_settings(app)
+
+
+def set_app_settings(app):
+    """
+    Use existing env vars if loaded
+    """
+    if None in [app.client_id, app.cognito_domain, app.client_secret]:
+        cognito_credentials = cognito.load_app_settings()
+        app.cognito_domain = cognito_credentials["cognito_domain"]
+        app.client_id = cognito_credentials["client_id"]
+        app.client_secret = cognito_credentials["client_secret"]
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session["details"] is None:
+            return redirect("/")
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def admin_interface(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if app.is_admin_interface == "false":
+            raise Exception("ADMIN not set when trying /admin")
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def render_template_custom(template, **args):
+    args["is_admin_interface"] = app.is_admin_interface
+    args["title"] = app.page_title
+    return render_template(template, **args)
 
 
 def exchange_code_for_tokens(code, code_verifier=None) -> dict:
@@ -40,7 +106,6 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
     Documentation:
     https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
     """
-
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     payload = {
@@ -97,26 +162,62 @@ def send_assets(path):
     return send_from_directory("assets", path)
 
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_file("assets/images/favicon.ico")
+
+
+@app.route("/apple-touch-icon.png")
+def apple_touch():
+    return send_file("assets/images/govuk-apple-touch-icon.png")
+
+
+@app.route("/apple-touch-icon-152x152.png")
+def apple_touch_152():
+    return send_file("assets/images/govuk-apple-touch-icon-152x152.png")
+
+
 @app.route("/robots.txt")
 def send_robots():
     return "User-agent: *\r\nDisallow: /", 200
 
 
+@app.route("/browserconfig.xml")
+def send_browser_config():
+    return (
+        """<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+    <msapplication>
+    </msapplication>
+</browserconfig>""",
+        200,
+    )
+
+
 @app.errorhandler(500)
 def server_error_500(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template("error.html", error=e, title=app.page_title), 500
+    return render_template_custom("error.html", error=e), 500
 
 
 @app.errorhandler(404)
 def server_error_404(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template("error.html", error=e, title=app.page_title), 500
+    return render_template_custom("error.html", error=e), 404
+
+
+@app.errorhandler(400)
+def server_error_400(e):
+    app.logger.error(f"Server error: {request.url}")
+    return render_template_custom("error.html", error=e), 400
 
 
 @app.route("/")
 @app.route("/index")
 def index():
+
+    if app.is_admin_interface == "true":
+        return redirect("/admin")
 
     args = request.args
 
@@ -130,11 +231,8 @@ def index():
 
     if "details" in session:
         app.logger.debug("Logged in")
-        return render_template(
-            "welcome.html",
-            user=session["user"],
-            email=session["email"],
-            title=app.page_title,
+        return render_template_custom(
+            "welcome.html", user=session["user"], email=session["email"]
         )
     else:
         app.logger.debug("Logged out")
@@ -145,7 +243,9 @@ def index():
             f"redirect_uri={app.redirect_host}&"
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
-        return render_template("login.html", login_url=login_url, title=app.page_title)
+        return render_template_custom(
+            "login.html", login_url=login_url, title=app.page_title
+        )
 
 
 @app.route("/logout")
@@ -198,7 +298,7 @@ def files():
 
         # TODO sorting
 
-        return render_template(
+        return render_template_custom(
             "files.html",
             user=session["user"],
             email=session["email"],
@@ -207,6 +307,55 @@ def files():
         )
     else:
         return redirect("/")
+
+
+# ----------- ADMIN ROUTES -----------
+# ====================================
+
+
+@app.route("/admin")
+@admin_interface
+def admin_main():
+    return admin.admin_main(app)
+
+
+@app.route("/admin/user/list")
+@admin_interface
+def admin_list_users():
+    return admin.admin_list_users(app)
+
+
+@app.route("/admin/user", methods=["POST", "GET"])
+@admin_interface
+def admin_user():
+    return admin.admin_user(app)
+
+
+@app.route("/admin/user/edit", methods=["POST", "GET"])
+@admin_interface
+def admin_edit_user():
+    return admin.admin_edit_user(app)
+
+
+@app.route("/admin/user/error")
+@admin_interface
+def admin_user_error():
+    return admin.admin_user_error(app)
+
+
+@app.route("/admin/user/confirm", methods=["POST"])
+@admin_interface
+def admin_confirm_user():
+    return admin.admin_confirm_user(app)
+
+
+@app.route("/admin/user/not-found")
+@admin_interface
+def admin_user_not_found():
+    return admin.admin_user_not_found(app)
+
+
+# ====================================
 
 
 def create_presigned_url(bucket_name: str, object_name: str, expiration=3600) -> str:
@@ -308,6 +457,7 @@ def run():
     """
     Run a local server
     """
+    setup_talisman(app)
     load_environment(app)
     app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
 

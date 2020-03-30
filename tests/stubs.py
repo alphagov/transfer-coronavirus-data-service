@@ -71,9 +71,7 @@ def mock_cognito(token):
         ],
     }
 
-    stubber.add_response(
-        "get_user", mock_get_user, {"AccessToken": token},
-    )
+    stubber.add_response("get_user", mock_get_user, {"AccessToken": token})
 
     stubber.activate()
     # override boto.client to return the mock client

@@ -1,0 +1,56 @@
+{% extends 'primary.html' %}
+{% block content %}
+
+<dl class="govuk-summary-list">
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Full name
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.name }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Email address
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.email }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      UK mobile number
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.phone_number }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Local authority user?
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ "Yes" if user["custom:is_la"] == "1" else "No" }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Paths
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {% for attr_path in user["custom:paths"].split(";") %}
+        <p class="govuk-body">{{ attr_path }}</p>
+      {% endfor %}
+    </dd>
+  </div>
+</dl>
+
+
+<form method="post">
+  <input type="hidden" name="frompage" value="self">
+  <button class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button" type="submit" name="action" value="edit">Back</button>
+  <button class="govuk-button" data-module="govuk-button" type="submit" name="action" value="confirm">{{ 'Save and invite new user' if new_user else 'Save changes' }}</button>
+</form>
+
+{% endblock %}

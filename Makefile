@@ -55,6 +55,15 @@ build: clean target_dir copy_dir
 run:
 	python3 run.py
 
+admin_test:
+	python3 run.py admin testing
+
+admin_stage:
+	python3 run.py admin staging
+
+admin_prod:
+	python3 run.py admin production
+
 zip: build
 	mkdir -p builds
 	cd .target; zip -X -9 ../builds/backend-consumer-app.zip -r .

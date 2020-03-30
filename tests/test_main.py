@@ -10,7 +10,6 @@ from main import (
     app,
     create_presigned_url,
     get_files,
-    load_environment,
     load_user_lookup,
     return_attribute,
 )
@@ -48,7 +47,6 @@ def test_dist():
 # Test the flask routes
 @pytest.mark.usefixtures("test_client")
 def test_route_index_logged_out(test_client):
-    load_environment(app)
     response = test_client.get("/")
     assert response.status_code == 200
 
@@ -97,13 +95,13 @@ def test_auth_flow(test_client, test_session, fake_jwt_decoder, **args):
     """ Test mocked oauth exchange """
 
     token = "abc123"
-    stubber = stubs.mock_cognito(token)
     domain = "test.cognito.domain.com"
     token_endpoint_url = f"https://{domain}/oauth2/token"
-    app.cogito_domain = domain
+    app.cognito_domain = domain
     app.client_id = "123456"
     app.client_secret = "987654"
     app.redirect_host = "test.domain.com"
+    stubber = stubs.mock_cognito(token)
 
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
@@ -113,9 +111,7 @@ def test_auth_flow(test_client, test_session, fake_jwt_decoder, **args):
 
         oauth_response = json.dumps({"id_token": token, "access_token": token})
         mocker = args["mocker"]
-        mocker.request(
-            method="POST", url=token_endpoint_url, text=oauth_response,
-        )
+        mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
         response = test_client.get(f"/?code={token}")
         body = response.data.decode()
         assert response.status_code == 302

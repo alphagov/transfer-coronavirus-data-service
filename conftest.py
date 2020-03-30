@@ -4,7 +4,7 @@ the test module includes to resolve successfully
 """
 import pytest
 
-from main import app
+from main import app, load_environment
 
 
 @pytest.fixture()
@@ -49,6 +49,7 @@ def test_client():
     # Flask provides a way to test your application by exposing the Werkzeug test Client
     # and handling the context locals for you.
     testing_client = app.test_client()
+    load_environment(app)
 
     # Establish an application context before running the tests.
     ctx = app.app_context()
