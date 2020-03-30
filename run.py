@@ -8,7 +8,9 @@ from logger import LOG
 from main import run
 
 
-def setup_local_environment(host="localhost", port=8000, is_admin=False, environment=None):
+def setup_local_environment(
+    host="localhost", port=8000, is_admin=False, environment=None
+):
 
     region = "eu-west-2"
 
@@ -37,7 +39,6 @@ def setup_local_environment(host="localhost", port=8000, is_admin=False, environ
         "/s3/bucket_name": "BUCKET_NAME",
     }
 
-
     ssm_client = boto3.client("ssm")
 
     try:
@@ -63,8 +64,5 @@ if __name__ == "__main__":
         is_admin = False
         admin_env = None
 
-    setup_local_environment(
-        is_admin=is_admin,
-        environment=admin_env
-    )
+    setup_local_environment(is_admin=is_admin, environment=admin_env)
     run()
