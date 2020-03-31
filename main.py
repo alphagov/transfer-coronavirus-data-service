@@ -77,7 +77,7 @@ def set_app_settings(app):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session["details"] is None:
+        if "details" not in session:
             return redirect("/")
         return f(*args, **kwargs)
 
@@ -249,6 +249,7 @@ def index():
 
 
 @app.route("/logout")
+@login_required
 def logout():
     try:
         session.pop("details", None)
@@ -266,6 +267,7 @@ def logout():
 
 
 @app.route("/download")
+@login_required
 def download():
     args = request.args
 
@@ -292,6 +294,7 @@ def download():
 
 
 @app.route("/files")
+@login_required
 def files():
     if "details" in session and "attributes" in session:
         files = get_files(app.bucket_name, session)
