@@ -1,0 +1,15 @@
+{% extends 'primary.html' %}
+{% block content %}
+
+<div>
+  <p>
+    Are you sure you want to disable {{ user_email }}? <br>
+  </p>
+</div>
+
+<form method="post">
+  <button name="task" value="goto-view" type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Cancel</button>
+  <button name="task" value="do-disable-user" type="submit" class="govuk-button govuk-button--warning" data-module="govuk-button">Disable</button>
+</form>
+
+{% endblock %}

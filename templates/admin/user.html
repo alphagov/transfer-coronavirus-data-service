@@ -1,0 +1,110 @@
+{% extends 'primary.html' %}
+{% block content %}
+
+{%if done != "None" %}
+  <div class="govuk-panel govuk-panel--confirmation">
+    <h2 class="govuk-panel__title">
+      {{ done|e|title }} successfully
+    </h2>
+  </div>
+{% endif %}
+
+<dl class="govuk-summary-list">
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Enabled
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ "Yes" if user.enabled == 'True' else "No" }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Status
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.status }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Full name
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.name|e }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Email address
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.email }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      UK mobile number
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {% if user.phone_number_verified == 'true' %}
+        {{ user.phone_number }} (VERIFIED)
+      {% else %}
+        {{ user.phone_number }} (AWAITING VERIFICATION)
+      {% endif %}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Local authority user?
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ "Yes" if user["custom:is_la"] == "1" else "No" }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Paths
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {% for attr_path in user["custom:paths"].split(";") %}
+        <p class="govuk-body">{{ attr_path }}</p>
+      {% endfor %}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Created date (last invited)
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.createdate }}
+    </dd>
+  </div>
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Last modified date
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ user.lastmodifieddate }}
+    </dd>
+  </div>
+</dl>
+
+<div>
+  <form action="/admin/user/edit" method="post">
+    <input type="hidden" name="email" value="{{ user.email }}">
+    <button name="task" value="edit" class="govuk-button govuk-button" data-module="govuk-button" type="submit">Edit</button>
+  </form>
+  <a href="/admin"><button class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Back to admin</button></a>
+</div>
+
+<p>The following actions will ask for confirmation</p>
+<div>
+  <form action="/admin/user/edit" method="post">
+    <button name="task" value="reinvite" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Reinvite</button>
+    <button name="task" value="disable" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Disable</button>
+    <button name="task" value="delete" class="govuk-button govuk-button--secondary" data-module="govuk-button">Delete</button>
+  </form>
+</div>
+
+{% endblock %}

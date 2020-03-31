@@ -1,0 +1,43 @@
+{% extends 'primary.html' %}
+{% block content %}
+
+  <p>
+    You're currently logged in as {{ user }}.
+  </p>
+  <p>
+    <a href="/logout">
+      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">
+        Logout
+      </button>
+    </a>
+  </p>
+
+  <p>
+    <a href="/files" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+      Reload
+    </a>
+  </p>
+
+  <p>If you would like support or to report any unexpected data, please email <a target="_blank" href="mailto:transfer-coronavirus-data-service@digital.cabinet-office.gov.uk">transfer-coronavirus-data-service@digital.cabinet-office.gov.uk</a>.</p>
+
+  <p>Any data available here is OFFICIAL SENSISTIVE and therefore needs to be handled appropriately.</p>
+
+  <div>
+    {% if files|length == 0 %}
+      There are no files currently available to download.
+    {% elif files|length == 1 %}
+      There is 1 file available to download:
+    {% else %}
+      There are {{ files|length }} file(s) available to download:
+    {% endif %}
+  </div>
+
+  <div>
+    {% for file in files %}
+      <a target="_blank" href="/download?url={{ file.url }}">{{ file.key }}</a> ({{ file.size|filesizeformat }})<br />
+    {% endfor %}
+  </div>
+
+  <div></div>
+
+{% endblock %}
