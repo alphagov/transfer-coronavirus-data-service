@@ -209,7 +209,7 @@ def index():
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
         return render_template_custom(
-            app, "login.html", login_url=login_url, title=app.page_title
+            app, "login.html", login_url=login_url
         )
 
 

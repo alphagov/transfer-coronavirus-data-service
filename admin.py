@@ -52,14 +52,14 @@ def admin_user(app):
             session["admin_user_object"] = user
 
             return render_template_custom(
-                app, app, "admin/user.html", user=user, done=done
+                app, "admin/user.html", user=user, done=done
             )
 
     return redirect("/admin/user/not-found")
 
 
 def admin_user_error(app):
-    return render_template_custom(app, app, "admin/user-error.html")
+    return render_template_custom(app, "admin/user-error.html")
 
 
 def sanitise_string(instr):
