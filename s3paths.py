@@ -37,7 +37,7 @@ def valid_paths():
             }
         )
 
-        other = ["gds"]
+        other = ["gds", "nhs"]
         res.append(
             {
                 "type": "other",
