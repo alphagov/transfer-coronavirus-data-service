@@ -88,7 +88,11 @@ if __name__ == "__main__":
         cont = "y"
         if env_load != "testing":
             try:
-                cont = input("Not {}testing{}; do you want to continue? (Y/n) ".format(green_char, end_charac)).lower()
+                cont = input(
+                    "Not {}testing{}; do you want to continue? (Y/n) ".format(
+                        green_char, end_charac
+                    )
+                ).lower()
                 if cont == "":
                     cont = "y"
             except KeyboardInterrupt:
