@@ -26,18 +26,18 @@ def load_app_settings():
     cognito_domain = ""
     estimated_num_users = 0
 
-    pool_client_resp = client.list_user_pool_clients(UserPoolId=pool_id, MaxResults=2,)
+    pool_client_resp = client.list_user_pool_clients(UserPoolId=pool_id, MaxResults=2)
     if "UserPoolClients" in pool_client_resp:
         client_id = pool_client_resp["UserPoolClients"][0]["ClientId"]
 
     if client_id != "":
         desc_client_resp = client.describe_user_pool_client(
-            UserPoolId=pool_id, ClientId=client_id,
+            UserPoolId=pool_id, ClientId=client_id
         )
         if "UserPoolClient" in desc_client_resp:
             client_secret = desc_client_resp["UserPoolClient"]["ClientSecret"]
 
-    desc_pool = client.describe_user_pool(UserPoolId=pool_id,)
+    desc_pool = client.describe_user_pool(UserPoolId=pool_id)
     if "UserPool" in desc_pool:
         cognito_domain = desc_pool["UserPool"]["Domain"]
         estimated_num_users = desc_pool["UserPool"]["EstimatedNumberOfUsers"]
@@ -83,7 +83,7 @@ def get_env_pool_id():
     environment = os.getenv("CF_SPACE", "testing")
 
     if environment == "production":
-        pool_name = "corona-cognito-pool-production"
+        pool_name = "corona-cognito-pool-prod"
     elif environment == "staging":
         pool_name = "corona-cognito-pool-staging"
     elif environment == "testing":
@@ -114,7 +114,7 @@ def sanitise_email(email_address):
         is_valid = validate_email(email_address)
         if is_valid and return_false_if_unexpected_domain(email_address):
             return email_address
-    return ""
+    raise Exception("Invalid email address")
 
 
 def sanitise_phone(phone_number):
@@ -151,7 +151,7 @@ def san_row(row):
 def get_user_details(email_address):
     san_email_address = sanitise_email(email_address)
     if san_email_address != "":
-        listed_users = list_users(email_starts_filter=san_email_address, limit=1)
+        listed_users = list_users(email_starts_filter=san_email_address, limit=2)
         if len(listed_users["users"]) == 1:
             return listed_users["users"][0]
     return {}
@@ -485,5 +485,3 @@ def update_user_attributes(
 
 # if __name__ == "__main__":
 #    print(load_app_settings())
-
-# oliver.chalk+test@digital.cabinet-office.gov.uk

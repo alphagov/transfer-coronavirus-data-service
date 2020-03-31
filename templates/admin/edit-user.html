@@ -21,11 +21,11 @@
       The following domains are allowed:
       <pre>*.gov.uk</pre>
       <pre>brake.co.uk</pre>
-      The following domains are denied:
+      <!--The following domains are denied:
       <pre>digital.cabinet-office.gov.uk</pre>
       <pre>cabinet-office.gov.uk</pre>
       <pre>localdigital.gov.uk</pre>
-      <pre>communities.gov.uk</pre>
+      <pre>communities.gov.uk</pre>-->
     </span>
     {% endif %}
   </div>
@@ -85,7 +85,7 @@
               {% for i in wholesaler.subs %}
               <div class="govuk-checkboxes__item">
                 <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
-                  'checked="checked"' if is_wholesaler
+                  'checked="checked"' if i['val'] in user_custom_paths
                 }}>
                 <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
                   {{ i['disp'] }}<br>
@@ -107,6 +107,32 @@
           <label class="govuk-label govuk-radios__label" for="dwp_radio">
             DWP ({{ dwp.main }})
           </label>
+        </div>
+
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="other_cond" name="custom_paths_radio" type="radio" value="{{ other.main }}" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if is_other }} aria-expanded="true">
+          <label class="govuk-label govuk-radios__label" for="other_cond">
+            Other
+          </label>
+        </div>
+        <div class="govuk-radios__conditional govuk-radios__conditional" id="conditional-other_cond">
+          <div class="govuk-form-group">
+            <div class="govuk-checkboxes">
+              {% for i in other.subs %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
+                  'checked="checked"' if i['val'] in user_custom_paths
+                }}>
+                <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
+                  {{ i['disp'] }}<br>
+                  <span class="govuk-hint">
+                    {{ i['val'] }}
+                  </span>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
 
         <div class="govuk-radios__item">

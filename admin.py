@@ -33,12 +33,20 @@ def value_paths_by_type(type):
 
 
 def admin_user(app):
-    email = request.values.get("email")
-    done = sanitise_string(request.values.get("done"))
+    done = "None"
 
-    if "admin_user_action" in session:
-        if session["admin_user_action"] == "view" and "admin_user_email" in session:
-            email = session["admin_user_email"]
+    if len(request.args) != 0:
+        email = request.args.get("email", "")
+        done = request.args.get("done", "None")
+
+    if len(request.form) != 0:
+        email = request.form.get("email", "")
+        done = request.form.get("done", "None")
+
+    if email != "":
+        clear_session(app)
+    elif "admin_user_email" in session:
+        email = session["admin_user_email"]
 
     if email != "":
         user = cognito.get_user_details(email)
@@ -214,6 +222,8 @@ def admin_edit_user(app):
     if len(args) == 0:
         return redirect("/admin")
 
+    # print(args)
+
     if "task" in args:
         if args["task"] == "goto-view":
             session["admin_user_action"] = "view"
@@ -235,62 +245,80 @@ def admin_edit_user(app):
     admin_user_email = get_session_obj("admin_user_email")
     admin_user_object = get_session_obj("admin_user_object")
 
-    # "view" comes from /admin/user and so is an existing user
-    if admin_user_action in ["view", "reinvite", "disable", "delete"]:
+    if admin_user_email != "":
         user = cognito.get_user_details(admin_user_email)
         if user == {}:
             return redirect("/admin/user/not-found")
 
-        if "task" in args:
-            if args["task"] == "reinvite":
-                session["admin_user_action"] = "reinvite"
-                return render_template_custom(
-                    app,
-                    "admin/confirm-reinvite.html",
-                    email=quote(user["email"]),
-                    user_email=user["email"],
-                )
-            if args["task"] == "do-reinvite-user":
-                email = user["email"]
-                clear_session(app)
-                cognito.reinvite_user(email, True)
-                session["admin_user_action"] = "view"
-                session["admin_user_email"] = email
-                return redirect("/admin/user?done=reinvited")
+    if "task" in args:
+        if args["task"] == "reinvite":
+            session["admin_user_action"] = "reinvite"
+            return render_template_custom(
+                app,
+                "admin/confirm-reinvite.html",
+                email=quote(user["email"]),
+                user_email=user["email"],
+            )
+        if args["task"] == "do-reinvite-user":
+            email = user["email"]
+            clear_session(app)
+            cognito.reinvite_user(email, True)
+            session["admin_user_action"] = "view"
+            session["admin_user_email"] = email
+            return redirect("/admin/user?done=reinvited")
 
-            if args["task"] == "disable":
-                session["admin_user_action"] = "disable"
-                return render_template_custom(
-                    app,
-                    "admin/confirm-disable.html",
-                    email=quote(user["email"]),
-                    user_email=user["email"],
-                )
-            if args["task"] == "do-disable-user":
-                email = user["email"]
-                cognito.disable_user(email, True)
-                clear_session(app)
-                return redirect("/admin/user?done=disabled")
+        if args["task"] == "enable":
+            session["admin_user_action"] = "enable"
+            return render_template_custom(
+                app,
+                "admin/confirm-enable.html",
+                email=quote(user["email"]),
+                user_email=user["email"],
+            )
+        if args["task"] == "do-enable-user":
+            email = user["email"]
+            print(email)
+            cognito.enable_user(email, True)
+            clear_session(app)
+            session["admin_user_action"] = "view"
+            session["admin_user_email"] = email
+            return redirect("/admin/user?done=enabled")
 
-            if args["task"] == "delete":
-                session["admin_user_action"] = "delete"
-                return render_template_custom(
-                    app,
-                    "admin/confirm-delete.html",
-                    email=quote(user["email"]),
-                    user_email=user["email"],
-                )
-            if args["task"] == "do-delete-user":
-                email = user["email"]
-                cognito.delete_user(email, True)
-                clear_session(app)
-                return redirect("/admin?done=deleted")
+        if args["task"] == "disable":
+            session["admin_user_action"] = "disable"
+            return render_template_custom(
+                app,
+                "admin/confirm-disable.html",
+                email=quote(user["email"]),
+                user_email=user["email"],
+            )
+        if args["task"] == "do-disable-user":
+            email = user["email"]
+            cognito.disable_user(email, True)
+            clear_session(app)
+            session["admin_user_action"] = "view"
+            session["admin_user_email"] = email
+            return redirect("/admin/user?done=disabled")
 
-            if args["task"] == "edit":
-                session["admin_user_action"] = "edit-existing"
-                session["admin_user_object"] = user
-                admin_user_action = "edit-existing"
-                enable_email_edit = False
+        if args["task"] == "delete":
+            session["admin_user_action"] = "delete"
+            return render_template_custom(
+                app,
+                "admin/confirm-delete.html",
+                email=quote(user["email"]),
+                user_email=user["email"],
+            )
+        if args["task"] == "do-delete-user":
+            email = user["email"]
+            cognito.delete_user(email, True)
+            clear_session(app)
+            return redirect("/admin?done=deleted")
+
+        if args["task"] == "edit":
+            session["admin_user_action"] = "edit-existing"
+            session["admin_user_object"] = user
+            admin_user_action = "edit-existing"
+            enable_email_edit = False
 
     elif admin_user_action == "edit-new":
         user = admin_user_object
@@ -311,6 +339,9 @@ def admin_edit_user(app):
     is_la = False
     is_wholesaler = False
     is_dwp = False
+    is_other = False
+
+    print(user)
 
     if admin_user_action != "new":
         user_is_la = user["custom:is_la"] == "1"
@@ -326,6 +357,9 @@ def admin_edit_user(app):
             if "/dwp" in custom_path and not user_is_la:
                 is_dwp = True
                 break
+            if "/other/" in custom_path and not user_is_la:
+                is_other = True
+                break
 
     return render_template_custom(
         app,
@@ -339,12 +373,10 @@ def admin_edit_user(app):
         is_wholesaler=is_wholesaler,
         dwp=value_paths_by_type("dwp"),
         is_dwp=is_dwp,
+        other=value_paths_by_type("other"),
+        is_other=is_other,
     )
 
 
 def admin_user_not_found(app):
-    return ""
-
-
-if __name__ == "__main__":
-    print(value_paths_by_type("wholesaler"))
+    return "User not found"

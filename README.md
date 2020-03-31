@@ -1,5 +1,5 @@
 # transfer-coronavirus-data-service
-Serve files from S3 based on a user database managed in Cognito. 
+Serve files from S3 based on a user database managed in Cognito.
 
 ## Cognito User Management
 
@@ -30,6 +30,29 @@ The links are presigned URLs to S3 with a short expiration time.
     - blackpool
   - wholesaler
   - dwp
+
+
+## Admin interface
+Using the admin interface:
+```
+cd app/
+eval $(gds aws security-test -e)
+make admin_test
+```
+or
+```
+cd app/
+eval $(gds aws govuk-corona-data-staging-cognito -e)
+make admin_stage
+```
+or
+```
+cd app/
+eval $(gds aws govuk-corona-data-prod-cognito -e)
+make admin_prod
+```
+
+Open <http://localhost:8000>...
 
 
 ### Changing users access
@@ -63,8 +86,8 @@ At the bottom of the login is a "Forgot your password?" link. This will email th
 
 ## How to run
 
-To run the app locally you will need the following 
-parameters defined in 
+To run the app locally you will need the following
+parameters defined in
 AWS Systems Manager > Parameter Store
 
 ```ssm
@@ -74,22 +97,22 @@ AWS Systems Manager > Parameter Store
 /transfer-coronavirus-data-service/s3/bucket_name
 ```
 
-### make run 
+### make run
 
 Run a local python server running the flask app on port 8000
 
-### make install 
+### make install
 
-Install the dev and runtime requirements 
+Install the dev and runtime requirements
 
-### make checks 
+### make checks
 
-Run linters black, flake8 etc. 
+Run linters black, flake8 etc.
 
-### make test 
+### make test
 
-Run linters and then pytests 
+Run linters and then pytests
 
-### make zip 
+### make zip
 
-Build the distributable zip file for shipping to PaaS 
+Build the distributable zip file for shipping to PaaS
