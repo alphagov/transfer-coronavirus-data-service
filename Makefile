@@ -53,12 +53,21 @@ copy_dir:
 build: clean target_dir copy_dir
 
 run:
-	python3 run.py
+	python3 run.py main testing
+
+run_test:
+	python3 run.py main testing
+
+run_staging:
+	python3 run.py main staging
+
+run_prod:
+	python3 run.py main production
 
 admin_test:
 	python3 run.py admin testing
 
-admin_stage:
+admin_staging:
 	python3 run.py admin staging
 
 admin_prod:

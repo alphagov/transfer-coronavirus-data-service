@@ -2,25 +2,17 @@
 
 import base64
 import os
-from functools import wraps
 
 import boto3
 import requests
 from botocore.exceptions import ClientError
-from flask import (
-    Flask,
-    redirect,
-    render_template,
-    request,
-    send_file,
-    send_from_directory,
-    session,
-)
+from flask import Flask, redirect, request, send_file, send_from_directory, session
 from flask_talisman import Talisman
 from requests.auth import HTTPBasicAuth
 
 import admin
 import cognito
+from flask_helpers import admin_interface, login_required, render_template_custom
 from logger import LOG
 
 app = Flask(__name__)
@@ -51,7 +43,6 @@ def load_environment(app):
     """
     Load environment vars into flask app attributes
     """
-    app.is_admin_interface = os.getenv("ADMIN", "false")
     app.secret_key = os.getenv("APPSECRET", "secret")
     app.client_id = os.getenv("CLIENT_ID", None)
     app.cognito_domain = os.getenv("COGNITO_DOMAIN", None)
@@ -72,37 +63,6 @@ def set_app_settings(app):
         app.cognito_domain = cognito_credentials["cognito_domain"]
         app.client_id = cognito_credentials["client_id"]
         app.client_secret = cognito_credentials["client_secret"]
-
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "details" not in session:
-            return redirect("/")
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
-def admin_interface(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if app.is_admin_interface == "false":
-            raise Exception("ADMIN not set when trying /admin")
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
-def render_template_custom(template, **args):
-    args["is_admin_interface"] = app.is_admin_interface
-
-    title_after_env = app.page_title
-    if app.cf_space != "production":
-        title_after_env = "{} - {}".format(app.cf_space, title_after_env)
-
-    args["title"] = title_after_env
-    return render_template(template, **args)
 
 
 def exchange_code_for_tokens(code, code_verifier=None) -> dict:
@@ -202,26 +162,26 @@ def send_browser_config():
 @app.errorhandler(500)
 def server_error_500(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom("error.html", error=e), 500
+    return render_template_custom(app, "error.html", error=e), 500
 
 
 @app.errorhandler(404)
 def server_error_404(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom("error.html", error=e), 404
+    return render_template_custom(app, "error.html", error=e), 404
 
 
 @app.errorhandler(400)
 def server_error_400(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom("error.html", error=e), 400
+    return render_template_custom(app, "error.html", error=e), 400
 
 
 @app.route("/")
 @app.route("/index")
 def index():
 
-    if app.is_admin_interface == "true":
+    if os.getenv("ADMIN", "false") == "true":
         return redirect("/admin")
 
     args = request.args
@@ -237,7 +197,7 @@ def index():
     if "details" in session:
         app.logger.debug("Logged in")
         return render_template_custom(
-            "welcome.html", user=session["user"], email=session["email"]
+            app, "welcome.html", user=session["user"], email=session["email"]
         )
     else:
         app.logger.debug("Logged out")
@@ -249,7 +209,7 @@ def index():
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
         return render_template_custom(
-            "login.html", login_url=login_url, title=app.page_title
+            app, "login.html", login_url=login_url, title=app.page_title
         )
 
 
@@ -307,6 +267,7 @@ def files():
         # TODO sorting
 
         return render_template_custom(
+            app,
             "files.html",
             user=session["user"],
             email=session["email"],
