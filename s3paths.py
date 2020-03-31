@@ -37,6 +37,18 @@ def valid_paths():
             }
         )
 
+        other = ["gds"]
+        res.append(
+            {
+                "type": "other",
+                "main": "{}/other".format(auth_path),
+                "subs": [
+                    {"disp": d.upper(), "val": "{}/other/{}".format(auth_path, d)}
+                    for d in other
+                ],
+            }
+        )
+
         la_hubs = hubs()
         res.append(
             {

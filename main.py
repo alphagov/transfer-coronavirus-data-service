@@ -96,7 +96,12 @@ def admin_interface(f):
 
 def render_template_custom(template, **args):
     args["is_admin_interface"] = app.is_admin_interface
-    args["title"] = app.page_title
+
+    title_after_env = app.page_title
+    if app.cf_space != "production":
+        title_after_env = "{} - {}".format(app.cf_space, title_after_env)
+
+    args["title"] = title_after_env
     return render_template(template, **args)
 
 
