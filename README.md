@@ -37,19 +37,19 @@ Using the admin interface:
 ```
 cd app/
 eval $(gds aws security-test -e)
-ADMIN=true python3 main.py
+make admin_test
 ```
 or
 ```
 cd app/
 eval $(gds aws govuk-corona-data-staging-cognito -e)
-ADMIN=true python3 main.py
+make admin_stage
 ```
 or
 ```
 cd app/
 eval $(gds aws govuk-corona-data-prod-cognito -e)
-ADMIN=true python3 main.py
+make admin_prod
 ```
 
 Open <http://localhost:8000>...
