@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 # import os
 
-from flask import escape, redirect, render_template, request, session
+from flask import escape, redirect, request, session
 from requests.utils import quote
 
 import cognito
 import s3paths
+from flask_helpers import render_template_custom
 
 local_valid_paths_var = []
-
-
-def render_template_custom(app, template, **args):
-    args["is_admin_interface"] = app.is_admin_interface
-    args["title"] = app.page_title
-    return render_template(template, **args)
 
 
 def _local_valid_paths():
@@ -56,13 +51,15 @@ def admin_user(app):
             session["admin_user_email"] = user["email"]
             session["admin_user_object"] = user
 
-            return render_template_custom(app, "admin/user.html", user=user, done=done)
+            return render_template_custom(
+                app, app, "admin/user.html", user=user, done=done
+            )
 
     return redirect("/admin/user/not-found")
 
 
 def admin_user_error(app):
-    return render_template_custom(app, "admin/user-error.html")
+    return render_template_custom(app, app, "admin/user-error.html")
 
 
 def sanitise_string(instr):

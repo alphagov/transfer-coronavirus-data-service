@@ -2,7 +2,7 @@ import os
 import sys
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from logger import LOG
 from main import run
@@ -17,15 +17,12 @@ def setup_local_environment(
     os.environ["ADMIN"] = "true" if is_admin else "false"
 
     if environment:
-        title = "COVID-19 Data Transfer"
-        if environment != "production":
-            title = f"{environment.upper()} - {title}"
+        os.environ["CF_SPACE"] = environment
+        if environment == "testing":
             os.environ["BUCKET_NAME"] = "backend-consumer-service-test"
 
-        os.environ["PAGE_TITLE"] = title
-        os.environ["FLASK_ENV"] = "development"
-        os.environ["CF_SPACE"] = environment
-
+    os.environ["PAGE_TITLE"] = "LOCAL COVID-19 Data Transfer"
+    os.environ["FLASK_ENV"] = "development"
     os.environ["LOG_LEVEL"] = "DEBUG"
     os.environ["REDIRECT_HOST"] = f"http://{host}:{port}"
     os.environ["AWS_DEFAULT_REGION"] = region
@@ -51,18 +48,59 @@ def setup_local_environment(
                 if param["Name"].endswith(param_name):
                     os.environ[env_var_name] = param["Value"]
                     LOG.debug("Set env var: %s from ssm", env_var_name)
+
     except ClientError as error:
         LOG.error(error)
+    except NoCredentialsError:
+        green_char = "\033[92m"
+        end_charac = "\033[0m"
+        print("-" * 35)
+        print("Please run: {}eval $(gds aws XXXX -e){}".format(green_char, end_charac))
+        print("Where {}XXXX{} is the account to access".format(green_char, end_charac))
+        print("Then run make again")
+        print("-" * 35)
+        exit()
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) > 2:
+    if len(sys.argv) == 3:
         is_admin = sys.argv[1] == "admin"
-        admin_env = sys.argv[2]
+        env_load = sys.argv[2]
     else:
         is_admin = False
-        admin_env = None
+        env_load = "testing"
 
-    setup_local_environment(is_admin=is_admin, environment=admin_env)
+    green_char = "\033[92m"
+    end_charac = "\033[0m"
+
+    print("-" * 35)
+    print(
+        "Running {0}{2}{1} for: {0}{3}{1}".format(
+            green_char,
+            end_charac,
+            "admin tool" if is_admin else "download tool frontend",
+            env_load,
+        )
+    )
+
+    if sys.argv[0] == "run.py":
+        cont = "y"
+        if env_load != "testing":
+            try:
+                cont = input(
+                    "Not {}testing{}; do you want to continue? (Y/n) ".format(
+                        green_char, end_charac
+                    )
+                ).lower()
+                if cont == "":
+                    cont = "y"
+            except KeyboardInterrupt:
+                print("\nRegistration cancelled.")
+                exit()
+        if cont != "y":
+            exit()
+    print("-" * 35)
+
+    setup_local_environment(is_admin=is_admin, environment=env_load)
     run()

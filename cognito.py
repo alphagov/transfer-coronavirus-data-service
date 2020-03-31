@@ -26,7 +26,10 @@ def load_app_settings():
     cognito_domain = ""
     estimated_num_users = 0
 
+    print("pool_id", pool_id)
     pool_client_resp = client.list_user_pool_clients(UserPoolId=pool_id, MaxResults=2)
+    print("pool_client_resp", pool_client_resp)
+
     if "UserPoolClients" in pool_client_resp:
         client_id = pool_client_resp["UserPoolClients"][0]["ClientId"]
 
