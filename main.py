@@ -50,7 +50,6 @@ def load_environment(app):
     app.redirect_host = os.getenv("REDIRECT_HOST")
     app.bucket_name = os.getenv("BUCKET_NAME")
     app.region = os.getenv("REGION")
-    app.page_title = os.getenv("PAGE_TITLE", "GOV.UK")
     set_app_settings(app)
 
 
@@ -272,7 +271,6 @@ def files():
             user=session["user"],
             email=session["email"],
             files=files,
-            title=app.page_title,
         )
     else:
         return redirect("/")

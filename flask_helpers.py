@@ -36,9 +36,9 @@ def login_required(f):
 def render_template_custom(app, template, **args):
     args["is_admin_interface"] = is_admin_interface()
 
-    title_after_env = app.page_title
-    if is_development:
-        title_after_env = "{} - {}".format(app.cf_space.upper(), title_after_env)
-    args["title"] = title_after_env
+    page_title = os.getenv("PAGE_TITLE", "GOV.UK")
+    if is_development():
+        page_title = "{} - {}".format(app.cf_space.upper(), page_title)
+    args["title"] = page_title
 
     return render_template(template, **args)
