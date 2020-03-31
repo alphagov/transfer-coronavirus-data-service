@@ -5,5 +5,5 @@ applications:
     - python_buildpack
   command: python main.py
   health-check-type: process
-  memory: 512M
+  memory: 384M
   instances: 1
