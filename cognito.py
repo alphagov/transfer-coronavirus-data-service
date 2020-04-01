@@ -36,9 +36,7 @@ def load_app_settings():
     cognito_domain = ""
     estimated_num_users = 0
 
-    print("pool_id", pool_id)
     pool_client_resp = client.list_user_pool_clients(UserPoolId=pool_id, MaxResults=2)
-    print("pool_client_resp", pool_client_resp)
 
     if "UserPoolClients" in pool_client_resp:
         client_id = pool_client_resp["UserPoolClients"][0]["ClientId"]
@@ -178,12 +176,44 @@ def san_row(row):
 
 
 def get_user_details(email_address):
+    client = get_boto3_client()
     san_email_address = sanitise_email(email_address)
     if san_email_address != "":
-        listed_users = list_users(email_starts_filter=san_email_address, limit=2)
-        if len(listed_users["users"]) == 1:
-            return listed_users["users"][0]
+        user = client.admin_get_user(
+            UserPoolId=get_env_pool_id(), Username=san_email_address
+        )
+        return normalise_user(user)
     return {}
+
+
+def normalise_user(aws_user_resp):
+    res = {}
+    if "Username" in aws_user_resp:
+        res = {
+            "username": aws_user_resp["Username"],
+            "status": aws_user_resp["UserStatus"],
+            "createdate": aws_user_resp["UserCreateDate"],
+            "lastmodifieddate": aws_user_resp["UserLastModifiedDate"],
+            "enabled": aws_user_resp["Enabled"],
+        }
+        for attr in aws_user_resp[
+            "Attributes" if "Attributes" in aws_user_resp else "UserAttributes"
+        ]:
+            res[attr["Name"]] = attr["Value"]
+
+    if "username" in res:
+        grps = []
+        client = get_boto3_client()
+        response = client.admin_list_groups_for_user(
+            Username=res["username"], UserPoolId=get_env_pool_id(), Limit=10
+        )
+        if "Groups" in response:
+            for grp in response["Groups"]:
+                if "GroupName" in grp:
+                    grps.append(grp["GroupName"])
+        res["groups"] = grps
+
+    return res
 
 
 def list_users(email_starts_filter="", token="", limit=20):
@@ -217,16 +247,9 @@ def list_users(email_starts_filter="", token="", limit=20):
 
     if "Users" in response:
         for user in response["Users"]:
-            user_to_add = {
-                "username": user["Username"],
-                "status": user["UserStatus"],
-                "createdate": user["UserCreateDate"],
-                "lastmodifieddate": user["UserLastModifiedDate"],
-                "enabled": user["Enabled"],
-            }
-            for attr in user["Attributes"]:
-                user_to_add[attr["Name"]] = attr["Value"]
-            users.append(user_to_add)
+            user_to_add = normalise_user(user)
+            if user_to_add != {}:
+                users.append(user_to_add)
 
         if "PaginationToken" in response:
             token = response["PaginationToken"]
@@ -234,7 +257,6 @@ def list_users(email_starts_filter="", token="", limit=20):
         # this is a weird edge case where users could be blank but there is
         # a token for getting more users
         if len(response["Users"]) == 0 and token != "":
-            print("edge case")
             return list_users(
                 email_starts_filter=email_starts_filter, limit=limit, token=token
             )
@@ -509,7 +531,3 @@ def update_user_attributes(
     # and SCRIPT will be session["user"]
     print("ERR: {}: no actions to take".format("script"))
     return False
-
-
-# if __name__ == "__main__":
-#    print(load_app_settings())
