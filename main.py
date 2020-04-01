@@ -207,9 +207,7 @@ def index():
             f"redirect_uri={app.redirect_host}&"
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
-        return render_template_custom(
-            app, "login.html", login_url=login_url
-        )
+        return render_template_custom(app, "login.html", login_url=login_url)
 
 
 @app.route("/logout")
@@ -266,11 +264,7 @@ def files():
         # TODO sorting
 
         return render_template_custom(
-            app,
-            "files.html",
-            user=session["user"],
-            email=session["email"],
-            files=files,
+            app, "files.html", user=session["user"], email=session["email"], files=files
         )
     else:
         return redirect("/")

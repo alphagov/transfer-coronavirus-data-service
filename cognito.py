@@ -9,7 +9,17 @@ import time
 
 import boto3
 from botocore.exceptions import ClientError
-from validate_email import validate_email
+
+# from validate_email import validate_email
+
+
+class CognitoException(Exception):
+    def __init__(self, type, msg=None):
+        self.type = type
+        self.msg = msg  # you could add more args
+
+    def __str__(self):
+        return "{}: {}".format(self.type, self.msg if self.msg is not None else "")
 
 
 def get_boto3_client():
@@ -60,6 +70,7 @@ def return_false_if_unexpected_domain(email_address):
     for domain in [
         ".gov.uk",  # allow any *.gov.uk email
         "@brake.co.uk",  # allow @brake.co.uk (wholesaler)
+        "@nhs.net",
     ]:
         if email_address.endswith(domain):
             res = True
@@ -69,9 +80,9 @@ def return_false_if_unexpected_domain(email_address):
     # but shouldn't have access
     for domain in [
         # "@digital.cabinet-office.gov.uk",
-        "@cabinet-office.gov.uk",
-        "@localdigital.gov.uk",
-        "@communities.gov.uk",
+        # "@cabinet-office.gov.uk",
+        # "@localdigital.gov.uk",
+        # "@communities.gov.uk",
     ]:
         if email_address.endswith(domain):
             res = False
@@ -113,11 +124,14 @@ def list_pools():
 
 def sanitise_email(email_address):
     if "@" in email_address:
-        email_address = email_address.strip().lower()
-        is_valid = validate_email(email_address)
-        if is_valid and return_false_if_unexpected_domain(email_address):
+        email_address = email_address.strip().lower().encode("latin1").decode("utf-8")
+        if return_false_if_unexpected_domain(email_address):
             return email_address
-    raise Exception("Invalid email address")
+        else:
+            raise CognitoException(
+                type="BadEmailWhitelist", msg="failed for '{}'".format(email_address)
+            )
+    raise CognitoException(type="BadEmail")
 
 
 def sanitise_phone(phone_number):

@@ -36,20 +36,17 @@ The links are presigned URLs to S3 with a short expiration time.
 Using the admin interface:
 ```
 cd app/
-eval $(gds aws security-test -e)
-make admin_test
+eval $(gds aws security-test -e); make admin_test
 ```
 or
 ```
 cd app/
-eval $(gds aws govuk-corona-data-staging-cognito -e)
-make admin_stage
+eval $(gds aws govuk-corona-data-staging-cognito -e); make admin_staging
 ```
 or
 ```
 cd app/
-eval $(gds aws govuk-corona-data-prod-cognito -e)
-make admin_prod
+eval $(gds aws govuk-corona-data-prod-cognito -e); make admin_prod
 ```
 
 Open <http://localhost:8000>...
