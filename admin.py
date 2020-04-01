@@ -51,9 +51,7 @@ def admin_user(app):
             session["admin_user_email"] = user["email"]
             session["admin_user_object"] = user
 
-            return render_template_custom(
-                app, "admin/user.html", user=user, done=done
-            )
+            return render_template_custom(app, "admin/user.html", user=user, done=done)
 
     return redirect("/admin/user/not-found")
 
@@ -107,7 +105,11 @@ def admin_confirm_user(app):
 
     if admin_user_action == "new" or admin_user_action == "edit-new":
         new_user = True
-        user = {"email": sanitise_input(args, "email")}
+        if "email" in args:
+            user = {"email": cognito.sanitise_email(args["email"])}
+        else:
+            user = {"email": ""}
+        print(user)
 
     elif admin_user_action == "edit-existing":
         new_user = False
@@ -243,7 +245,10 @@ def admin_edit_user(app):
     admin_user_object = get_session_obj("admin_user_object")
 
     if admin_user_email != "":
-        user = cognito.get_user_details(admin_user_email)
+        try:
+            user = cognito.get_user_details(admin_user_email)
+        except cognito.CognitoException as e:
+            app.logger.err(e)
         if user == {}:
             return redirect("/admin/user/not-found")
 
