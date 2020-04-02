@@ -73,6 +73,8 @@ def return_false_if_unexpected_domain(email_address):
         "@nhs.net",
         "@tesco.com",
         "@ocadoretail.com",
+        "@morrisonsplc.co.uk",
+        "@sainsburys.co.uk",
     ]:
         if email_address.endswith(domain):
             res = True
