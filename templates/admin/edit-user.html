@@ -14,8 +14,8 @@
     <label class="govuk-label" for="email">
       Email address
     </label>
-    <input class="govuk-input" id="email" name="email" type="text" {{ "readonly disabled='disabled'" if not enable_email_edit }} autocomplete="false" spellcheck="false" value="{{ user.email }}">
-    {% if enable_email_edit %}
+    <input class="govuk-input" id="email" name="email" type="text" {{ "readonly disabled='disabled'" if not new_user }} autocomplete="false" spellcheck="false" value="{{ user.email }}">
+    {% if new_user %}
     <span class="govuk-hint">
       <br>
       The following domains are allowed:
@@ -74,43 +74,7 @@
       <div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
 
         <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="wholesaler_cond" name="custom_paths_radio" type="radio" value="{{ wholesaler.main }}" data-aria-controls="conditional-wholesaler_cond" {{ 'checked="checked"' if is_wholesaler }} aria-expanded="true">
-          <label class="govuk-label govuk-radios__label" for="wholesaler_cond">
-            Wholesaler
-          </label>
-        </div>
-        <div class="govuk-radios__conditional govuk-radios__conditional" id="conditional-wholesaler_cond">
-          <div class="govuk-form-group">
-            <div class="govuk-checkboxes">
-              {% for i in wholesaler.subs %}
-              <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
-                  'checked="checked"' if i['val'] in user_custom_paths
-                }}>
-                <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
-                  {{ i['disp'] }}<br>
-                  <span class="govuk-hint">
-                    {{ i['val'] }}
-                  </span>
-                </label>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <div class="govuk-radios__item">
-          <input type="hidden" name="custom_paths" value="{{ dwp.main }}">
-          <input class="govuk-radios__input" id="dwp_radio" name="custom_paths_radio" type="radio" value="{{ dwp.main }}" {{
-            'checked="checked"' if is_dwp
-          }}>
-          <label class="govuk-label govuk-radios__label" for="dwp_radio">
-            DWP ({{ dwp.main }})
-          </label>
-        </div>
-
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="other_cond" name="custom_paths_radio" type="radio" value="{{ other.main }}" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if is_other }} aria-expanded="true">
+          <input class="govuk-radios__input" id="other_cond" type="radio" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if is_other }} aria-expanded="true">
           <label class="govuk-label govuk-radios__label" for="other_cond">
             Other
           </label>
@@ -136,7 +100,7 @@
         </div>
 
         <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="la_cond" name="custom_paths_radio" type="radio" value="{{ local_authority.main }}" data-aria-controls="conditional-la_cond" {{ 'checked="checked"' if is_la }}>
+          <input class="govuk-radios__input" id="la_cond" type="radio" data-aria-controls="conditional-la_cond" {{ 'checked="checked"' if is_la }}>
           <label class="govuk-label govuk-radios__label" for="la_cond">
             Local authority
           </label>
@@ -166,8 +130,8 @@
   </div>
 
   <div>
-    <a href="/admin"><button class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button" type="button">Cancel</button></a>
-    <button class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" data-prevent-double-click="true" type="submit">Continue and check</button>
+    <button name="task" value="{{ 'cancel-new' if new_user else 'cancel-existing' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button" type="submit">Cancel</button>
+    <button name="task" value="continue" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" data-prevent-double-click="true" type="submit">Continue and check</button>
   </div>
 
 {% endblock %}
