@@ -1,0 +1,9 @@
+version: '3'
+services:
+  chrome-driver:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    command: bash
+    environment:
+      - ENVIRONMENT=test
