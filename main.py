@@ -2,6 +2,7 @@
 
 import base64
 import os
+import re
 
 import boto3
 import requests
@@ -371,6 +372,10 @@ def get_files(bucket_name: str, user_session: dict):
     resp = []
     for file_key in file_keys:
         print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
+
+        # remove root element from path
+        file_link_path = re.sub(r'^[^/]+\/', "", file_key["key"])
+
         url = create_presigned_url(bucket_name, file_key["key"], 300)
         if url is not None:
             app.logger.info(
@@ -382,7 +387,7 @@ def get_files(bucket_name: str, user_session: dict):
             url_base64 = base64.b64encode(url_bytes)
             url_string = url_base64.decode("utf-8")
             resp.append(
-                {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
+                {"url": url_string, "key": file_link_path, "size": file_key["size"]}
             )
     app.logger.info(resp)
     return resp
