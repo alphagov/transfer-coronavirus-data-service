@@ -377,6 +377,7 @@ def admin_edit_user(app):
         is_dwp=is_dwp,
         other=value_paths_by_type("other"),
         is_other=is_other,
+        allowed_domains=(cognito.allowed_domains() if enable_email_edit else []),
     )
 
 
