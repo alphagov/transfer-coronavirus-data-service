@@ -4,8 +4,8 @@ import csv
 import os
 
 
-def app_authorised_paths():
-    return [os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")]
+def app_authorised_path():
+    return os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")
 
 
 # this list is from communitiesuk / MHCLG
@@ -19,50 +19,44 @@ def hubs():
     return res
 
 
-def valid_paths():
+def valid_paths(input_path=None):
     res = []
 
-    for auth_path in app_authorised_paths():
-        res.append({"type": "dwp", "main": "{}/dwp".format(auth_path), "subs": []})
+    if input_path is None:
+        input_path = app_authorised_path()
 
-        wholesalers = ["brakes"]
-        res.append(
-            {
-                "type": "wholesaler",
-                "main": "{}/wholesaler".format(auth_path),
-                "subs": [
-                    {"disp": d.upper(), "val": "{}/wholesaler/{}".format(auth_path, d)}
-                    for d in wholesalers
-                ],
-            }
-        )
+    other = [
+        {"path": "other/gds", "disp": "GDS"},
+        {"path": "other/nhs", "disp": "NHS"},
+        {"path": "dwp", "disp": "DWP"},
+        {"path": "wholesaler/brakes", "disp": "Brakes"},
+        {"path": "supermarket", "disp": "Supermarket"},
+    ]
+    res.append(
+        {
+            "type": "other",
+            "main": "{}".format(input_path),
+            "subs": [
+                {"disp": d["disp"], "val": "{}/{}".format(input_path, d["path"])}
+                for d in other
+            ],
+        }
+    )
 
-        other = ["gds", "nhs"]
-        res.append(
-            {
-                "type": "other",
-                "main": "{}/other".format(auth_path),
-                "subs": [
-                    {"disp": d.upper(), "val": "{}/other/{}".format(auth_path, d)}
-                    for d in other
-                ],
-            }
-        )
-
-        la_hubs = hubs()
-        res.append(
-            {
-                "type": "local_authority",
-                "main": "{}/local_authority".format(auth_path),
-                "subs": [
-                    {
-                        "disp": d["name"],
-                        "val": "{}/local_authority/{}".format(auth_path, d["hub"]),
-                    }
-                    for d in la_hubs
-                ],
-            }
-        )
+    la_hubs = hubs()
+    res.append(
+        {
+            "type": "local_authority",
+            "main": "{}/local_authority".format(input_path),
+            "subs": [
+                {
+                    "disp": d["name"],
+                    "val": "{}/local_authority/{}".format(input_path, d["hub"]),
+                }
+                for d in la_hubs
+            ],
+        }
+    )
 
     return res
 

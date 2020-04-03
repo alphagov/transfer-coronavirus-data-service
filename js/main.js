@@ -23,20 +23,19 @@ function is_la_switch(s) {
     document.getElementById("la_cond").click();
     document.getElementById("conditional-la_cond").classList.remove("govuk-radios__conditional--hidden");
 
-    document.getElementById("wholesaler_cond").removeAttribute("aria-expanded")
-    document.getElementById("wholesaler_cond").setAttribute("disabled", "disabled");
-    document.getElementById("dwp_radio").removeAttribute("aria-expanded")
-    document.getElementById("dwp_radio").setAttribute("disabled", "disabled");
     document.getElementById("other_cond").removeAttribute("aria-expanded")
+    document.getElementById("other_cond").checked = false;
     document.getElementById("other_cond").setAttribute("disabled", "disabled");
+    document.getElementById("conditional-other_cond").classList.add("govuk-radios__conditional--hidden");
   } else {
     document.getElementById("la_cond").removeAttribute("aria-expanded")
     document.getElementById("la_cond").checked = false;
     document.getElementById("la_cond").setAttribute("disabled", "disabled");
     document.getElementById("conditional-la_cond").classList.add("govuk-radios__conditional--hidden");
 
-    document.getElementById("wholesaler_cond").removeAttribute("disabled");
-    document.getElementById("dwp_radio").removeAttribute("disabled");
     document.getElementById("other_cond").removeAttribute("disabled");
+    document.getElementById("other_cond").setAttribute("checked", "checked")
+    document.getElementById("other_cond").click();
+    document.getElementById("conditional-other_cond").classList.remove("govuk-radios__conditional--hidden");
   }
 }

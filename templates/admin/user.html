@@ -92,10 +92,9 @@
 
 <div>
   <form action="/admin/user/edit" method="post">
-    <input type="hidden" name="email" value="{{ user.email }}">
-    <button name="task" value="edit" class="govuk-button govuk-button" data-module="govuk-button" type="submit">Edit</button>
+    <button name="task" value="edit" class="govuk-button govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Edit</button>
+    <button name="task" value="cancel" class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Back to admin</button>
   </form>
-  <a href="/admin"><button class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Back to admin</button></a>
 </div>
 
 <p>The following actions will ask for confirmation</p>

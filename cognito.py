@@ -285,7 +285,6 @@ def return_false_if_paths_bad(is_la_value, paths_semicolon_seperated):
 def reinvite_user(email_address, confirm=False):
     if confirm:
         user = get_user_details(email_address)
-        print(user)
         if user != {}:
             del_res = delete_user(email_address, confirm)
             print("del_res", del_res)
