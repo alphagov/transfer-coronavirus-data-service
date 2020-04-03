@@ -14,6 +14,12 @@ def credentials_step(context):
 
 @when("oauth username is set")
 def login_username_step(context):
+    """
+    The cognito signin form is rendered in HTML twice for difference screen sizes.
+    The small screen version appears first in the HTML but is hidden by CSS.
+    Without the .visible-md class this resolves the hidden form element and
+    is unable to interact with the form.
+    """
     elem = context.browser.find_element_by_css_selector(
         ".visible-md .modal-body #signInFormUsername"
     )
@@ -23,6 +29,12 @@ def login_username_step(context):
 
 @when("oauth password is set")
 def login_password_step(context):
+    """
+    The cognito signin form is rendered in HTML twice for difference screen sizes.
+    The small screen version appears first in the HTML but is hidden by CSS.
+    Without the .visible-md class this resolves the hidden form element and
+    is unable to interact with the form.
+    """
     elem = context.browser.find_element_by_css_selector(
         ".visible-md .modal-body #signInFormPassword"
     )
@@ -32,6 +44,12 @@ def login_password_step(context):
 
 @when("oauth form is submitted")
 def login_submit_step(context):
+    """
+    The cognito signin form is rendered in HTML twice for difference screen sizes.
+    The small screen version appears first in the HTML but is hidden by CSS.
+    Without the .visible-md class this resolves the hidden form element and
+    is unable to interact with the form.
+    """
     elem = context.browser.find_element_by_css_selector(
         ".visible-md .modal-body #signInFormPassword"
     )
@@ -40,6 +58,12 @@ def login_submit_step(context):
 
 @when("oauth sign in button is clicked")
 def login_submit_button_click_step(context):
+    """
+    The cognito signin form is rendered in HTML twice for difference screen sizes.
+    The small screen version appears first in the HTML but is hidden by CSS.
+    Without the .visible-md class this resolves the hidden form element and
+    is unable to interact with the form.
+    """
     elem = context.browser.find_element_by_name(
         ".visible-md .modal-body .btn.btn-primary.submitButton-customizable"
     )
