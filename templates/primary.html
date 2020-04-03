@@ -42,7 +42,7 @@
     <script src="/dist/html5shiv.min.js"></script>
   <![endif]-->
 
-  <link href="/css/main.css" rel="stylesheet">
+  <link href="/css/main.css?update=202004031810" rel="stylesheet">
 
   <meta property="og:image" content="/assets/images/govuk-opengraph-image.png">
 </head>
@@ -90,6 +90,17 @@
     <main class="govuk-main-wrapper govuk-body" id="main-content" role="main">
 
       <h1 class="govuk-heading-xl covid-transfer-page-title">{{ title }}</h1>
+      {% if show_logout %}
+        <p>
+          You're currently logged in as
+          <span class="covid-transfer-username">{{ display_username }}</span>.
+        </p>
+        <p>
+          <a href="/logout" class="covid-transfer-logout-button">
+            <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">Logout</button>
+          </a>
+        </p>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
   </div>
@@ -115,7 +126,7 @@
   </footer>
 
   <script src="/js/govuk-frontend-3.6.0.min.js"></script>
-  <script src="/js/main.js?update=202004022151"></script>
+  <script src="/js/main.js?update=202004031812"></script>
 
 </body>
 </html>

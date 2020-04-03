@@ -33,8 +33,17 @@ def login_required(f):
     return decorated_function
 
 
-def render_template_custom(app, template, **args):
+def render_template_custom(app, template, hide_logout=False, **args):
     args["is_admin_interface"] = is_admin_interface()
+
+    show_logout = False
+    display_username = ""
+    if "details" in session and not hide_logout:
+        show_logout = True
+        display_username = session["email"]
+
+    args["show_logout"] = show_logout
+    args["display_username"] = display_username
 
     page_title = os.getenv("PAGE_TITLE", "GOV.UK")
     if is_development():

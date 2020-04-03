@@ -59,10 +59,10 @@ def test_route_index_logged_in(test_client, test_session):
         app.logger.debug(test_session)
     response = test_client.get("/")
     body = response.data.decode()
-    # print(body)
+
     assert response.status_code == 200
     assert "You're currently logged in as" in body
-    assert '<span class="covid-transfer-username">test-user</span>' in body
+    assert '<span class="covid-transfer-username">test-user@test-domain.com</span>' in body
 
 
 @pytest.mark.usefixtures("test_client")
