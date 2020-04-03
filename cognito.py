@@ -63,15 +63,27 @@ def load_app_settings():
     }
 
 
+def allowed_domains():
+    return [
+        ".gov.uk",  # allow any *.gov.uk email
+        "@brake.co.uk",  # allow @brake.co.uk (wholesaler)
+        "@nhs.net",
+        "@tesco.com",
+        "@ocadoretail.com",
+        "@morrisonsplc.co.uk",
+        "@sainsburys.co.uk",
+        "@iceland.co.uk",
+        "@coop.co.uk",
+        "@asda.co.uk",
+        "@johnlewis.co.uk",
+    ]
+
+
 def return_false_if_unexpected_domain(email_address):
     res = False
 
     # ALLOWS
-    for domain in [
-        ".gov.uk",  # allow any *.gov.uk email
-        "@brake.co.uk",  # allow @brake.co.uk (wholesaler)
-        "@nhs.net",
-    ]:
+    for domain in allowed_domains():
         if email_address.endswith(domain):
             res = True
 

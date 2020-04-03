@@ -18,14 +18,10 @@
     {% if enable_email_edit %}
     <span class="govuk-hint">
       <br>
-      The following domains are allowed:
-      <pre>*.gov.uk</pre>
-      <pre>brake.co.uk</pre>
-      <!--The following domains are denied:
-      <pre>digital.cabinet-office.gov.uk</pre>
-      <pre>cabinet-office.gov.uk</pre>
-      <pre>localdigital.gov.uk</pre>
-      <pre>communities.gov.uk</pre>-->
+      The following email addresses are allowed:
+      {% for d in allowed_domains %}
+      <pre>*{{ d }}</pre>
+      {% endfor %}
     </span>
     {% endif %}
   </div>
