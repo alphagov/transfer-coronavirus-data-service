@@ -222,6 +222,7 @@ def test_load_user_lookup(test_session):
 @pytest.mark.usefixtures("test_session")
 def test_get_files(test_session):
     """ Test mocked delete ssm param """
+    root_path = "web-app-prod-data"
     bucket_name = "test_bucket"
     paths = load_user_lookup(test_session)
 
@@ -232,11 +233,14 @@ def test_get_files(test_session):
         os.environ["AWS_SECRET_ACCESS_KEY"] = "fake"
         matched_files = get_files(bucket_name, test_session)
         matched_keys = [matched_file["key"] for matched_file in matched_files]
-        assert f"local_authority/haringey/people1.csv" in matched_keys
-        assert f"local_authority/haringey/people4.csv" in matched_keys
-        assert f"local_authority/haringey/nested/nested_people1.csv" in matched_keys
-        assert f"local_authority/barnet/people1.csv" in matched_keys
-        assert f"local_authority/barnet/people4.csv" in matched_keys
+        assert f"{root_path}/local_authority/haringey/people1.csv" in matched_keys
+        assert f"{root_path}/local_authority/haringey/people4.csv" in matched_keys
+        assert (
+            f"{root_path}/local_authority/haringey/nested/nested_people1.csv"
+            in matched_keys
+        )
+        assert f"{root_path}/local_authority/barnet/people1.csv" in matched_keys
+        assert f"{root_path}/local_authority/barnet/people4.csv" in matched_keys
         stubber.deactivate()
 
 

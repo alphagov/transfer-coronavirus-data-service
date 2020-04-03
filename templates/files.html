@@ -47,7 +47,9 @@
       <ul class="govuk-list">
       {% for file in files %}
         <li>
-          <a target="_blank" class="govuk-link covid-tranfer-file-link" href="/download?url={{ file.url }}">{{ file.key }}</a> ({{ file.size|filesizeformat }})
+          <a target="_blank" class="govuk-link covid-tranfer-file-link" href="/download?url={{ file.url }}">
+            {{ file.key | s3_remove_root_path }}
+          </a> ({{ file.size|filesizeformat }})
         </li>
       {% endfor %}
       </ul>
