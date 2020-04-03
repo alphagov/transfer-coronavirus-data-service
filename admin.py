@@ -124,7 +124,7 @@ def admin_confirm_user(app):
 
     print("admin_confirm_user:args:", args)
 
-    if task in ["new", "continue"]:
+    if task in ["new", "continue-new"]:
         new_user = True
         if "email" in args:
             user = {"email": cognito.sanitise_email(args["email"])}
