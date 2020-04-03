@@ -374,7 +374,7 @@ def get_files(bucket_name: str, user_session: dict):
         print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
 
         # remove root element from path
-        file_link_path = re.sub(r'^[^/]+\/', "", file_key["key"])
+        file_link_path = re.sub(r"^[^/]+\/", "", file_key["key"])
 
         url = create_presigned_url(bucket_name, file_key["key"], 300)
         if url is not None:
