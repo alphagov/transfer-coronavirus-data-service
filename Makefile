@@ -7,6 +7,12 @@
 
 .SILENT: test install upgrade watch checks target_dir add_deps copy_dir build run zip
 
+rebuild:
+	docker-compose build
+
+shell: rebuild
+	docker-compose run chrome-driver bash
+
 clean:
 	rm -rf __pycache__ .coverage *.zip *.egg-info .tox venv .pytest_cache htmlcov **/__pycache__ **/*.pyc .target setup.cfg
 	echo "✔️ Cleanup of files completed!"
@@ -52,28 +58,34 @@ copy_dir:
 
 build: clean target_dir copy_dir
 
-run:
-	python3 run.py main testing
+run: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py main testing
 
-run_test:
-	python3 run.py main testing
+run_test: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py main testing
 
-run_staging:
-	python3 run.py main staging
+run_staging: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py main staging
 
-run_prod:
-	python3 run.py main production
+run_prod: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py main production
 
-admin_test:
-	python3 run.py admin testing
+admin_test: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py admin testing
 
-admin_staging:
-	python3 run.py admin staging
+admin_staging: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py admin staging
 
-admin_prod:
-	python3 run.py admin production
+admin_prod: rebuild
+	docker-compose run --service-ports chrome-driver python3 run.py admin production
 
 zip: build
 	mkdir -p builds
 	cd .target; zip -X -9 ../builds/backend-consumer-app.zip -r .
 	echo "✔️ zip file built!"
+
+e2e: rebuild
+	docker-compose run chrome-driver bash -c "python3 run.py main testing & cd behave && behave"
+
+concourse_e2e:
+	behave

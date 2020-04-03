@@ -113,3 +113,30 @@ Run linters and then pytests
 ### make zip
 
 Build the distributable zip file for shipping to PaaS
+
+
+## End to end testing 
+
+### Run locally
+
+You need to export some local environment variables like  
+the following: 
+
+```behave_env.sh
+export E2E_STAGING_ROOT_URL=https://localhost:8000/
+export E2E_STAGING_USERNAME=[e2e_username_value]
+export E2E_STAGING_PASSWORD=[e2e_password_value]
+```  
+
+The credentials should be for a cognito account which is 
+able to login without an MFA SMS. 
+
+Then (with appropriate AWS credentials) you can run
+
+`make e2e`
+
+### Running against staging 
+
+The tests are automatically run against staging in the 
+pipeline but can be run manually by assuming a 
+different role and setting different credentials. 
