@@ -9,7 +9,7 @@ import time
 
 import boto3
 from botocore.exceptions import ClientError
-from cognito_groups import user_groups
+from cognito_groups import user_groups, return_users_group
 
 # from validate_email import validate_email
 
@@ -187,17 +187,20 @@ def get_user_details(email_address):
     return {}
 
 
-def users_groups(username):
+def users_group(username):
     grps = []
+
     client = get_boto3_client()
     response = client.admin_list_groups_for_user(
         Username=username, UserPoolId=get_env_pool_id(), Limit=10
     )
+
     if "Groups" in response:
         for grp in response["Groups"]:
             if "GroupName" in grp:
                 grps.append(grp["GroupName"])
-    return grps
+
+    return return_users_group(grps)
 
 
 def normalise_user(aws_user_resp):
@@ -216,7 +219,7 @@ def normalise_user(aws_user_resp):
             res[attr["Name"]] = attr["Value"]
 
     if "username" in res:
-        res["groups"] = users_groups(res["username"])
+        res["group"] = users_group(res["username"])
 
     return res
 
@@ -322,6 +325,7 @@ def reinvite_user(email_address, confirm=False):
                     phone_number=user["phone_number"],
                     attr_paths=user["custom:paths"],
                     is_la=user["custom:is_la"],
+                    groupname=user["group"],
                 )
                 print("cre_res", cre_res)
                 return cre_res
@@ -360,8 +364,11 @@ def create_and_list_groups():
     return groups_res
 
 
-def add_user_to_group(username, groupname):
+def add_user_to_group(username, groupname=None):
     client = get_boto3_client()
+
+    if groupname is None:
+        groupname = "standard-download"
 
     calg = create_and_list_groups()
     groups = [g["value"] for g in calg]
@@ -377,7 +384,9 @@ def add_user_to_group(username, groupname):
     return False
 
 
-def create_user(name, email_address, phone_number, attr_paths, is_la="0"):
+def create_user(
+    name, email_address, phone_number, attr_paths, is_la="0", groupname=None
+):
     client = get_boto3_client()
     email_address = sanitise_email(email_address)
     if email_address == "":
@@ -434,6 +443,10 @@ def create_user(name, email_address, phone_number, attr_paths, is_la="0"):
             UserPoolId=get_env_pool_id(),
             MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
         )
+
+        time.sleep(0.1)
+
+        autg = add_user_to_group(email_address, group)
 
     return res
 
@@ -496,7 +509,12 @@ def delete_user(email_address, confirm=False):
 
 
 def update_user_attributes(
-    email_address, new_name=None, new_phone_number=None, new_is_la=None, new_paths=None
+    email_address,
+    new_name=None,
+    new_phone_number=None,
+    new_is_la=None,
+    new_paths=None,
+    new_groupname=None,
 ):
     client = get_boto3_client()
     if (
@@ -568,6 +586,28 @@ def update_user_attributes(
                 # TODO: will eventually be app.logger.error
                 # and SCRIPT will be session["user"]
                 print("ERR: {}: new_paths is not list".format("script"))
+                return False
+
+        if new_groupname is not None:
+            if isinstance(new_groupname, str):
+                # current groupname
+                groupname_value = user["group"]
+
+                rufg_res = client.admin_remove_user_from_group(
+                    UserPoolId=get_env_pool_id(),
+                    Username=email_address,
+                    GroupName=groupname_value,
+                )
+
+                if "ResponseMetadata" in rufg_res:
+                    if "HTTPStatusCode" in rufg_res["ResponseMetadata"]:
+                        if rufg_res["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                            add_user_to_group(email_address, new_groupname)
+
+            else:
+                # TODO: will eventually be app.logger.error
+                # and SCRIPT will be session["user"]
+                print("ERR: {}: new_groupname is not str".format("script"))
                 return False
 
         if len(attrs) != 0:

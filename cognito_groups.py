@@ -42,13 +42,10 @@ def user_groups(groupvalue=None):
 def return_users_group(user=None):
     sel_group = user_groups("standard-download")[0]
 
-    start_pref = 1000
-    if user is not None and "groups" in user:
-        avail_groups = user_groups()
-        for ug in user["groups"]:
-            for ag in avail_groups:
-                if ug == ag["value"] and ag["preference"] < start_pref:
-                    sel_group = ag
-                    start_pref = ag["preference"]
+    if user is not None and "group" in user:
+        for ugs in user_groups():
+            if user["group"] == ugs["value"]:
+                sel_group = ugs
+                break
 
     return sel_group

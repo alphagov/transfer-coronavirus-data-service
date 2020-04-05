@@ -152,6 +152,7 @@ def admin_confirm_user(app):
                     phone_number=admin_user_object["phone_number"],
                     attr_paths=admin_user_object["custom:paths"],
                     is_la=admin_user_object["custom:is_la"],
+                    groupname=admin_user_object["group"],
                 )
 
                 clear_session(app)
@@ -171,6 +172,7 @@ def admin_confirm_user(app):
                     new_phone_number=admin_user_object["phone_number"],
                     new_paths=admin_user_object["custom:paths"].split(";"),
                     new_is_la=admin_user_object["custom:is_la"],
+                    new_groupname=admin_user_object["group"],
                 )
 
                 clear_session(app)
@@ -192,8 +194,8 @@ def admin_confirm_user(app):
     user["phone_number"] = sanitise_input(args, "telephone-number")
 
     account_type = sanitise_input(args, "account")
-    user_group = return_users_group({"groups": [account_type]})[0]
-    user["groups"] = account_group["value"]
+    user_group = return_users_group({"group": account_type})
+    user["group"] = user_group["value"]
 
     san_is_la = sanitise_input(args, "is-la-radio") == "yes"
     if san_is_la:
