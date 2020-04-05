@@ -7,6 +7,7 @@ from requests.utils import quote
 import cognito
 import s3paths
 from flask_helpers import render_template_custom
+from cognito_groups import user_groups, return_users_group
 
 local_valid_paths_var = []
 
@@ -52,7 +53,11 @@ def admin_user(app):
             session["admin_user_email"] = user["email"]
             session["admin_user_object"] = user
 
-            return render_template_custom(app, "admin/user.html", user=user, done=done)
+            user_group = return_users_group(user)
+
+            return render_template_custom(
+                app, "admin/user.html", user=user, user_group=user_group, done=done
+            )
 
     return redirect("/admin/user/not-found")
 
@@ -186,6 +191,10 @@ def admin_confirm_user(app):
     user["name"] = sanitise_input(args, "full-name")
     user["phone_number"] = sanitise_input(args, "telephone-number")
 
+    account_type = sanitise_input(args, "account")
+    user_group = return_users_group({"groups": [account_type]})[0]
+    user["groups"] = account_group["value"]
+
     san_is_la = sanitise_input(args, "is-la-radio") == "yes"
     if san_is_la:
         user["custom:is_la"] = "1"
@@ -207,7 +216,11 @@ def admin_confirm_user(app):
     session["admin_user_object"] = user
 
     return render_template_custom(
-        app, "admin/confirm-user.html", user=user, new_user=new_user
+        app,
+        "admin/confirm-user.html",
+        user=user,
+        new_user=new_user,
+        user_group=user_group,
     )
 
 
@@ -319,6 +332,7 @@ def admin_edit_user(app):
         other=value_paths_by_type("other"),
         is_other=is_other,
         allowed_domains=(cognito.allowed_domains() if new_user else []),
+        available_groups=user_groups(),
     )
 
 

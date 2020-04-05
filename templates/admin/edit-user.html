@@ -41,11 +41,9 @@
         </h1>
       </legend>
       <select class="govuk-select" id="account-select" name="account">
-        <option value="standard-download" selected>Standard download user</option>
-        <option value="standard-upload">Standard download and upload user</option>
-        <option value="admin-view">User administrator read-only</option>
-        <option value="admin-power">User administrator power (reinvite/disable)</option>
-        <option value="admin-full">User administrator full access</option>
+        {% for g in available_groups %}
+        <option value="{{ g['value'] }}" selected>{{ g['display'] }}</option>
+        {% endfor %}
       </select>
     </fieldset>
   </div>

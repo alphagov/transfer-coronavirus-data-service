@@ -9,6 +9,7 @@ import time
 
 import boto3
 from botocore.exceptions import ClientError
+from cognito_groups import user_groups
 
 # from validate_email import validate_email
 
@@ -186,6 +187,19 @@ def get_user_details(email_address):
     return {}
 
 
+def users_groups(username):
+    grps = []
+    client = get_boto3_client()
+    response = client.admin_list_groups_for_user(
+        Username=username, UserPoolId=get_env_pool_id(), Limit=10
+    )
+    if "Groups" in response:
+        for grp in response["Groups"]:
+            if "GroupName" in grp:
+                grps.append(grp["GroupName"])
+    return grps
+
+
 def normalise_user(aws_user_resp):
     res = {}
     if "Username" in aws_user_resp:
@@ -202,16 +216,7 @@ def normalise_user(aws_user_resp):
             res[attr["Name"]] = attr["Value"]
 
     if "username" in res:
-        grps = []
-        client = get_boto3_client()
-        response = client.admin_list_groups_for_user(
-            Username=res["username"], UserPoolId=get_env_pool_id(), Limit=10
-        )
-        if "Groups" in response:
-            for grp in response["Groups"]:
-                if "GroupName" in grp:
-                    grps.append(grp["GroupName"])
-        res["groups"] = grps
+        res["groups"] = users_groups(res["username"])
 
     return res
 
@@ -320,6 +325,55 @@ def reinvite_user(email_address, confirm=False):
                 )
                 print("cre_res", cre_res)
                 return cre_res
+    return False
+
+
+def create_and_list_groups():
+    groups_res = []
+    client = get_boto3_client()
+
+    user_pool_group_names = []
+    lg_res = client.list_groups(UserPoolId=get_env_pool_id(), Limit=10)
+    if "ResponseMetadata" in lg_res:
+        if "HTTPStatusCode" in lg_res["ResponseMetadata"]:
+            if lg_res["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                user_pool_group_names = [g["GroupName"] for g in response["Groups"]]
+
+    if len(user_pool_group_names) == 0:
+        return groups_res
+
+    for user_group in user_groups():
+        if user_group["value"] in user_pool_group_names:
+            groups_res.append(user_group)
+        else:
+            cg_res = client.create_group(
+                GroupName=user_group["value"],
+                UserPoolId=get_env_pool_id(),
+                Description=user_group["display"],
+                Precedence=user_group["preference"],
+            )
+            if "ResponseMetadata" in cg_res:
+                if "HTTPStatusCode" in cg_res["ResponseMetadata"]:
+                    if cg_res["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                        groups_res.append(user_group)
+
+    return groups_res
+
+
+def add_user_to_group(username, groupname):
+    client = get_boto3_client()
+
+    calg = create_and_list_groups()
+    groups = [g["value"] for g in calg]
+
+    if groupname in groups:
+        response = client.admin_add_user_to_group(
+            UserPoolId=get_env_pool_id(), Username=username, GroupName=groupname
+        )
+        if "ResponseMetadata" in response:
+            if "HTTPStatusCode" in response["ResponseMetadata"]:
+                if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                    return True
     return False
 
 

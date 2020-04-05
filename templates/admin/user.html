@@ -56,15 +56,10 @@
   </div>
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
-      User groups
+      Account type
     </dt>
     <dd class="govuk-summary-list__value">
-      {% if user["groups"]|length == 0 %}
-        <p class="govuk-body">Standard download user</p>
-      {% endif %}
-      {% for grp in user["groups"] %}
-        <p class="govuk-body">{{ grp }}</p>
-      {% endfor %}
+      <p class="govuk-body">{{ user_group['display'] }}</p>
     </dd>
   </div>
   <div class="govuk-summary-list__row">
