@@ -15,6 +15,8 @@ import admin
 import cognito
 from flask_helpers import admin_interface, login_required, render_template_custom
 from logger import LOG
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 app.cf_space = os.getenv("CF_SPACE", "testing")
@@ -196,8 +198,13 @@ def index():
 
     if "details" in session:
         app.logger.debug("Logged in")
+        upload_rights = True
         return render_template_custom(
-            app, "welcome.html", user=session["user"], email=session["email"]
+            app,
+            "welcome.html",
+            user=session["user"],
+            email=session["email"],
+            upload_rights=upload_rights,
         )
     else:
         app.logger.debug("Logged out")
@@ -256,6 +263,91 @@ def download():
                 return redirect(redirect_url, 302)
     else:
         return redirect("/404")
+
+
+@app.route("/upload", methods=["POST", "GET"])
+@login_required
+def upload():
+    if True:  # in group
+        ucps = user_custom_paths(is_upload=True)
+        preupload = True
+        file_extensions = [
+            {"ext": "csv"},
+        ]
+        presignedurl = ""
+
+        if request.method == "POST":
+            filepathtoupload = ""
+            presignedurl = ""
+            path = ""
+
+            if len(args) != 0:
+                args = request.form
+
+                if "task" in args:
+                    if args["task"] == "upload":
+                        # handled in javascript
+                        # return a redirect here if JS is disabled
+                        return redirect("/upload?js_disabled=True")
+
+                    if args["task"] == "cancel-upload":
+                        return redirect("/upload")
+
+                    if args["task"] == "cancel-preupload":
+                        return redirect("/start")
+
+                    if args["task"] == "preupload":
+                        preupload = False
+                        complete = 0
+                        file_location = ""
+                        file_name = ""
+                        ext = ""
+
+                        if "file_location" in args:
+                            arg_fl = args["file_location"]
+                            for fl in ucps:
+                                if fl["key"] == arg_fl:
+                                    file_location = fl["path"]
+                                    complete += 1
+                                    break
+
+                        if "filename" in args:
+                            arg_fn = args["filename"]
+                            file_name = secure_filename(arg_fn)
+                            complete += 1
+
+                        if "file_ext" in args:
+                            arg_ext = args["file_ext"]
+                            for fe in file_extensions:
+                                if fe == arg_ext:
+                                    ext = fe
+                                    complete += 1
+                                    break
+
+                        if complete == 3:
+                            filedatetime = datetime.now().strftime("%Y%m%d-%H%M")
+                            filepathtoupload = "{}/{}_{}.{}".format(
+                                file_location, filedatetime, file_name, ext
+                            )
+                            # generate a S3 presignedurl PutObjct based
+                            # on filepathtoupload
+                            presignedurl = ""
+                        else:
+                            return redirect("/upload?error=True")
+
+        return render_template_custom(
+            app,
+            "upload.html",
+            user=session["user"],
+            email=session["email"],
+            presignedurl=presignedurl,
+            preupload=preupload,
+            filepathtoupload=filepathtoupload,
+            file_extensions=file_extensions if preupload else [],
+            upload_keys=[u["key"] for u in ucps] if preupload else [],
+        )
+    else:
+        return redirect("/")
 
 
 @app.route("/files")
@@ -398,19 +490,38 @@ def return_attribute(session: dict, get_attribute: str) -> str:
     return ""
 
 
+def user_custom_paths(session, is_upload=False):
+    paths = []
+
+    app_download_path = os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")
+    app_upload_path = os.getenv("BUCKET_UPLOAD_PREFIX", "web-app-upload")
+
+    user_key_prefixes = return_attribute(session, "custom:paths")
+    for key_prefix in user_key_prefixes.split(";"):
+        if key_prefix != "" and "/" in key_prefix:
+            if not is_upload and not key_prefix.startswith(app_download_path):
+                continue
+
+            skp = key_prefix.split("/", 1)
+            if is_upload:
+                key = skp[1]
+                path = "{}/{}".format(app_upload_path, skp[1])
+            else:
+                key = key_prefix
+                path = key_prefix
+            if key != "" and path != "":
+                paths.append({"key": key, "path": path})
+
+    return paths
+
+
 def load_user_lookup(session):
     paths = []
 
-    # user_is_local_authority = return_attribute(session, "custom:is_la") == "1"
-    app_authorised_paths = [os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")]
-    user_authorised_paths = return_attribute(session, "custom:paths")
-
-    user_key_prefixes = user_authorised_paths.split(";")
-    for key_prefix in user_key_prefixes:
-        root_folder = key_prefix.split("/")[0]
-        if root_folder in app_authorised_paths:
-            paths.append(key_prefix)
-            app.logger.info("User: {} prefix: {}".format(session["user"], key_prefix))
+    ucps = user_custom_paths(session, is_upload=False)
+    for ucp in ucps:
+        paths.append(ucp["path"])
+        app.logger.info("User: {} prefix: {}".format(session["user"], ucp["path"]))
 
     return paths
 
