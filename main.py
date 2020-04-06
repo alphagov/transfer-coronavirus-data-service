@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from flask import Flask, redirect, request, send_file, send_from_directory, session
 from flask_talisman import Talisman
 from requests.auth import HTTPBasicAuth
+from datetime import datetime
 
 import admin
 import cognito
@@ -269,22 +270,23 @@ def download():
 @login_required
 def upload():
     if True:  # in group
-        ucps = user_custom_paths(is_upload=True)
+        ucps = user_custom_paths(is_upload=True, session=session)
         preupload = True
         file_extensions = [
-            {"ext": "csv"},
+            {"ext": "csv", "display": "CSV"},
         ]
-        presignedurl = ""
+        filepathtoupload = ""
+        presigned_object = ""
 
         if request.method == "POST":
-            filepathtoupload = ""
-            presignedurl = ""
             path = ""
-
+            args = request.form
             if len(args) != 0:
-                args = request.form
 
                 if "task" in args:
+                    print("task", args["task"])
+                    print("args", args)
+
                     if args["task"] == "upload":
                         # handled in javascript
                         # return a redirect here if JS is disabled
@@ -294,7 +296,7 @@ def upload():
                         return redirect("/upload")
 
                     if args["task"] == "cancel-preupload":
-                        return redirect("/start")
+                        return redirect("/")
 
                     if args["task"] == "preupload":
                         preupload = False
@@ -308,20 +310,23 @@ def upload():
                             for fl in ucps:
                                 if fl["key"] == arg_fl:
                                     file_location = fl["path"]
+                                    print("file_location", file_location)
                                     complete += 1
                                     break
 
                         if "filename" in args:
                             arg_fn = args["filename"]
                             file_name = secure_filename(arg_fn)
+                            print("file_name", file_name)
                             complete += 1
 
                         if "file_ext" in args:
                             arg_ext = args["file_ext"]
                             for fe in file_extensions:
-                                if fe == arg_ext:
-                                    ext = fe
+                                if fe["ext"] == arg_ext:
+                                    ext = fe["ext"]
                                     complete += 1
+                                    print("ext", ext)
                                     break
 
                         if complete == 3:
@@ -329,9 +334,11 @@ def upload():
                             filepathtoupload = "{}/{}_{}.{}".format(
                                 file_location, filedatetime, file_name, ext
                             )
-                            # generate a S3 presignedurl PutObjct based
+                            print("filepathtoupload", filepathtoupload)
+                            # generate a S3 presigned_object PutObjct based
                             # on filepathtoupload
-                            presignedurl = ""
+                            cpp = create_presigned_post(filepathtoupload)
+                            presigned_object = cpp
                         else:
                             return redirect("/upload?error=True")
 
@@ -340,7 +347,7 @@ def upload():
             "upload.html",
             user=session["user"],
             email=session["email"],
-            presignedurl=presignedurl,
+            presigned_object=presigned_object,
             preupload=preupload,
             filepathtoupload=filepathtoupload,
             file_extensions=file_extensions if preupload else [],
@@ -348,6 +355,22 @@ def upload():
         )
     else:
         return redirect("/")
+
+
+def create_presigned_post(object_name, expiration=3600):
+    # Generate a presigned S3 POST URL
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.generate_presigned_post(app.bucket_name,
+                                                     object_name,
+                                                     ExpiresIn=expiration)
+    except ClientError as e:
+        logging.error(e)
+        return None
+
+    print(response)
+    # The response contains the presigned URL and required fields
+    return response
 
 
 @app.route("/files")
