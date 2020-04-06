@@ -19,8 +19,8 @@
     <span class="govuk-hint">
       <br>
       The following email addresses are allowed:
-      {% for d in allowed_domains %}
-      <pre>*{{ d }}</pre>
+      {% for domain in allowed_domains %}
+      <pre>*{{ domain }}</pre>
       {% endfor %}
     </span>
     {% endif %}
@@ -36,13 +36,13 @@
   <div class="govuk-form-group">
     <fieldset class="govuk-fieldset" aria-describedby="la_cond-hint">
       <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-        <h1 class="govuk-fieldset__heading">
+        <h2 class="govuk-fieldset__heading">
           Account type
-        </h1>
+        </h2>
       </legend>
       <select class="govuk-select" id="account-select" name="account">
-        {% for g in available_groups %}
-        <option value="{{ g['value'] }}" selected>{{ g['display'] }}</option>
+        {% for group in available_groups %}
+        <option value="{{ group['value'] }}" {% if user['group']['value'] == group['value'] %} selected {% endif %}>{{ group['display'] }}</option>
         {% endfor %}
       </select>
     </fieldset>
@@ -53,9 +53,9 @@
     <div class="govuk-form-group">
       <fieldset class="govuk-fieldset" aria-describedby="is-la-radio-hint">
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-          <h1 class="govuk-fieldset__heading">
+          <h2 class="govuk-fieldset__heading">
             Local authority user?
-          </h1>
+          </h2>
         </legend>
         <div class="govuk-radios govuk-radios--inline">
           <div class="govuk-radios__item">
@@ -77,9 +77,9 @@
     <div class="govuk-form-group">
       <fieldset class="govuk-fieldset" aria-describedby="la_cond-hint">
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-          <h1 class="govuk-fieldset__heading">
+          <h2 class="govuk-fieldset__heading">
             Available download areas
-          </h1>
+          </h2>
         </legend>
         <div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
 
