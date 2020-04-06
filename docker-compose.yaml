@@ -1,0 +1,21 @@
+version: '3'
+services:
+  chrome-driver:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    command: bash
+    environment:
+      - CF_SPACE=testing
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+      - AWS_REGION=$AWS_REGION
+      - AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+      - AWS_SECURITY_TOKEN=$AWS_SECURITY_TOKEN
+      - AWS_SESSION_EXPIRATION=$AWS_SESSION_EXPIRATION
+      - E2E_STAGING_ROOT_URL=$E2E_STAGING_ROOT_URL
+      - E2E_STAGING_USERNAME=$E2E_STAGING_USERNAME
+      - E2E_STAGING_PASSWORD=$E2E_STAGING_PASSWORD
+    ports:
+      - "8000:8000"

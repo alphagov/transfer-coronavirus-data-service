@@ -8,7 +8,7 @@ RUN apt-get install -y build-essential libssl-dev libffi-dev python3-dev
 RUN apt-get install -y curl tar imagemagick python-gtk2
 RUN apt-get install -y libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1
 
-# install chromedriver and headless-chrome
+# Install chromedriver and headless-chrome
 RUN mkdir ./bin
 COPY bin/* ./bin/
 RUN bash bin/install_chrome.sh

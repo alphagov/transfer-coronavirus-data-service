@@ -1,2 +1,2 @@
-behave_env.sh
+behave_*.sh
 geckodriver.log
