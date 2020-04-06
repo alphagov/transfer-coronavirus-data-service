@@ -42,7 +42,7 @@
       </legend>
       <select class="govuk-select" id="account-select" name="account">
         {% for group in available_groups %}
-        <option value="{{ group['value'] }}" {% if user['group']['value'] == group['value'] %} selected {% endif %}>{{ group['display'] }}</option>
+        <option value="{{ group['value'] }}" {% if "group" in user and user["group"]["value"] == group["value"] %} selected {% endif %}>{{ group['display'] }}</option>
         {% endfor %}
       </select>
     </fieldset>
