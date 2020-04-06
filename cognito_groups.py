@@ -31,9 +31,9 @@ def user_groups(groupvalue=None):
     ]
 
     if groupvalue is not None:
-        for g in groups:
-            if groupvalue == g["value"]:
-                return [g]
+        for group in groups:
+            if groupvalue == group["value"]:
+                return [group]
         return user_groups("standard-download")
 
     return groups
@@ -43,9 +43,9 @@ def return_users_group(user=None):
     sel_group = user_groups("standard-download")[0]
 
     if user is not None and "group" in user:
-        for ugs in user_groups():
-            if user["group"] == ugs["value"]:
-                sel_group = ugs
+        for group in user_groups():
+            if user["group"] == group["value"]:
+                sel_group = group
                 break
 
     return sel_group
