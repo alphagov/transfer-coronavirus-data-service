@@ -1,6 +1,5 @@
 from cognito_groups import return_users_group, user_groups
 
-
 fx_standard_download = {
     "preference": 10,
     "value": "standard-download",

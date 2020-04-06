@@ -6,8 +6,8 @@ from requests.utils import quote
 
 import cognito
 import s3paths
+from cognito_groups import return_users_group, user_groups
 from flask_helpers import render_template_custom
-from cognito_groups import user_groups, return_users_group
 
 local_valid_paths_var = []
 

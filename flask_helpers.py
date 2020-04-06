@@ -35,7 +35,7 @@ def login_required(f):
 
 def render_template_custom(app, template, hide_logout=False, **args):
     args["is_admin_interface"] = is_admin_interface()
-    show_back_link =  template not in ["welcome.html","login.html"]
+    show_back_link = template not in ["welcome.html", "login.html"]
 
     show_logout = False
     display_username = ""

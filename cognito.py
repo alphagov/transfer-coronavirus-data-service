@@ -9,7 +9,8 @@ import time
 
 import boto3
 from botocore.exceptions import ClientError
-from cognito_groups import user_groups, return_users_group
+
+from cognito_groups import return_users_group, user_groups
 
 # from validate_email import validate_email
 
