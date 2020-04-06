@@ -24,8 +24,6 @@ def test_return_users_group(standard_download, standard_upload):
 
     assert return_users_group() == standard_download
     assert return_users_group({}) == standard_download
-    assert return_users_group({"group": []}) == standard_download
-    assert return_users_group({"group": [""]}) == standard_download
 
-    assert return_users_group({"group": "standard-upload"}) == standard_upload
-    assert return_users_group({"group": "standard-download"}) == standard_download
+    assert return_users_group({"group": standard_upload}) == standard_upload
+    assert return_users_group({"group": standard_download}) == standard_download

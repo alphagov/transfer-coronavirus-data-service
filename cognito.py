@@ -9,8 +9,9 @@ import time
 
 import boto3
 from botocore.exceptions import ClientError
+from flask import session
 
-from cognito_groups import return_users_group, user_groups
+from cognito_groups import get_group_map, user_groups
 from logger import LOG
 
 # from validate_email import validate_email
@@ -202,7 +203,14 @@ def users_group(username):
             if "GroupName" in group:
                 groups.append(group["GroupName"])
 
-    return return_users_group(groups)
+    LOG.debug(groups)
+
+    # return return_users_group(groups)
+    # Currently you can attach a list of users in cognito
+    # but we're currently only interested in the first group
+    group_map = get_group_map()
+    group_name = groups[0]
+    return group_map[group_name]
 
 
 def normalise_user(aws_user_resp):
@@ -289,9 +297,8 @@ def return_false_if_paths_bad(is_la_value, paths_semicolon_seperated):
                     "{}/local_authority/".format(authed_path)
                 ):
                     LOG.error(
-                        "%s: won't set non-LA user to: %s"
-                        "user-admin",
-                        path_re_split_for_check
+                        "%s: won't set non-LA user to: %s" "user-admin",
+                        path_re_split_for_check,
                     )
                     return False
             # if current/new attr for is_la is 1 (IS local authority)
@@ -303,7 +310,7 @@ def return_false_if_paths_bad(is_la_value, paths_semicolon_seperated):
                     LOG.debug(
                         "%s: won't set LA user to: %s",
                         "user-admin",
-                        path_re_split_for_check
+                        path_re_split_for_check,
                     )
                     return False
 
@@ -315,7 +322,7 @@ def reinvite_user(email_address, confirm=False):
         user = get_user_details(email_address)
         if user != {}:
             del_res = delete_user(email_address, confirm)
-            LOG.debug({ "action": "delete-user", "response": del_res })
+            LOG.debug({"action": "delete-user", "response": del_res})
             if del_res:
                 cre_res = create_user(
                     name=user["name"],
@@ -323,9 +330,9 @@ def reinvite_user(email_address, confirm=False):
                     phone_number=user["phone_number"],
                     attr_paths=user["custom:paths"],
                     is_la=user["custom:is_la"],
-                    groupname=user["group"],
+                    group_name=user["group"]["value"],
                 )
-                LOG.debug({ "action": "create-user", "response": "cre_res" })
+                LOG.debug({"action": "create-user", "response": "cre_res"})
                 return cre_res
     return False
 
@@ -364,27 +371,34 @@ def create_and_list_groups():
     return groups_res
 
 
-def add_user_to_group(username, groupname=None):
+def add_user_to_group(username, group_name=None):
     client = get_boto3_client()
 
-    if groupname is None:
-        groupname = "standard-download"
+    if group_name is None:
+        group_name = "standard-download"
 
-    calg = create_and_list_groups()
-    groups = [g["value"] for g in calg]
+    group_map = get_group_map()
+    # group_list = create_and_list_groups()
+    # groups = [group["value"] for group in group_list]
 
-    if groupname in groups:
+    if group_name in group_map.keys():
         response = client.admin_add_user_to_group(
-            UserPoolId=get_env_pool_id(), Username=username, GroupName=groupname
+            UserPoolId=get_env_pool_id(), Username=username, GroupName=group_name
         )
         if "ResponseMetadata" in response:
             if "HTTPStatusCode" in response["ResponseMetadata"]:
                 if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                    session["admin_user_object"]["group"] = group_map[group_name]
                     return True
+        else:
+            LOG.debug("Failed to add user to group: %s", group_name)
+            LOG.debug(response)
     return False
 
 
-def create_user(name, email_address, phone_number, attr_paths, is_la="0", group=None):
+def create_user(
+    name, email_address, phone_number, attr_paths, is_la="0", group_name=None
+):
     client = get_boto3_client()
     email_address = sanitise_email(email_address)
     if email_address == "":
@@ -444,7 +458,7 @@ def create_user(name, email_address, phone_number, attr_paths, is_la="0", group=
 
         time.sleep(0.1)
 
-        add_user_to_group(email_address, group)
+        add_user_to_group(email_address, group_name)
 
     return res
 
@@ -506,7 +520,7 @@ def update_user_attributes(
     new_phone_number=None,
     new_is_la=None,
     new_paths=None,
-    new_groupname=None,
+    new_group_name=None,
 ):
     client = get_boto3_client()
     if (
@@ -572,24 +586,30 @@ def update_user_attributes(
                 LOG.error("ERR: %s: new_paths is not list", "user-admin")
                 return False
 
-        if new_groupname is not None:
-            if isinstance(new_groupname, str):
-                # current groupname
-                groupname_value = user["group"]
+        if new_group_name is not None:
+            if isinstance(new_group_name, str):
+                # current group_name
+                old_group_name = user["group"]["value"]
+
+                LOG.debug("Remove user from group: %s", old_group_name)
 
                 rufg_res = client.admin_remove_user_from_group(
                     UserPoolId=get_env_pool_id(),
                     Username=email_address,
-                    GroupName=groupname_value,
+                    GroupName=old_group_name,
                 )
 
                 if "ResponseMetadata" in rufg_res:
                     if "HTTPStatusCode" in rufg_res["ResponseMetadata"]:
                         if rufg_res["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                            add_user_to_group(email_address, new_groupname)
+                            LOG.debug("Add user to group: %s", new_group_name)
+                            add_user_to_group(email_address, new_group_name)
+                else:
+                    LOG.debug("Failed to remove user from group: %s", old_group_name)
+                    LOG.debug(rufg_res)
 
             else:
-                LOG.error("ERR: %s: new_groupname is not str", "user-admin")
+                LOG.error("ERR: %s: new_group_name is not str", "user-admin")
                 return False
 
         if len(attrs) != 0:

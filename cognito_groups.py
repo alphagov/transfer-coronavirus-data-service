@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-def user_groups(groupvalue=None):
+def get_group_list():
     groups = [
         {
             "preference": 10,
@@ -29,10 +29,26 @@ def user_groups(groupvalue=None):
             "display": "User administrator full access",
         },
     ]
+    return groups
 
-    if groupvalue is not None:
+
+def get_group_map():
+    group_list = get_group_list()
+    group_map = {group["value"]: group for group in group_list}
+    return group_map
+
+
+def get_group_by_name(group_name):
+    group_map = get_group_map()
+    return group_map[group_name]
+
+
+def user_groups(group_value=None):
+    groups = get_group_list()
+
+    if group_value is not None:
         for group in groups:
-            if groupvalue == group["value"]:
+            if group_value == group["value"]:
                 return [group]
         return user_groups("standard-download")
 
@@ -40,12 +56,16 @@ def user_groups(groupvalue=None):
 
 
 def return_users_group(user=None):
-    sel_group = user_groups("standard-download")[0]
+    """
+    Return the users current group or the default
+    group for new users if not specified
+    """
 
-    if user is not None and "group" in user:
-        for group in user_groups():
-            if user["group"] == group["value"]:
-                sel_group = group
-                break
-
-    return sel_group
+    default_group_name = "standard-download"
+    group_map = get_group_map()
+    default_group = group_map[default_group_name]
+    try:
+        group = user.get("group", default_group)
+    except (ValueError, KeyError, AttributeError):
+        group = default_group
+    return group

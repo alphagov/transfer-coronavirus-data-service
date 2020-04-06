@@ -6,7 +6,7 @@ from requests.utils import quote
 
 import cognito
 import s3paths
-from cognito_groups import return_users_group, user_groups
+from cognito_groups import get_group_by_name, return_users_group, user_groups
 from flask_helpers import render_template_custom
 
 local_valid_paths_var = []
@@ -152,7 +152,7 @@ def admin_confirm_user(app):
                     phone_number=admin_user_object["phone_number"],
                     attr_paths=admin_user_object["custom:paths"],
                     is_la=admin_user_object["custom:is_la"],
-                    groupname=admin_user_object["group"],
+                    group_name=admin_user_object["group"]["value"],
                 )
 
                 clear_session(app)
@@ -172,7 +172,7 @@ def admin_confirm_user(app):
                     new_phone_number=admin_user_object["phone_number"],
                     new_paths=admin_user_object["custom:paths"].split(";"),
                     new_is_la=admin_user_object["custom:is_la"],
-                    new_groupname=admin_user_object["group"],
+                    new_group_name=admin_user_object["group"]["value"],
                 )
 
                 clear_session(app)
@@ -194,8 +194,9 @@ def admin_confirm_user(app):
     user["phone_number"] = sanitise_input(args, "telephone-number")
 
     account_type = sanitise_input(args, "account")
-    user_group = return_users_group({"group": account_type})
-    user["group"] = user_group["value"]
+    # user_group = return_users_group({"group": account_type})
+    user_group = get_group_by_name(account_type)
+    user["group"] = user_group
 
     san_is_la = sanitise_input(args, "is-la-radio") == "yes"
     if san_is_la:
