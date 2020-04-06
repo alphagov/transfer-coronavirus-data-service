@@ -88,4 +88,4 @@ e2e: rebuild
 	docker-compose run chrome-driver bash -c "python3 run.py main testing & cd behave && behave"
 
 concourse_e2e:
-    cd behave && behave
+	cd behave && behave
