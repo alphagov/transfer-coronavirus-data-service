@@ -58,3 +58,21 @@ def test_client():
     yield testing_client  # this is where the testing happens!
 
     ctx.pop()
+
+
+@pytest.fixture()
+def standard_download():
+    return {
+        "preference": 10,
+        "value": "standard-download",
+        "display": "Standard download user",
+    }
+
+
+@pytest.fixture()
+def standard_upload():
+    return {
+        "preference": 20,
+        "value": "standard-upload",
+        "display": "Standard download and upload user",
+    }
