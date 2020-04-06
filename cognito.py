@@ -338,11 +338,13 @@ def create_and_list_groups():
     client = get_boto3_client()
 
     user_pool_group_names = []
-    lg_res = client.list_groups(UserPoolId=get_env_pool_id(), Limit=10)
-    if "ResponseMetadata" in lg_res:
-        if "HTTPStatusCode" in lg_res["ResponseMetadata"]:
-            if lg_res["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                user_pool_group_names = [g["GroupName"] for g in response["Groups"]]
+    list_groups_response = client.list_groups(UserPoolId=get_env_pool_id(), Limit=10)
+    if "ResponseMetadata" in list_groups_response:
+        if "HTTPStatusCode" in list_groups_response["ResponseMetadata"]:
+            if list_groups_response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                user_pool_group_names = [
+                    group["GroupName"] for group in list_groups_response["Groups"]
+                ]
 
     if len(user_pool_group_names) == 0:
         return groups_res
@@ -385,9 +387,7 @@ def add_user_to_group(username, groupname=None):
     return False
 
 
-def create_user(
-    name, email_address, phone_number, attr_paths, is_la="0", groupname=None
-):
+def create_user(name, email_address, phone_number, attr_paths, is_la="0", group=None):
     client = get_boto3_client()
     email_address = sanitise_email(email_address)
     if email_address == "":
@@ -447,7 +447,7 @@ def create_user(
 
         time.sleep(0.1)
 
-        autg = add_user_to_group(email_address, group)
+        add_user_to_group(email_address, group)
 
     return res
 
