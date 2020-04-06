@@ -1,7 +1,9 @@
 {% extends 'primary.html' %}
 {% block content %}
 
-  <p>This is a new service for pre-registered users to access.</p>
+  <p class="covid-transfer--welcome-text">
+    This is a new service for pre-registered users to access.
+  </p>
 
   <p>
     If you would like support using this service, please email:<br>
@@ -14,7 +16,7 @@
   </p>
 
   <a href="{{ login_url }}">
-    <button class="govuk-button" data-module="govuk-button" id="signInButton" title="Sign In">
+    <button class="govuk-button covid-transfer-signin-button" data-module="govuk-button" id="signInButton" title="Sign In">
       Sign In
     </button>
   </a>

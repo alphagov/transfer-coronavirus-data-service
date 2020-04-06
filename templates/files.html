@@ -1,11 +1,14 @@
 {% extends 'primary.html' %}
 {% block content %}
 
+  <a href="/" class="govuk-back-link">Back</a>
+
   <p>
-    You're currently logged in as {{ user }}.
+    You're currently logged in as
+    <span class="covid-transfer-username">{{ user }}</span>.
   </p>
   <p>
-    <a href="/logout">
+    <a href="/logout" class="covid-transfer-logout-button">
       <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">
         Logout
       </button>
@@ -13,7 +16,7 @@
   </p>
 
   <p>
-    <a href="/files" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+    <a href="/files" role="button" draggable="false" class="govuk-button covid-transfer-reload-button" data-module="govuk-button">
       Reload
     </a>
   </p>
@@ -30,21 +33,29 @@
 
   <p>Any data available here is OFFICIAL SENSISTIVE and therefore needs to be handled appropriately.</p>
 
-  <div>
-    {% if files|length == 0 %}
-      There are no files currently available to download.
-    {% elif files|length == 1 %}
-      There is 1 file available to download:
-    {% else %}
-      There are {{ files|length }} file(s) available to download:
-    {% endif %}
-  </div>
+  <section class="covid-transfer-download-section">
+    <div>
+      {% if files|length == 0 %}
+        There are no files currently available to download.
+      {% elif files|length == 1 %}
+        There is 1 file available to download:
+      {% else %}
+        There are {{ files|length }} file(s) available to download:
+      {% endif %}
+    </div>
 
-  <div>
-    {% for file in files %}
-      <a target="_blank" href="/download?url={{ file.url }}">{{ file.key }}</a> ({{ file.size|filesizeformat }})<br />
-    {% endfor %}
-  </div>
+    <div>
+      <ul class="govuk-list">
+      {% for file in files %}
+        <li>
+          <a target="_blank" class="govuk-link covid-tranfer-file-link" href="/download?url={{ file.url }}">
+            {{ file.key | s3_remove_root_path }}
+          </a> ({{ file.size|filesizeformat }})
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  </section>
 
   <div></div>
 

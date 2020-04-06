@@ -61,7 +61,8 @@ def test_route_index_logged_in(test_client, test_session):
     body = response.data.decode()
     # print(body)
     assert response.status_code == 200
-    assert "You're currently logged in as test-user." in body
+    assert "You're currently logged in as" in body
+    assert '<span class="covid-transfer-username">test-user</span>' in body
 
 
 @pytest.mark.usefixtures("test_client")
