@@ -109,37 +109,37 @@ def admin_confirm_user(app):
     elif "task" in args:
         task = args["task"]
 
-    print("admin_confirm_user:task:", task)
+    app.logger.debug("admin_confirm_user:task:", task)
 
     if task == "cancel-existing":
-        print("admin_confirm_user: redirecting back to user")
+        app.logger.debug("admin_confirm_user: redirecting back to user")
         return redirect("/admin/user")
 
     if task == "cancel-new":
         clear_session(app)
-        print("admin_confirm_user: redirecting back to admin")
+        app.logger.debug("admin_confirm_user: redirecting back to admin")
         return redirect("/admin")
 
     if task in ["edit-exiting", "edit-new"]:
-        print("admin_confirm_user: redirecting back to edit")
+        app.logger.debug("admin_confirm_user: redirecting back to edit")
         return redirect("/admin/user/edit")
 
     user = {}
     new_user = False
 
-    print("admin_confirm_user:args:", args)
+    app.logger.debug("admin_confirm_user:args:", args)
 
     if task in ["new", "continue-new"]:
         new_user = True
         if "email" in args:
             user = {"email": cognito.sanitise_email(args["email"])}
 
-    print("admin_confirm_user:user1:", user)
+    app.logger.debug("admin_confirm_user:user1:", user)
 
     if user == {}:
         user = admin_user_object
 
-    print("admin_confirm_user:user2:", user)
+    app.logger.debug("admin_confirm_user:user2:", user)
 
     if "frompage" in args:
         if "self" == args["frompage"]:

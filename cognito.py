@@ -11,6 +11,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from cognito_groups import return_users_group, user_groups
+from logger import LOG
 
 # from validate_email import validate_email
 
@@ -249,7 +250,7 @@ def list_users(email_starts_filter="", token="", limit=20):
 
     response = client.list_users(**arguments)
 
-    # print(json.dumps(response, indent=4, sort_keys=True, default=str))
+    # LOG.debug({ "action": "list-users", "response": response })
 
     token = ""
     users = []
@@ -287,12 +288,10 @@ def return_false_if_paths_bad(is_la_value, paths_semicolon_seperated):
                 if path_re_split_for_check.startswith(
                     "{}/local_authority/".format(authed_path)
                 ):
-                    # TODO: will eventually be app.logger.error
-                    # and SCRIPT will be session["user"]
-                    print(
-                        "{}: won't set non-LA user to: {}".format(
-                            "script", path_re_split_for_check
-                        )
+                    LOG.error(
+                        "%s: won't set non-LA user to: %s"
+                        "user-admin",
+                        path_re_split_for_check
                     )
                     return False
             # if current/new attr for is_la is 1 (IS local authority)
@@ -301,12 +300,10 @@ def return_false_if_paths_bad(is_la_value, paths_semicolon_seperated):
                 if not path_re_split_for_check.startswith(
                     "{}/local_authority/".format(authed_path)
                 ):
-                    # TODO: will eventually be app.logger.error
-                    # and SCRIPT will be session["user"]
-                    print(
-                        "{}: won't set LA user to: {}".format(
-                            "script", path_re_split_for_check
-                        )
+                    LOG.debug(
+                        "%s: won't set LA user to: %s",
+                        "user-admin",
+                        path_re_split_for_check
                     )
                     return False
 
@@ -318,7 +315,7 @@ def reinvite_user(email_address, confirm=False):
         user = get_user_details(email_address)
         if user != {}:
             del_res = delete_user(email_address, confirm)
-            print("del_res", del_res)
+            LOG.debug({ "action": "delete-user", "response": del_res })
             if del_res:
                 cre_res = create_user(
                     name=user["name"],
@@ -328,7 +325,7 @@ def reinvite_user(email_address, confirm=False):
                     is_la=user["custom:is_la"],
                     groupname=user["group"],
                 )
-                print("cre_res", cre_res)
+                LOG.debug({ "action": "create-user", "response": "cre_res" })
                 return cre_res
     return False
 
@@ -419,7 +416,7 @@ def create_user(name, email_address, phone_number, attr_paths, is_la="0", group=
             DesiredDeliveryMediums=["EMAIL"],
         )
     except ClientError as e:
-        print("ERROR:", email_address, "-", e.response["Error"]["Code"])
+        LOG.error("ERROR:  %s - %s", email_address, e.response["Error"]["Code"])
         return False
 
     res = False
@@ -456,9 +453,7 @@ def disable_user(email_address, confirm=False):
     client = get_boto3_client()
     if confirm:
         if sanitise_email(email_address) == "":
-            # TODO: will eventually be app.logger.error
-            # and SCRIPT will be session["user"]
-            print("ERR: {}: the email {} is not valid".format("script", email_address))
+            LOG.error("ERR: %s: the email %s is not valid", "user-admin", email_address)
             return False
 
         response = client.admin_disable_user(
@@ -475,9 +470,7 @@ def enable_user(email_address, confirm=False):
     client = get_boto3_client()
     if confirm:
         if sanitise_email(email_address) == "":
-            # TODO: will eventually be app.logger.error
-            # and SCRIPT will be session["user"]
-            print("ERR: {}: the email {} is not valid".format("script", email_address))
+            LOG.error("ERR: %s: the email %s is not valid", "user-admin", email_address)
             return False
 
         response = client.admin_enable_user(
@@ -494,9 +487,7 @@ def delete_user(email_address, confirm=False):
     client = get_boto3_client()
     if confirm:
         if sanitise_email(email_address) == "":
-            # TODO: will eventually be app.logger.error
-            # and SCRIPT will be session["user"]
-            print("ERR: {}: the email {} is not valid".format("script", email_address))
+            LOG.error("ERR: %s: the email %s is not valid", "user-admin", email_address)
             return False
 
         response = client.admin_delete_user(
@@ -526,13 +517,13 @@ def update_user_attributes(
     ):
         # TODO: will eventually be app.logger.error
         # and SCRIPT will be session["user"]
-        print("ERR: {}: no new attributes".format("script", email_address))
+        LOG.debug("ERR: %s: %s has no new attributes", "user-admin", email_address)
         return False
 
     if sanitise_email(email_address) == "":
         # TODO: will eventually be app.logger.error
         # and SCRIPT will be session["user"]
-        print("ERR: {}: the email {} is not valid".format("script", email_address))
+        LOG.debug("ERR: %s: the email %s is not valid", "user-admin", email_address)
         return False
 
     user = get_user_details(email_address)
@@ -548,31 +539,25 @@ def update_user_attributes(
                 is_la_value = new_is_la
                 attrs.append({"Name": "custom:is_la", "Value": new_is_la})
             else:
-                # TODO: will eventually be app.logger.error
-                # and SCRIPT will be session["user"]
-                print("ERR: {}: new_is_la is not str".format("script"))
+                LOG.error("ERR: %s: new_is_la is not str", "user-admin")
                 return False
 
         if new_phone_number is not None:
             if isinstance(new_phone_number, str):
                 san_phone = sanitise_phone(new_phone_number)
                 if san_phone != user["phone_number"]:
-                    print({"current": user["phone_number"], "new": san_phone})
+                    LOG.debug({"current": user["phone_number"], "new": san_phone})
                     attrs.append({"Name": "phone_number", "Value": san_phone})
                     attrs.append({"Name": "phone_number_verified", "Value": "false"})
             else:
-                # TODO: will eventually be app.logger.error
-                # and SCRIPT will be session["user"]
-                print("ERR: {}: phone_number is not str".format("script"))
+                LOG.error("ERR: %s: phone_number is not str", "user-admin")
                 return False
 
         if new_name is not None:
             if isinstance(new_name, str):
                 attrs.append({"Name": "name", "Value": sanitise_name(new_name)})
             else:
-                # TODO: will eventually be app.logger.error
-                # and SCRIPT will be session["user"]
-                print("ERR: {}: new_name is not str".format("script"))
+                LOG.error("ERR: %s: new_name is not str", "script")
                 return False
 
         if new_paths is not None:
@@ -584,9 +569,7 @@ def update_user_attributes(
 
                 attrs.append({"Name": "custom:paths", "Value": path_scsl})
             else:
-                # TODO: will eventually be app.logger.error
-                # and SCRIPT will be session["user"]
-                print("ERR: {}: new_paths is not list".format("script"))
+                LOG.error("ERR: %s: new_paths is not list", "user-admin")
                 return False
 
         if new_groupname is not None:
@@ -606,9 +589,7 @@ def update_user_attributes(
                             add_user_to_group(email_address, new_groupname)
 
             else:
-                # TODO: will eventually be app.logger.error
-                # and SCRIPT will be session["user"]
-                print("ERR: {}: new_groupname is not str".format("script"))
+                LOG.error("ERR: %s: new_groupname is not str", "user-admin")
                 return False
 
         if len(attrs) != 0:
@@ -622,7 +603,5 @@ def update_user_attributes(
                     if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
                         return True
 
-    # TODO: will eventually be app.logger.error
-    # and SCRIPT will be session["user"]
-    print("ERR: {}: no actions to take".format("script"))
+    LOG.error("ERR: %s: no actions to take", "user-admin")
     return False
