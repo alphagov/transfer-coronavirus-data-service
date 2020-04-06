@@ -89,7 +89,12 @@
 
     <main class="govuk-main-wrapper govuk-body" id="main-content" role="main">
 
+
       <h1 class="govuk-heading-xl covid-transfer-page-title">{{ title }}</h1>
+      {% if show_back_link %}
+      <a href="/" class="govuk-back-link">Back</a>
+      {% endif %}
+
       {% if show_logout %}
         <p>
           You're currently logged in as
