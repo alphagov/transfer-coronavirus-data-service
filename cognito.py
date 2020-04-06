@@ -189,7 +189,7 @@ def get_user_details(email_address):
 
 
 def users_group(username):
-    grps = []
+    groups = []
 
     client = get_boto3_client()
     response = client.admin_list_groups_for_user(
@@ -197,11 +197,11 @@ def users_group(username):
     )
 
     if "Groups" in response:
-        for grp in response["Groups"]:
-            if "GroupName" in grp:
-                grps.append(grp["GroupName"])
+        for group in response["Groups"]:
+            if "GroupName" in group:
+                groups.append(group["GroupName"])
 
-    return return_users_group(grps)
+    return return_users_group(groups)
 
 
 def normalise_user(aws_user_resp):
