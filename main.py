@@ -25,6 +25,9 @@ app.logger = LOG
 
 
 def setup_talisman(app):
+    csp = {
+        'default-src': ["'self'", "https://*.s3.amazonaws.com"]
+    }
     if app.cf_space == "testing":
         print("loading Talisman for testing - no HTTPS")
         return Talisman(
@@ -32,6 +35,7 @@ def setup_talisman(app):
             force_https=False,
             strict_transport_security=False,
             session_cookie_secure=False,
+            content_security_policy=csp,
         )
     else:
         print("loading Talisman with HTTPS")
@@ -40,6 +44,7 @@ def setup_talisman(app):
             force_https=True,
             strict_transport_security=True,
             session_cookie_secure=True,
+            content_security_policy=csp,
         )
 
 

@@ -52,7 +52,7 @@
 
   <form id="upload_form" action="{{ presigned_object['url'] }}" method="POST" enctype="multipart/form-data">
     {% for key, value in presigned_object['fields'].items() %}
-    <input type="hidden" name="{{ key }}" value="{{ value }}" />
+    <input type="hidden" class="upload_form_post_param" name="{{ key }}" value="{{ value }}" />
     {% endfor %}
 
     <div class="govuk-form-group">
@@ -73,5 +73,7 @@
 
 {% endblock %}
 {% block scriptblock %}
-  <script src="/js/s3upload.js?update=202004052205"></script>
+  {% if not preupload %}
+  <script src="/js/s3upload.js?update=20200406-1944"></script>
+  {% endif %}
 {% endblock %}
