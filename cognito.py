@@ -113,7 +113,7 @@ def get_env_pool_id():
     elif environment == "staging":
         pool_name = "corona-cognito-pool-staging"
     elif environment == "testing":
-        pool_name = "backend-consumer-service-test"
+        pool_name = "corona-cognito-pool-development"
 
     if pool_name is not None:
         for pool in list_pools():
