@@ -2,40 +2,40 @@
 
 
 def get_group_list():
-    groups = [
-        {
-            "preference": 10,
-            "value": "standard-download",
-            "display": "Standard download user",
-        },
-        {
-            "preference": 20,
-            "value": "standard-upload",
-            "display": "Standard download and upload user",
-        },
-        {
-            "preference": 70,
-            "value": "admin-view",
-            "display": "User administrator read-only",
-        },
-        {
-            "preference": 80,
-            "value": "admin-power",
-            "display": "User administrator power (reinvite/disable)",
-        },
-        {
-            "preference": 90,
-            "value": "admin-full",
-            "display": "User administrator full access",
-        },
-    ]
+    group_map = get_group_map()
+    groups = group_map.values()
     return groups
 
 
 def get_group_map():
-    group_list = get_group_list()
-    group_map = {group["value"]: group for group in group_list}
-    return group_map
+    groups = {
+        "standard-download": {
+            "preference": 10,
+            "value": "standard-download",
+            "display": "Standard download user",
+        },
+        "standard-upload": {
+            "preference": 20,
+            "value": "standard-upload",
+            "display": "Standard download and upload user",
+        },
+        "admin-view": {
+            "preference": 70,
+            "value": "admin-view",
+            "display": "User administrator read-only",
+        },
+        "admin-power": {
+            "preference": 80,
+            "value": "admin-power",
+            "display": "User administrator power (reinvite/disable)",
+        },
+        "admin-full": {
+            "preference": 90,
+            "value": "admin-full",
+            "display": "User administrator full access",
+        },
+    }
+    return groups
 
 
 def get_group_by_name(group_name):
