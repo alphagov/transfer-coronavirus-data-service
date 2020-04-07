@@ -19,7 +19,9 @@ function load_is_la_radio_js() {
 function load_account_switch_js() {
   console.log("load_account_switch_js");
   var x = document.getElementById("account-select");
-  x.addEventListener('change', function() { account_switch(this.value); });
+  if (x != null) {
+    x.addEventListener('change', function() { account_switch(this.value); });
+  }
 }
 
 function account_switch(s) {

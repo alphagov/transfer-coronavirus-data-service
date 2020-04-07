@@ -5,10 +5,73 @@ load_s3upload_js();
 
 function load_s3upload_js() {
   console.log("Loaded s3upload.js");
+
   var x = document.getElementById("upload_submit");
-  x.addEventListener('click', function(e) { upload_submit_click(this, e); });
+  if (x != null) {
+    x.addEventListener('click', function(e) { upload_submit_click(this, e); });
+  }
+
+  var fs = get_file_settings()
+  if (fs !== false) {
+    fs.file_location.addEventListener('change', filename_change);
+    fs.filename.addEventListener('keyup', filename_change);
+    fs.file_ext.addEventListener('change', filename_change);
+    filename_change();
+  }
 }
 
+
+function get_file_settings() {
+  var file_location = document.getElementById("file_location");
+  if (file_location == null) {
+    return false;
+  }
+
+  var filename = document.getElementById("filename");
+  var file_ext = document.getElementById("file_ext");
+
+  return {
+    "file_location": file_location,
+    "filename": filename,
+    "file_ext": file_ext
+  }
+}
+
+
+function filename_change() {
+  var fs = get_file_settings()
+  if (fs !== false) {
+    let flv = fs.file_location.value;
+    let cds = current_datetime_string();
+    let fnv = fs.filename.value;
+    if (fnv.trim() == "") {
+      fnv = "{file name}"
+    }
+    let fev = fs.file_ext.value;
+
+    var new_filename_display = "web-app-upload/" + flv + "/" + cds + "_" + fnv.trim() + "." + fev;
+
+    var dfp = document.getElementById("dynamic_file_path");
+    dfp.innerText = new_filename_display;
+  }
+}
+
+function current_datetime_string() {
+  const now = new Date();
+  let y = now.getFullYear();
+  let m = pad((now.getMonth() + 1), 2);
+  let d = pad(now.getDate(), 2);
+  let h = pad(now.getHours(), 2);
+  let min = pad(now.getMinutes(), 2);
+  let sec = pad(now.getSeconds(), 2);
+  return y + m + d + "_" + h + min + sec;
+}
+
+function pad(n, width, z) {
+  z = z || '0';
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
 
 // use the hidden filepathtoupload as the presignedurl
 function upload_submit_click(s, e) {
@@ -26,23 +89,17 @@ function upload_submit_click(s, e) {
   uploading_panel = document.getElementById("upload_panel");
   uploading_panel.classList.add("hidden");
 
-  console.log("hiding upload_panel, showing uploading_panel");
-
   start_upload();
 
   return false;
 }
 
 function upload_complete(result) {
-  console.log("upload_complete");
-  console.log(result);
   document.getElementById("upload_success").classList.remove("hidden");
   document.getElementById("uploading_spinner").classList.add("hidden");
 }
 
 function upload_failed(result) {
-  console.log("upload_failed");
-  console.log(result);
   document.getElementById("upload_failure").classList.remove("hidden");
   document.getElementById("uploading_spinner").classList.add("hidden");
 }
