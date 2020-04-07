@@ -15,7 +15,7 @@ from werkzeug.utils import secure_filename
 
 import admin
 import cognito
-from flask_helpers import admin_interface, login_required, render_template_custom
+from flask_helpers import admin_interface, login_required, render_template_custom, has_upload_rights
 from logger import LOG
 
 app = Flask(__name__)
@@ -204,7 +204,7 @@ def index():
 
     if "details" in session:
         app.logger.debug("Logged in")
-        upload_rights = True
+        upload_rights = has_upload_rights()
         return render_template_custom(
             app,
             "welcome.html",
@@ -275,7 +275,7 @@ def download():
 @app.route("/upload", methods=["POST", "GET"])
 @login_required
 def upload():
-    if True:  # in group
+    if has_upload_rights():  # in group
         ucps = user_custom_paths(is_upload=True, session=session)
         preupload = True
         file_extensions = [{"ext": "csv", "display": "CSV"}]
