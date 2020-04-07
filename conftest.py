@@ -14,13 +14,21 @@ def test_session():
         "web-app-prod-data/local_authority/barnet"
     )
     session = {
-        "details": {"user": "test-user", "email": "test-user@test-domain.com"},
-        "user": "test-user",
+        "details": {
+            "user": "test-user@test-domain.com",
+            "email": "test-user@test-domain.com",
+        },
+        "user": "test-user@test-domain.com",
         "email": "test-user@test-domain.com",
         "attributes": [
             {"Name": "custom:is_la", "Value": "1"},
             {"Name": "custom:paths", "Value": user_paths},
         ],
+        "group": {
+            "preference": 10,
+            "value": "standard-download",
+            "display": "Standard download user",
+        },
     }
     return session
 
