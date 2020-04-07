@@ -378,7 +378,7 @@ def add_user_to_group(username, group_name=None):
         group_name = "standard-download"
 
     group_map = get_group_map()
-    
+
     if group_name in group_map.keys():
         response = client.admin_add_user_to_group(
             UserPoolId=get_env_pool_id(), Username=username, GroupName=group_name
