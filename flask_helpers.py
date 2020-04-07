@@ -56,4 +56,7 @@ def render_template_custom(app, template, hide_logout=False, **args):
 
 
 def has_upload_rights():
-    return session["group"]["value"] == "standard-upload"
+    has_upload_role = False
+    if "group" in session:
+        has_upload_role = session["group"]["value"] == "standard-upload"
+    return has_upload_role
