@@ -44,28 +44,36 @@
 
   {% else %}
 
-  <h3 class="govuk-heading-m">File to be uploaded</h3>
-  <p>The following filename will be uploaded:</p>
-  <p id="full_file_path">{{ filepathtoupload }}</p>
+  <h3 class="govuk-heading-m">File upload</h3>
 
-  <div></div>
+  <div id="upload_panel">
+    <p>The following filename will be uploaded:</p>
+    <p id="full_file_path">{{ filepathtoupload }}</p>
 
-  <form id="upload_form" action="{{ presigned_object['url'] }}" method="POST" enctype="multipart/form-data">
-    {% for key, value in presigned_object['fields'].items() %}
-    <input type="hidden" class="upload_form_post_param" name="{{ key }}" value="{{ value }}" />
-    {% endfor %}
+    <div></div>
 
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="file">
-        Upload a file
-      </label>
-      <input class="govuk-file-upload" id="file" name="file" type="file">
-    </div>
+    <form id="upload_form" action="{{ presigned_object['url'] }}" method="POST" enctype="multipart/form-data">
+      {% for key, value in presigned_object['fields'].items() %}
+      <input type="hidden" class="upload_form_post_param" name="{{ key }}" value="{{ value }}" />
+      {% endfor %}
 
-    <button id="upload_submit" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
-  </form>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="file">
+          Upload a file
+        </label>
+        <input class="govuk-file-upload" id="file" name="file" type="file">
+      </div>
 
-  <a href="/upload"><button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="button">Cancel</button></a>
+      <button id="upload_submit" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
+    </form>
+
+    <a href="/upload"><button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="button">Cancel</button></a>
+  </div>
+  <div id="uploading_panel" class="hidden">
+    <div id="uploading_spinner" class="govuk-!-margin-bottom-7 loading-spinner"></div>
+    <p id="upload_success" class="hidden">Uploaded successfully.</p>
+    <p id="upload_failure" class="hidden">Upload failed.</p>
+  </div>
 
   {% endif %}
 
@@ -74,6 +82,6 @@
 {% endblock %}
 {% block scriptblock %}
   {% if not preupload %}
-  <script src="/js/s3upload.js?update=20200406-1944"></script>
+  <script src="/js/s3upload.js?update=20200407-1024"></script>
   {% endif %}
 {% endblock %}

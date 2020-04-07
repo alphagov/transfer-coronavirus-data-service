@@ -335,7 +335,7 @@ def upload():
                                     break
 
                         if complete == 3:
-                            filedatetime = datetime.now().strftime("%Y%m%d-%H%M")
+                            filedatetime = datetime.now().strftime("%Y%m%d-%H%M%S")
                             filepathtoupload = "{}/{}_{}.{}".format(
                                 file_location, filedatetime, file_name, ext
                             )

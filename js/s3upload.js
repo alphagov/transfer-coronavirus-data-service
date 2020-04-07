@@ -15,46 +15,83 @@ function upload_submit_click(s, e) {
   e.preventDefault();
 
   var form_files = document.getElementById("file").files;
-  var form_file_to_upload;
-
   if (form_files.length != 1) {
     alert("Please choose a file to upload.");
     return false;
-  } else {
-    form_file_to_upload = form_files[0];
   }
 
-  let req = new XMLHttpRequest();
+  uploading_panel = document.getElementById("uploading_panel");
+  uploading_panel.classList.remove("hidden");
 
-  req.addEventListener("load", upload_complete);
-  req.addEventListener("error", upload_failed);
+  uploading_panel = document.getElementById("upload_panel");
+  uploading_panel.classList.add("hidden");
 
-  let formData = new FormData();
+  console.log("hiding upload_panel, showing uploading_panel");
 
-  var hidden_params = document.getElementsByClassName('upload_form_post_param');
-  for (var i = 0; i < hidden_params.length; i++) {
-    form_key = hidden_params[i].name;
-    form_val = hidden_params[i].value;
-    formData.append(form_key, form_val);
-  }
-
-  formData.append("file", form_file_to_upload);
-
-  var action_url = document.getElementById("upload_form").action;
-  req.open("POST", action_url);
-  //req.setRequestHeader("Content-type", "multipart/form-data");
-  req.send(formData);
+  start_upload();
 
   return false;
 }
 
-function upload_complete(e) {
-  console.log(e);
-  console.log(this.response);
-  console.log(this.status);
-  console.log(this.statusText);
+function upload_complete(result) {
+  console.log("upload_complete");
+  console.log(result);
+  document.getElementById("upload_success").classList.remove("hidden");
+  document.getElementById("uploading_spinner").classList.add("hidden");
 }
 
-function upload_failed(e) {
-  console.log(e);
+function upload_failed(result) {
+  console.log("upload_failed");
+  console.log(result);
+  document.getElementById("upload_failure").classList.remove("hidden");
+  document.getElementById("uploading_spinner").classList.add("hidden");
+}
+
+async function start_upload() {
+  await ajax_file_upload();
+}
+
+function ajax_file_upload() {
+  return new Promise(function() {
+    var form_files = document.getElementById("file").files;
+    var form_file_to_upload;
+
+    if (form_files.length == 1) {
+      form_file_to_upload = form_files[0];
+    }
+
+    let req = new XMLHttpRequest();
+    let formData = new FormData();
+
+    var hidden_params = document.getElementsByClassName('upload_form_post_param');
+    for (var i = 0; i < hidden_params.length; i++) {
+      form_key = hidden_params[i].name;
+      form_val = hidden_params[i].value;
+      formData.append(form_key, form_val);
+    }
+
+    formData.append("file", form_file_to_upload);
+
+    var action_url = document.getElementById("upload_form").action;
+    req.open("POST", action_url);
+
+    req.onload = function () {
+        if (this.status >= 200 && this.status < 300) {
+            upload_complete(req.response);
+        } else {
+            upload_failed({
+                status: this.status,
+                statusText: req.statusText
+            });
+        }
+    };
+    req.onerror = function () {
+        upload_failed({
+            status: this.status,
+            statusText: req.statusText
+        });
+    };
+
+    req.send(formData);
+  });
 }
