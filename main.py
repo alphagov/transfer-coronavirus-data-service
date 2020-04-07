@@ -100,10 +100,13 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
     client = boto3.client("cognito-idp")
     response = client.get_user(AccessToken=oauth_response_body["access_token"])
 
+    group = cognito.users_group(response["Username"])
+
     session["attributes"] = response["UserAttributes"]
     session["user"] = response["Username"]
     session["email"] = return_attribute(session, "email")
     session["details"] = id_token
+    session["group"] = group
 
     app.logger.info(
         "Successful login - user: %s email: %s", session["user"], session["email"]
@@ -231,6 +234,7 @@ def logout():
         session.pop("email", None)
         session.pop("user", None)
         session.pop("attributes", None)
+        session.pop("group", None)
     except Exception as err:
         app.logger.error(err)
 
