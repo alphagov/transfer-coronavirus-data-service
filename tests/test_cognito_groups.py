@@ -1,6 +1,32 @@
 import pytest
 
-from cognito_groups import return_users_group, user_groups
+from cognito_groups import (
+    get_group_list,
+    get_group_map,
+    return_users_group,
+    user_groups,
+)
+
+
+@pytest.mark.usefixtures("standard_download")
+@pytest.mark.usefixtures("standard_upload")
+def test_get_group_map(standard_download, standard_upload):
+
+    group_map = get_group_map()
+    assert len(group_map.keys()) == 5
+    assert group_map["standard-download"] == standard_download
+    assert group_map["standard-upload"] == standard_upload
+
+
+@pytest.mark.usefixtures("standard_download")
+@pytest.mark.usefixtures("standard_upload")
+def test_get_group_list(standard_download, standard_upload):
+
+    group_list = get_group_list()
+
+    assert len(group_list) == 5
+    assert standard_download in group_list
+    assert standard_upload in group_list
 
 
 @pytest.mark.usefixtures("standard_download")
