@@ -2,6 +2,7 @@ document.body.className = ((document.body.className) ? document.body.className +
 window.GOVUKFrontend.initAll();
 
 load_is_la_radio_js();
+load_account_switch_js();
 
 function load_is_la_radio_js() {
   console.log("load_is_la_radio_js");
@@ -12,6 +13,21 @@ function load_is_la_radio_js() {
       is_la_switch(x[i].value);
     }
     x[i].addEventListener('change', function() { is_la_switch(this.value); });
+  }
+}
+
+function load_account_switch_js() {
+  console.log("load_account_switch_js");
+  var x = document.getElementById("account-select");
+  x.addEventListener('change', function() { account_switch(this.value); });
+}
+
+function account_switch(s) {
+  var is_admin = (s.indexOf("admin-") === 0)
+  if (is_admin) {
+    document.getElementById("standard-user-inputs").classList.add("hidden");
+  } else {
+    document.getElementById("standard-user-inputs").classList.remove("hidden");
   }
 }
 

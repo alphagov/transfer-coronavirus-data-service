@@ -1,20 +1,6 @@
 {% extends 'primary.html' %}
 {% block content %}
 
-  <a href="/" class="govuk-back-link">Back</a>
-
-  <p>
-    You're currently logged in as
-    <span class="covid-transfer-username">{{ user }}</span>.
-  </p>
-  <p>
-    <a href="/logout" class="covid-transfer-logout-button">
-      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">
-        Logout
-      </button>
-    </a>
-  </p>
-
   <p>
     <a href="/files" role="button" draggable="false" class="govuk-button covid-transfer-reload-button" data-module="govuk-button">
       Reload
@@ -40,7 +26,7 @@
       {% elif files|length == 1 %}
         There is 1 file available to download:
       {% else %}
-        There are {{ files|length }} file(s) available to download:
+        There are {{ files|length }} files available to download:
       {% endif %}
     </div>
 

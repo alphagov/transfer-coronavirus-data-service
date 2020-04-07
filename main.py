@@ -162,19 +162,19 @@ def send_browser_config():
 @app.errorhandler(500)
 def server_error_500(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", error=e), 500
+    return render_template_custom(app, "error.html", hide_logout=True, error=e), 500
 
 
 @app.errorhandler(404)
 def server_error_404(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", error=e), 404
+    return render_template_custom(app, "error.html", hide_logout=True, error=e), 404
 
 
 @app.errorhandler(400)
 def server_error_400(e):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", error=e), 400
+    return render_template_custom(app, "error.html", hide_logout=True, error=e), 400
 
 
 @app.route("/")
@@ -208,7 +208,9 @@ def index():
             f"redirect_uri={app.redirect_host}&"
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
-        return render_template_custom(app, "login.html", login_url=login_url)
+        return render_template_custom(
+            app, "login.html", login_url=login_url, hide_logout=True
+        )
 
 
 @app.route("/logout")
@@ -259,16 +261,13 @@ def download():
 @app.route("/files")
 @login_required
 def files():
-    if "details" in session and "attributes" in session:
-        files = get_files(app.bucket_name, session)
+    files = get_files(app.bucket_name, session)
 
-        # TODO sorting
+    # TODO sorting
 
-        return render_template_custom(
-            app, "files.html", user=session["user"], email=session["email"], files=files
-        )
-    else:
-        return redirect("/")
+    return render_template_custom(
+        app, "files.html", user=session["user"], email=session["email"], files=files
+    )
 
 
 # ----------- ADMIN ROUTES -----------

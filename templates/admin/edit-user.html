@@ -19,8 +19,8 @@
     <span class="govuk-hint">
       <br>
       The following email addresses are allowed:
-      {% for d in allowed_domains %}
-      <pre>*{{ d }}</pre>
+      {% for domain in allowed_domains %}
+      <pre>*{{ domain }}</pre>
       {% endfor %}
     </span>
     {% endif %}
@@ -34,95 +34,111 @@
   </div>
 
   <div class="govuk-form-group">
-    <fieldset class="govuk-fieldset" aria-describedby="is-la-radio-hint">
+    <fieldset class="govuk-fieldset" aria-describedby="la_cond-hint">
       <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-        <h1 class="govuk-fieldset__heading">
-          Local authority user?
-        </h1>
+        <h2 class="govuk-fieldset__heading">
+          Account type
+        </h2>
       </legend>
-      <div class="govuk-radios govuk-radios--inline">
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="is-la-radio" name="is-la-radio" type="radio" value="yes" {{ 'checked="checked"' if is_la }}>
-          <label class="govuk-label govuk-radios__label" for="is-la-radio">
-            Yes
-          </label>
-        </div>
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="is-la-radio-2" name="is-la-radio" type="radio" value="no" {{ 'checked="checked"' if not is_la }}>
-          <label class="govuk-label govuk-radios__label" for="is-la-radio-2">
-            No
-          </label>
-        </div>
-      </div>
+      <select class="govuk-select" id="account-select" name="account">
+        {% for group in available_groups %}
+        <option value="{{ group['value'] }}" {% if "group" in user and user["group"]["value"] == group["value"] %} selected {% endif %}>{{ group['display'] }}</option>
+        {% endfor %}
+      </select>
     </fieldset>
   </div>
 
-  <div class="govuk-form-group">
-    <fieldset class="govuk-fieldset" aria-describedby="la_cond-hint">
-      <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-        <h1 class="govuk-fieldset__heading">
-          Type of account and access
-        </h1>
-      </legend>
-      <span id="la_cond-hint" class="govuk-hint">
-        Select one option.
-      </span>
-      <div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
+  <div id="standard-user-inputs">
 
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="other_cond" type="radio" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if is_other }} aria-expanded="true">
-          <label class="govuk-label govuk-radios__label" for="other_cond">
-            Other
-          </label>
-        </div>
-        <div class="govuk-radios__conditional govuk-radios__conditional" id="conditional-other_cond">
-          <div class="govuk-form-group">
-            <div class="govuk-checkboxes">
-              {% for i in other.subs %}
-              <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
-                  'checked="checked"' if i['val'] in user_custom_paths
-                }}>
-                <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
-                  {{ i['disp'] }}<br>
-                  <span class="govuk-hint">
-                    {{ i['val'] }}
-                  </span>
-                </label>
-              </div>
-              {% endfor %}
-            </div>
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset" aria-describedby="is-la-radio-hint">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+          <h2 class="govuk-fieldset__heading">
+            Local authority user?
+          </h2>
+        </legend>
+        <div class="govuk-radios govuk-radios--inline">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="is-la-radio" name="is-la-radio" type="radio" value="yes" {{ 'checked="checked"' if is_la }}>
+            <label class="govuk-label govuk-radios__label" for="is-la-radio">
+              Yes
+            </label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="is-la-radio-2" name="is-la-radio" type="radio" value="no" {{ 'checked="checked"' if not is_la }}>
+            <label class="govuk-label govuk-radios__label" for="is-la-radio-2">
+              No
+            </label>
           </div>
         </div>
+      </fieldset>
+    </div>
 
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="la_cond" type="radio" data-aria-controls="conditional-la_cond" {{ 'checked="checked"' if is_la }}>
-          <label class="govuk-label govuk-radios__label" for="la_cond">
-            Local authority
-          </label>
-        </div>
-        <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-la_cond">
-          <div class="govuk-form-group">
-            <div class="govuk-checkboxes">
-              {% for i in local_authority.subs %}
-              <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
-                  'checked="checked"' if i['val'] in user_custom_paths
-                }}>
-                <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
-                  {{ i['disp'] }}<br>
-                  <span class="govuk-hint">
-                    {{ i['val'] }}
-                  </span>
-                </label>
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset" aria-describedby="la_cond-hint">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+          <h2 class="govuk-fieldset__heading">
+            Available download areas
+          </h2>
+        </legend>
+        <div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
+
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="other_cond" type="radio" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if is_other }} aria-expanded="true">
+            <label class="govuk-label govuk-radios__label" for="other_cond">
+              Other
+            </label>
+          </div>
+          <div class="govuk-radios__conditional govuk-radios__conditional" id="conditional-other_cond">
+            <div class="govuk-form-group">
+              <div class="govuk-checkboxes">
+                {% for i in other.subs %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
+                    'checked="checked"' if i['val'] in user_custom_paths
+                  }}>
+                  <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
+                    {{ i['disp'] }}<br>
+                    <span class="govuk-hint">
+                      {{ i['val'] }}
+                    </span>
+                  </label>
+                </div>
+                {% endfor %}
               </div>
-              {% endfor %}
             </div>
           </div>
-        </div>
 
-      </div>
-    </fieldset>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="la_cond" type="radio" data-aria-controls="conditional-la_cond" {{ 'checked="checked"' if is_la }}>
+            <label class="govuk-label govuk-radios__label" for="la_cond">
+              Local authority
+            </label>
+          </div>
+          <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-la_cond">
+            <div class="govuk-form-group">
+              <div class="govuk-checkboxes">
+                {% for i in local_authority.subs %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
+                    'checked="checked"' if i['val'] in user_custom_paths
+                  }}>
+                  <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
+                    {{ i['disp'] }}<br>
+                    <span class="govuk-hint">
+                      {{ i['val'] }}
+                    </span>
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </fieldset>
+    </div>
+
   </div>
 
   <div>

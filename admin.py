@@ -6,6 +6,7 @@ from requests.utils import quote
 
 import cognito
 import s3paths
+from cognito_groups import get_group_by_name, return_users_group, user_groups
 from flask_helpers import render_template_custom
 
 local_valid_paths_var = []
@@ -52,7 +53,11 @@ def admin_user(app):
             session["admin_user_email"] = user["email"]
             session["admin_user_object"] = user
 
-            return render_template_custom(app, "admin/user.html", user=user, done=done)
+            user_group = return_users_group(user)
+
+            return render_template_custom(
+                app, "admin/user.html", user=user, user_group=user_group, done=done
+            )
 
     return redirect("/admin/user/not-found")
 
@@ -104,37 +109,37 @@ def admin_confirm_user(app):
     elif "task" in args:
         task = args["task"]
 
-    print("admin_confirm_user:task:", task)
+    app.logger.debug("admin_confirm_user:task:", task)
 
     if task == "cancel-existing":
-        print("admin_confirm_user: redirecting back to user")
+        app.logger.debug("admin_confirm_user: redirecting back to user")
         return redirect("/admin/user")
 
     if task == "cancel-new":
         clear_session(app)
-        print("admin_confirm_user: redirecting back to admin")
+        app.logger.debug("admin_confirm_user: redirecting back to admin")
         return redirect("/admin")
 
     if task in ["edit-exiting", "edit-new"]:
-        print("admin_confirm_user: redirecting back to edit")
+        app.logger.debug("admin_confirm_user: redirecting back to edit")
         return redirect("/admin/user/edit")
 
     user = {}
     new_user = False
 
-    print("admin_confirm_user:args:", args)
+    app.logger.debug("admin_confirm_user:args:", args)
 
     if task in ["new", "continue-new"]:
         new_user = True
         if "email" in args:
             user = {"email": cognito.sanitise_email(args["email"])}
 
-    print("admin_confirm_user:user1:", user)
+    app.logger.debug("admin_confirm_user:user1:", user)
 
     if user == {}:
         user = admin_user_object
 
-    print("admin_confirm_user:user2:", user)
+    app.logger.debug("admin_confirm_user:user2:", user)
 
     if "frompage" in args:
         if "self" == args["frompage"]:
@@ -147,6 +152,7 @@ def admin_confirm_user(app):
                     phone_number=admin_user_object["phone_number"],
                     attr_paths=admin_user_object["custom:paths"],
                     is_la=admin_user_object["custom:is_la"],
+                    group_name=admin_user_object["group"]["value"],
                 )
 
                 clear_session(app)
@@ -166,6 +172,7 @@ def admin_confirm_user(app):
                     new_phone_number=admin_user_object["phone_number"],
                     new_paths=admin_user_object["custom:paths"].split(";"),
                     new_is_la=admin_user_object["custom:is_la"],
+                    new_group_name=admin_user_object["group"]["value"],
                 )
 
                 clear_session(app)
@@ -185,6 +192,11 @@ def admin_confirm_user(app):
 
     user["name"] = sanitise_input(args, "full-name")
     user["phone_number"] = sanitise_input(args, "telephone-number")
+
+    account_type = sanitise_input(args, "account")
+    # user_group = return_users_group({"group": account_type})
+    user_group = get_group_by_name(account_type)
+    user["group"] = user_group
 
     san_is_la = sanitise_input(args, "is-la-radio") == "yes"
     if san_is_la:
@@ -207,7 +219,11 @@ def admin_confirm_user(app):
     session["admin_user_object"] = user
 
     return render_template_custom(
-        app, "admin/confirm-user.html", user=user, new_user=new_user
+        app,
+        "admin/confirm-user.html",
+        user=user,
+        new_user=new_user,
+        user_group=user_group,
     )
 
 
@@ -319,6 +335,7 @@ def admin_edit_user(app):
         other=value_paths_by_type("other"),
         is_other=is_other,
         allowed_domains=(cognito.allowed_domains() if new_user else []),
+        available_groups=user_groups(),
     )
 
 
