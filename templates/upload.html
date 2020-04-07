@@ -3,13 +3,18 @@
 
   {% if preupload %}
 
+  <h3 class="govuk-heading-m">File settings</h3>
+
   <form id="preupload_form" method="post">
     <div class="govuk-form-group">
       <label class="govuk-label" for="file_location">
-        File location
+        <b>File location:</b>
       </label>
 
-      <select class="govuk-select" id="file_location" name="file_location">
+      {% if upload_keys|length == 1 %}
+        <p>{{ upload_keys[0] }}<p>
+      {% endif %}
+      <select class="govuk-select {{ 'hidden' if upload_keys|length == 1 else '' }}" id="file_location" name="file_location">
         {% for ukey in upload_keys %}
         <option value="{{ ukey }}" {{ "selected='selected'" if upload_keys|length == 1 else "" }}>{{ ukey }}</option>
         {% endfor %}
@@ -18,24 +23,31 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="filename">
-        File name (excluding extension)
+        <b>File name (excluding extension):</b>
       </label>
       <input class="govuk-input" id="filename" name="filename" type="text">
     </div>
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="file_ext">
-        File extension
+        <b>File extension:</b>
       </label>
-      <select class="govuk-select" id="file_ext" name="file_ext">
+      {% if file_extensions|length == 1 %}
+        <p>{{ file_extensions[0]['display'] }}<p>
+      {% endif %}
+      <select class="govuk-select {{ 'hidden' if file_extensions|length == 1 else '' }}" id="file_ext" name="file_ext">
         {% for ext in file_extensions %}
         <option value="{{ ext['ext'] }}" {{ "selected='selected'" if file_extensions|length == 1 else "" }}>{{ ext['display'] }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <h3 class="govuk-heading-m">File to be uploaded</h3>
-    <p>The following filename will be uploaded: <span id="dynamic_file_path">path/YYYYMMDD-HHMM_filename.ext</span></p>
+    <p>&nbsp;</p>
+
+    <h3 class="govuk-heading-m">The following filename will be uploaded</h3>
+    <p id="dynamic_file_path">web-app-upload/path/yyyymmdd-hhMMss_{file name}.ext</p>
+
+    <p>&nbsp;</p>
 
     <p>You'll be asked to select a file when you continue</p>
     <button id="preuploadbut" name="task" value="preupload" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Continue</button>
@@ -44,13 +56,11 @@
 
   {% else %}
 
-  <h3 class="govuk-heading-m">File upload</h3>
-
   <div id="upload_panel">
-    <p>The following filename will be uploaded:</p>
+    <h3 class="govuk-heading-m">The following filename will be uploaded</h3>
     <p id="full_file_path">{{ filepathtoupload }}</p>
 
-    <div></div>
+    <p>&nbsp;</p>
 
     <form id="upload_form" action="{{ presigned_object['url'] }}" method="POST" enctype="multipart/form-data">
       {% for key, value in presigned_object['fields'].items() %}
@@ -64,6 +74,8 @@
         <input class="govuk-file-upload" id="file" name="file" type="file">
       </div>
 
+      <p>&nbsp;</p>
+
       <button id="upload_submit" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
     </form>
 
@@ -71,8 +83,16 @@
   </div>
   <div id="uploading_panel" class="hidden">
     <div id="uploading_spinner" class="govuk-!-margin-bottom-7 loading-spinner"></div>
-    <p id="upload_success" class="hidden">Uploaded successfully.</p>
-    <p id="upload_failure" class="hidden">Upload failed.</p>
+    <div id="upload_success" class="hidden">
+      <p>Uploaded successfully.</p>
+      <a href="/upload" role="button" draggable="false" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button">Upload another file</a>
+      <a href="/" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">Back to start</a>
+    </div>
+    <div id="upload_failure" class="hidden">
+      <p>Upload failed.</p>
+      <a href="/upload" role="button" draggable="false" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button">Try again</a>
+      <a href="/" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">Back to start</a>
+    </div>
   </div>
 
   {% endif %}
@@ -81,7 +101,5 @@
 
 {% endblock %}
 {% block scriptblock %}
-  {% if not preupload %}
-  <script src="/js/s3upload.js?update=20200407-1024"></script>
-  {% endif %}
+  <script src="/js/s3upload.js?update=20200407-2050"></script>
 {% endblock %}
