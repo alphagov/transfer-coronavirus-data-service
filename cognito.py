@@ -11,7 +11,7 @@ import boto3
 from botocore.exceptions import ClientError
 from flask import session
 
-from cognito_groups import get_group_map, user_groups
+from cognito_groups import get_group_map, user_groups, get_group_by_name
 from logger import LOG
 
 # from validate_email import validate_email
@@ -208,9 +208,8 @@ def users_group(username):
     # return return_users_group(groups)
     # Currently you can attach a list of users in cognito
     # but we're currently only interested in the first group
-    group_map = get_group_map()
-    group_name = groups[0]
-    return group_map[group_name]
+    group_name = groups[0] if len(groups) > 0 else None
+    return get_group_by_name(group_name)
 
 
 def normalise_user(aws_user_resp):
