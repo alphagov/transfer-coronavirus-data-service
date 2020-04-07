@@ -73,7 +73,29 @@ def mock_cognito(token):
 
     stubber.add_response("get_user", mock_get_user, {"AccessToken": token})
 
+    mock_list_user_pools = {
+        "UserPools": [
+            {"Id": "eu-west-2_poolid", "Name": "corona-cognito-pool-development"}
+        ]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_list_groups_for_user = {
+        "Groups": [
+            {
+                "GroupName": "standard-download",
+                "UserPoolId": "eu-west-2_poolid",
+                "Description": "Standard download user",
+            }
+        ]
+    }
+    stubber.add_response(
+        "admin_list_groups_for_user",
+        mock_admin_list_groups_for_user,
+        {"UserPoolId": "eu-west-2_poolid", "Username": "test-secrets", "Limit": 10},
+    )
+
     stubber.activate()
     # override boto.client to return the mock client
-    boto3.client = lambda service: client
+    boto3.client = lambda service, region_name=None: client
     return stubber

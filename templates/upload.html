@@ -1,0 +1,87 @@
+{% extends 'primary.html' %}
+{% block content %}
+
+  {% if preupload %}
+
+  <form id="preupload_form" method="post">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="file_location">
+        File location
+      </label>
+
+      <select class="govuk-select" id="file_location" name="file_location">
+        {% for ukey in upload_keys %}
+        <option value="{{ ukey }}" {{ "selected='selected'" if upload_keys|length == 1 else "" }}>{{ ukey }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="filename">
+        File name (excluding extension)
+      </label>
+      <input class="govuk-input" id="filename" name="filename" type="text">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="file_ext">
+        File extension
+      </label>
+      <select class="govuk-select" id="file_ext" name="file_ext">
+        {% for ext in file_extensions %}
+        <option value="{{ ext['ext'] }}" {{ "selected='selected'" if file_extensions|length == 1 else "" }}>{{ ext['display'] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <h3 class="govuk-heading-m">File to be uploaded</h3>
+    <p>The following filename will be uploaded: <span id="dynamic_file_path">path/YYYYMMDD-HHMM_filename.ext</span></p>
+
+    <p>You'll be asked to select a file when you continue</p>
+    <button id="preuploadbut" name="task" value="preupload" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Continue</button>
+    <button id="preupload_cancel" name="task" value="cancel-preupload" class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Cancel</button>
+  </form>
+
+  {% else %}
+
+  <h3 class="govuk-heading-m">File upload</h3>
+
+  <div id="upload_panel">
+    <p>The following filename will be uploaded:</p>
+    <p id="full_file_path">{{ filepathtoupload }}</p>
+
+    <div></div>
+
+    <form id="upload_form" action="{{ presigned_object['url'] }}" method="POST" enctype="multipart/form-data">
+      {% for key, value in presigned_object['fields'].items() %}
+      <input type="hidden" class="upload_form_post_param" name="{{ key }}" value="{{ value }}" />
+      {% endfor %}
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="file">
+          Upload a file
+        </label>
+        <input class="govuk-file-upload" id="file" name="file" type="file">
+      </div>
+
+      <button id="upload_submit" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
+    </form>
+
+    <a href="/upload"><button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="button">Cancel</button></a>
+  </div>
+  <div id="uploading_panel" class="hidden">
+    <div id="uploading_spinner" class="govuk-!-margin-bottom-7 loading-spinner"></div>
+    <p id="upload_success" class="hidden">Uploaded successfully.</p>
+    <p id="upload_failure" class="hidden">Upload failed.</p>
+  </div>
+
+  {% endif %}
+
+  <div></div>
+
+{% endblock %}
+{% block scriptblock %}
+  {% if not preupload %}
+  <script src="/js/s3upload.js?update=20200407-1024"></script>
+  {% endif %}
+{% endblock %}

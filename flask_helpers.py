@@ -53,3 +53,7 @@ def render_template_custom(app, template, hide_logout=False, **args):
     args["title"] = page_title
 
     return render_template(template, **args)
+
+
+def has_upload_rights():
+    return session["group"]["value"] == "standard-upload"
