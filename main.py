@@ -15,7 +15,12 @@ from werkzeug.utils import secure_filename
 
 import admin
 import cognito
-from flask_helpers import admin_interface, login_required, render_template_custom, has_upload_rights
+from flask_helpers import (
+    admin_interface,
+    has_upload_rights,
+    login_required,
+    render_template_custom,
+)
 from logger import LOG
 
 app = Flask(__name__)
