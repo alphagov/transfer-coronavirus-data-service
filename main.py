@@ -3,6 +3,7 @@
 import base64
 import os
 import re
+from datetime import datetime
 
 import boto3
 import requests
@@ -10,14 +11,12 @@ from botocore.exceptions import ClientError
 from flask import Flask, redirect, request, send_file, send_from_directory, session
 from flask_talisman import Talisman
 from requests.auth import HTTPBasicAuth
-from datetime import datetime
+from werkzeug.utils import secure_filename
 
 import admin
 import cognito
 from flask_helpers import admin_interface, login_required, render_template_custom
 from logger import LOG
-from werkzeug.utils import secure_filename
-
 
 app = Flask(__name__)
 app.cf_space = os.getenv("CF_SPACE", "testing")
@@ -25,9 +24,7 @@ app.logger = LOG
 
 
 def setup_talisman(app):
-    csp = {
-        'default-src': ["'self'", "https://*.s3.amazonaws.com"]
-    }
+    csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
     if app.cf_space == "testing":
         print("loading Talisman for testing - no HTTPS")
         return Talisman(
@@ -277,14 +274,11 @@ def upload():
     if True:  # in group
         ucps = user_custom_paths(is_upload=True, session=session)
         preupload = True
-        file_extensions = [
-            {"ext": "csv", "display": "CSV"},
-        ]
+        file_extensions = [{"ext": "csv", "display": "CSV"}]
         filepathtoupload = ""
         presigned_object = ""
 
         if request.method == "POST":
-            path = ""
             args = request.form
             if len(args) != 0:
 
@@ -343,6 +337,8 @@ def upload():
                             # generate a S3 presigned_object PutObjct based
                             # on filepathtoupload
                             cpp = create_presigned_post(filepathtoupload)
+                            if cpp is None:
+                                return redirect("/upload?error=True")
                             presigned_object = cpp
                         else:
                             return redirect("/upload?error=True")
@@ -364,13 +360,13 @@ def upload():
 
 def create_presigned_post(object_name, expiration=3600):
     # Generate a presigned S3 POST URL
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client("s3")
     try:
-        response = s3_client.generate_presigned_post(app.bucket_name,
-                                                     object_name,
-                                                     ExpiresIn=expiration)
+        response = s3_client.generate_presigned_post(
+            app.bucket_name, object_name, ExpiresIn=expiration
+        )
     except ClientError as e:
-        logging.error(e)
+        app.logger.error(e)
         return None
 
     print(response)

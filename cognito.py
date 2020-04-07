@@ -11,7 +11,7 @@ import boto3
 from botocore.exceptions import ClientError
 from flask import session
 
-from cognito_groups import get_group_map, user_groups, get_group_by_name
+from cognito_groups import get_group_by_name, get_group_map, user_groups
 from logger import LOG
 
 # from validate_email import validate_email
