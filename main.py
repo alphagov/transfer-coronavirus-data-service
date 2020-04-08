@@ -537,7 +537,9 @@ def get_files(bucket_name: str, user_session: dict):
 
     resp = []
     for file_key in file_keys:
-        print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
+        app.logger.info(
+            "User {}: file_key: {}".format(user_session["user"], file_key["key"])
+        )
 
         url_string = f"/download/{file_key['key']}"
         resp.append(
