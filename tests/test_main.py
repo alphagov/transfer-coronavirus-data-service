@@ -13,6 +13,7 @@ from main import (
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
+    user_custom_paths,
 )
 
 
@@ -260,6 +261,14 @@ def test_create_presigned_url(test_session):
         url = create_presigned_url(bucket, key, expiration=600)
         assert ".co/test_bucket/test_key" in url
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("test_session")
+def test_user_custom_paths(test_session):
+    download_paths = user_custom_paths(test_session, is_upload=False)
+    print(download_paths)
+    upload_paths = user_custom_paths(test_session, is_upload=True)
+    print(upload_paths)
 
 
 def test_key_has_granted_prefix():

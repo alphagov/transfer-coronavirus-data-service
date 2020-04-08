@@ -49,7 +49,7 @@ function filename_change() {
     }
     let fev = fs.file_ext.value;
 
-    var new_filename_display = "web-app-upload/" + flv + "/" + cds + "_" + fnv.trim() + "." + fev;
+    var new_filename_display = flv + "/" + cds + "_" + fnv.trim() + "." + fev;
 
     var dfp = document.getElementById("dynamic_file_path");
     dfp.innerText = new_filename_display;
