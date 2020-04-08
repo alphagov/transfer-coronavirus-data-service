@@ -497,7 +497,7 @@ def get_files(bucket_name: str, user_session: dict):
     for file_key in file_keys:
         print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
 
-        url = create_presigned_url(bucket_name, file_key["key"], 300)
+        url = create_presigned_url(bucket_name, file_key["key"], 1200)
         if url is not None:
             app.logger.info(
                 "User {}: generated url for: {}".format(
