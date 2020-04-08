@@ -9,10 +9,12 @@ import stubs
 from main import (
     app,
     create_presigned_url,
+    generate_upload_file_path,
     get_files,
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
+    upload_form_validate,
     user_custom_paths,
 )
 
@@ -339,6 +341,25 @@ def test_user_custom_paths(test_session):
     assert "web-app-prod-data/local_authority/haringey" in download_paths
     upload_paths = user_custom_paths(test_session, is_upload=True)
     assert "web-app-upload/local_authority/barnet" in upload_paths
+
+
+@pytest.mark.usefixtures("test_upload_session")
+@pytest.mark.usefixtures("upload_form_fields")
+@pytest.mark.usefixtures("valid_extensions")
+def test_upload_form_validate(test_session, upload_form_fields, valid_extensions):
+    upload_paths = user_custom_paths(test_session, is_upload=True)
+    validation_status = upload_form_validate(
+        upload_form_fields, upload_paths, valid_extensions
+    )
+    assert validation_status["valid"]
+
+
+@pytest.mark.usefixtures("upload_form_fields")
+def test_generate_upload_file_path(upload_form_fields):
+    file_path = generate_upload_file_path(upload_form_fields)
+    assert file_path.startswith(upload_form_fields["file_location"])
+    assert upload_form_fields["file_name"] in file_path
+    assert file_path.endswith(f".{upload_form_fields['file_ext']}")
 
 
 def test_key_has_granted_prefix():

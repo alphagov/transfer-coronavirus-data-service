@@ -355,7 +355,10 @@ def generate_upload_file_path(form_fields):
     """
     now = datetime.now().strftime("%Y%m%d-%H%M%S")
     file_path_to_upload = "{}/{}_{}.{}".format(
-        form_fields["file_location"], now, form_fields["file_name"], form_fields["ext"]
+        form_fields["file_location"],
+        now,
+        form_fields["file_name"],
+        form_fields["file_ext"],
     )
     return file_path_to_upload
 
@@ -376,8 +379,8 @@ def upload_form_validate(form_fields, valid_paths, valid_extensions):
         else:
             status["valid"] = False
 
-    if "filename" in form_fields:
-        file_name = secure_filename(form_fields["filename"])
+    if "file_name" in form_fields:
+        file_name = secure_filename(form_fields["file_name"])
         app.logger.debug({"route": "upload", "file_name": file_name})
         status["fields"]["file_name"] = file_name
 
@@ -385,8 +388,8 @@ def upload_form_validate(form_fields, valid_paths, valid_extensions):
         ext = form_fields["file_ext"]
         field_valid = form_fields["file_ext"] in valid_extensions.keys()
         if field_valid:
-            status["fields"]["ext"] = ext
-            app.logger.debug({"route": "upload", "ext": ext})
+            status["fields"]["file_ext"] = ext
+            app.logger.debug({"route": "upload", "file_ext": ext})
         else:
             status["valid"] = False
 

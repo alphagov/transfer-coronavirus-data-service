@@ -110,3 +110,17 @@ def standard_upload():
         "value": "standard-upload",
         "display": "Standard download and upload user",
     }
+
+
+@pytest.fixture()
+def upload_form_fields():
+    return {
+        "file_location": "web-app-upload/local_authority/haringey",
+        "file_name": "test_upload",
+        "file_ext": "csv",
+    }
+
+
+@pytest.fixture()
+def valid_extensions():
+    return {"csv": {"ext": "csv", "display": "CSV"}}
