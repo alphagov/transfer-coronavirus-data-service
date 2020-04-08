@@ -34,6 +34,32 @@ def test_session():
 
 
 @pytest.fixture()
+def test_upload_session():
+    user_paths = (
+        "web-app-prod-data/local_authority/haringey;"
+        "web-app-prod-data/local_authority/barnet"
+    )
+    session = {
+        "details": {
+            "user": "test-user@test-domain.com",
+            "email": "test-user@test-domain.com",
+        },
+        "user": "test-user@test-domain.com",
+        "email": "test-user@test-domain.com",
+        "attributes": [
+            {"Name": "custom:is_la", "Value": "1"},
+            {"Name": "custom:paths", "Value": user_paths},
+        ],
+        "group": {
+            "preference": 20,
+            "value": "standard-upload",
+            "display": "Standard download and upload user",
+        },
+    }
+    return session
+
+
+@pytest.fixture()
 def test_jwt():
     return get_test_jwt()
 

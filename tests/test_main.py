@@ -70,6 +70,76 @@ def test_route_index_logged_in(test_client, test_session):
 
 
 @pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_upload_session")
+def test_route_index_logged_in_upload(test_client, test_upload_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        app.logger.debug(test_upload_session)
+
+    response = test_client.get("/")
+    body = response.data.decode()
+    assert response.status_code == 200
+    assert "<h3>Upload</h3>" in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+def test_route_files(test_client, test_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+        app.logger.debug(test_session)
+
+    root_path = "web-app-prod-data"
+    bucket_name = "test_bucket"
+    paths = load_user_lookup(test_session)
+    stubber = stubs.mock_s3_list_objects(bucket_name, paths)
+
+    with stubber:
+        response = test_client.get("/files")
+        body = response.data.decode()
+
+        assert response.status_code == 200
+        assert "You're currently logged in as" in body
+        assert (
+            '<span class="covid-transfer-username">test-user@test-domain.com</span>'
+            in body
+        )
+        # Check the root path is removed from the presented link  text
+        # This test may need to change if we change the download
+        # behaviour
+        assert f">{root_path}/local_authority" not in body
+        assert "There are 10 files available to download:" in body
+        assert "local_authority/haringey/people1.csv" in body
+        assert "local_authority/haringey/people4.csv" in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+def test_route_upload_denied(test_client, test_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+        app.logger.debug(test_session)
+
+    response = test_client.get("/upload")
+    body = response.data.decode()
+    assert response.status_code == 302
+    assert "<h1>Redirecting...</h1>" in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_upload_session")
+def test_route_upload_allowed(test_client, test_upload_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        app.logger.debug(test_upload_session)
+
+    response = test_client.get("/upload")
+    body = response.data.decode()
+    assert response.status_code == 200
+    assert '<h3 class="govuk-heading-m">File settings</h3>' in body
+
+
+@pytest.mark.usefixtures("test_client")
 def test_route_css(test_client):
     """ Check CSS actually resolves successfully """
     response = test_client.get("/css/govuk-frontend-3.6.0.min.css")
@@ -266,9 +336,9 @@ def test_create_presigned_url(test_session):
 @pytest.mark.usefixtures("test_session")
 def test_user_custom_paths(test_session):
     download_paths = user_custom_paths(test_session, is_upload=False)
-    print(download_paths)
+    assert "web-app-prod-data/local_authority/haringey" in download_paths
     upload_paths = user_custom_paths(test_session, is_upload=True)
-    print(upload_paths)
+    assert "web-app-upload/local_authority/barnet" in upload_paths
 
 
 def test_key_has_granted_prefix():
