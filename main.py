@@ -18,8 +18,8 @@ from flask_helpers import (
     admin_interface,
     has_upload_rights,
     login_required,
-    upload_rights_required,
     render_template_custom,
+    upload_rights_required,
 )
 from logger import LOG
 
@@ -296,9 +296,7 @@ def upload():
     file_path_to_upload = ""
     presigned_object = ""
 
-    file_extensions = {
-        "csv": {"ext": "csv", "display": "CSV"}
-    }
+    file_extensions = {"csv": {"ext": "csv", "display": "CSV"}}
 
     upload_redirects = {
         "upload": "/upload?js_disabled=True",
@@ -320,14 +318,16 @@ def upload():
             preupload = False
 
             validated_form = upload_form_validate(
-                form_fields,
-                user_upload_paths,
-                file_extensions
+                form_fields, user_upload_paths, file_extensions
             )
 
             if validated_form["valid"]:
-                file_path_to_upload = generate_upload_file_path(validated_form["fields"])
-                app.logger.debug({"route": "upload", "file_path_to_upload": file_path_to_upload})
+                file_path_to_upload = generate_upload_file_path(
+                    validated_form["fields"]
+                )
+                app.logger.debug(
+                    {"route": "upload", "file_path_to_upload": file_path_to_upload}
+                )
                 # generate a S3 presigned_object PutObjct based
                 # on s3 key in file_path_to_upload
                 presigned_object = create_presigned_post(file_path_to_upload)
@@ -355,10 +355,7 @@ def generate_upload_file_path(form_fields):
     """
     now = datetime.now().strftime("%Y%m%d-%H%M%S")
     file_path_to_upload = "{}/{}_{}.{}".format(
-        form_fields["file_location"],
-        now,
-        form_fields["file_name"],
-        form_fields["ext"]
+        form_fields["file_location"], now, form_fields["file_name"], form_fields["ext"]
     )
     return file_path_to_upload
 
@@ -370,10 +367,7 @@ def upload_form_validate(form_fields, valid_paths, valid_extensions):
     file extensions approved for upload
     """
 
-    status = {
-        "valid": True,
-        "fields": {}
-    }
+    status = {"valid": True, "fields": {}}
     if "file_location" in form_fields:
         file_location = form_fields["file_location"]
         field_valid = file_location in valid_paths
@@ -381,7 +375,6 @@ def upload_form_validate(form_fields, valid_paths, valid_extensions):
             status["fields"]["file_location"] = file_location
         else:
             status["valid"] = False
-
 
     if "filename" in form_fields:
         file_name = secure_filename(form_fields["filename"])
