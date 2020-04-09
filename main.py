@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import base64
 import os
 import re
 from datetime import datetime
@@ -250,28 +249,19 @@ def logout():
     )
 
 
-@app.route("/download")
+@app.route("/download/<path:path>")
 @login_required
-def download():
-    args = request.args
+def download(path):
 
-    if "url" in args:
-        redirect_url = args["url"]
-
-        base64_bytes = redirect_url.encode("utf-8")
-        url_bytes = base64.b64decode(base64_bytes)
-        redirect_url = url_bytes.decode("utf-8")
+    redirect_url = create_presigned_url(app.bucket_name, path, 60)
+    if redirect_url is not None:
+        app.logger.info("User {}: generated url for: {}".format(session["user"], path))
 
         if "details" in session and "attributes" in session:
             if redirect_url.startswith(
                 "https://{}.s3.amazonaws.com/".format(app.bucket_name)
             ):
-                no_scheme = redirect_url.split("https://", 1)[1]
-                no_host = no_scheme.split("/", 1)[1]
-                only_key = no_host.split("?", 1)[0]
-                app.logger.info(
-                    "User {}: downloaded: {}".format(session["user"], only_key)
-                )
+                app.logger.info("User {}: downloaded: {}".format(session["user"], path))
                 return redirect(redirect_url, 302)
     else:
         return redirect("/404")
@@ -497,19 +487,10 @@ def get_files(bucket_name: str, user_session: dict):
     for file_key in file_keys:
         print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
 
-        url = create_presigned_url(bucket_name, file_key["key"], 300)
-        if url is not None:
-            app.logger.info(
-                "User {}: generated url for: {}".format(
-                    user_session["user"], file_key["key"]
-                )
-            )
-            url_bytes = url.encode("utf-8")
-            url_base64 = base64.b64encode(url_bytes)
-            url_string = url_base64.decode("utf-8")
-            resp.append(
-                {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
-            )
+        url_string = f"/download/{file_key['key']}"
+        resp.append(
+            {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
+        )
     app.logger.info(resp)
     return resp
 
