@@ -252,10 +252,20 @@ def logout():
 @app.route("/download/<path:path>")
 @login_required
 def download(path):
-    files = get_files(app.bucket_name, session)
-    keys = [file["key"] for file in files]
-    app.logger.debug({"granted_files": keys, "requested_path": path})
-    if path in keys:
+    """
+    Check the user has access to the requested file
+    Generate a presigned S3 URL
+    Redirect to download
+    """
+
+    # We could go to this method which is tigher if required
+    # files = get_files(app.bucket_name, session)
+    # keys = [file["key"] for file in files]
+    # app.logger.debug({"granted_files": keys, "requested_path": path})
+    # if path in keys:
+
+    prefixes = load_user_lookup(session)
+    if key_has_granted_prefix(path, prefixes):
         redirect_url = create_presigned_url(app.bucket_name, path, 60)
         if redirect_url is not None:
             app.logger.info("User {}: generated url for: {}".format(session["user"], path))
@@ -360,6 +370,19 @@ def upload():
         )
     else:
         return redirect("/")
+
+
+def key_has_granted_prefix(key, prefixes):
+    """
+    Check that the requested s3 key starts with
+    one of the granted file prefixes
+    """
+    granted = False
+    for prefix in prefixes:
+        if key.startswith(prefix):
+            granted = True
+
+    return granted
 
 
 def create_presigned_post(object_name, expiration=3600):
