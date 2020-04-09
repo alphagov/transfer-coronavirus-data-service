@@ -172,21 +172,21 @@ def send_browser_config():
 
 
 @app.errorhandler(500)
-def server_error_500(e):
+def server_error_500(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=e), 500
+    return render_template_custom(app, "error.html", hide_logout=True, error=error), 500
 
 
 @app.errorhandler(404)
-def server_error_404(e):
+def server_error_404(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=e), 404
+    return render_template_custom(app, "error.html", hide_logout=True, error=error), 404
 
 
 @app.errorhandler(400)
-def server_error_400(e):
+def server_error_400(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=e), 400
+    return render_template_custom(app, "error.html", hide_logout=True, error=error), 400
 
 
 @app.route("/")
@@ -252,17 +252,22 @@ def logout():
 @app.route("/download/<path:path>")
 @login_required
 def download(path):
+    files = get_files(app.bucket_name, session)
+    keys = [file["key"] for file in files]
+    app.logger.debug({"granted_files": keys, "requested_path": path})
+    if path in keys:
+        redirect_url = create_presigned_url(app.bucket_name, path, 60)
+        if redirect_url is not None:
+            app.logger.info("User {}: generated url for: {}".format(session["user"], path))
 
-    redirect_url = create_presigned_url(app.bucket_name, path, 60)
-    if redirect_url is not None:
-        app.logger.info("User {}: generated url for: {}".format(session["user"], path))
-
-        if "details" in session and "attributes" in session:
-            if redirect_url.startswith(
-                "https://{}.s3.amazonaws.com/".format(app.bucket_name)
-            ):
-                app.logger.info("User {}: downloaded: {}".format(session["user"], path))
-                return redirect(redirect_url, 302)
+            if "details" in session and "attributes" in session:
+                if redirect_url.startswith(
+                    "https://{}.s3.amazonaws.com/".format(app.bucket_name)
+                ):
+                    app.logger.info("User {}: downloaded: {}".format(session["user"], path))
+                    return redirect(redirect_url, 302)
+        else:
+            return redirect("/404")
     else:
         return redirect("/404")
 
