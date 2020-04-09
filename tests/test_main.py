@@ -10,6 +10,7 @@ from main import (
     app,
     create_presigned_url,
     get_files,
+    key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
 )
@@ -259,3 +260,24 @@ def test_create_presigned_url(test_session):
         url = create_presigned_url(bucket, key, expiration=600)
         assert ".co/test_bucket/test_key" in url
         stubber.deactivate()
+
+
+def test_key_has_granted_prefix():
+    key = "web-app-prod-data/other/gds/file.csv"
+    prefixes = ["web-app-prod-data/other/gds"]
+    assert key_has_granted_prefix(key, prefixes)
+    key = "web-app-prod-data/other/not-gds/file.csv"
+    prefixes = ["web-app-prod-data/other/gds"]
+    assert not key_has_granted_prefix(key, prefixes)
+    key = "web-app-prod-data/other/gds/file.csv"
+    prefixes = ["web-app-prod-data/other/gds", "web-app-prod-data/other/nhs"]
+    assert key_has_granted_prefix(key, prefixes)
+    key = "web-app-prod-data/other/nhs/file.csv"
+    prefixes = ["web-app-prod-data/other/gds", "web-app-prod-data/other/nhs"]
+    assert key_has_granted_prefix(key, prefixes)
+    key = "web-app-prod-data/other/gds/some/other/file/structure/file.csv"
+    prefixes = ["web-app-prod-data/other/gds"]
+    assert key_has_granted_prefix(key, prefixes)
+    key = "web-app-prod-data/other/gds/file.csv"
+    prefixes = ["web-app-prod-data/other/non-gds", "web-app-prod-data/other/nhs"]
+    assert not key_has_granted_prefix(key, prefixes)

@@ -268,13 +268,17 @@ def download(path):
     if key_has_granted_prefix(path, prefixes):
         redirect_url = create_presigned_url(app.bucket_name, path, 60)
         if redirect_url is not None:
-            app.logger.info("User {}: generated url for: {}".format(session["user"], path))
+            app.logger.info(
+                "User {}: generated url for: {}".format(session["user"], path)
+            )
 
             if "details" in session and "attributes" in session:
                 if redirect_url.startswith(
                     "https://{}.s3.amazonaws.com/".format(app.bucket_name)
                 ):
-                    app.logger.info("User {}: downloaded: {}".format(session["user"], path))
+                    app.logger.info(
+                        "User {}: downloaded: {}".format(session["user"], path)
+                    )
                     return redirect(redirect_url, 302)
         else:
             return redirect("/404")
