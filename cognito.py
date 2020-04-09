@@ -326,14 +326,7 @@ def reinvite_user(email_address, confirm=False):
             del_res = delete_user(email_address, confirm)
             LOG.debug({"action": "delete-user", "response": del_res})
             if del_res:
-                cre_res = create_user(
-                    name=user["name"],
-                    email_address=user["email"],
-                    phone_number=user["phone_number"],
-                    attr_paths=user["custom:paths"],
-                    is_la=user["custom:is_la"],
-                    group_name=user["group"]["value"],
-                )
+                cre_res = create_user(user)
                 LOG.debug({"action": "create-user", "response": "cre_res"})
                 return cre_res
     return False
