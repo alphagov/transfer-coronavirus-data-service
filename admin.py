@@ -94,6 +94,7 @@ def admin_list_users(app):
 
 
 def admin_main(app):
+    clear_session(app)
     return render_template_custom(app, "admin/index.html")
 
 
@@ -242,10 +243,6 @@ def admin_edit_user(app):
     task = ""
     if "task" in args:
         task = args["task"]
-
-    if task == "cancel":
-        clear_session(app)
-        return redirect("/admin")
 
     if task == "new":
         clear_session(app)
