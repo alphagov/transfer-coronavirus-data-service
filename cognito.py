@@ -208,7 +208,7 @@ def users_group(username):
     # return return_users_group(groups)
     # Currently you can attach a list of users in cognito
     # but we're currently only interested in the first group
-    group_name = groups[0] if len(groups) > 0 else None
+    group_name = None if len(groups) == 0 else groups[0]
     return get_group_by_name(group_name)
 
 
