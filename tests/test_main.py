@@ -291,6 +291,7 @@ def test_load_user_lookup(test_session):
     )
     paths = load_user_lookup(test_session)
     assert len(paths) == 1
+    # check paths outside approved root path are not returned
     assert f"{fake_root_path}/local_authority/haringey" not in paths
     assert f"{root_path}/local_authority/barnet" in paths
 
@@ -309,13 +310,18 @@ def test_get_files(test_session):
         os.environ["AWS_SECRET_ACCESS_KEY"] = "fake"
         matched_files = get_files(bucket_name, test_session)
         matched_keys = [matched_file["key"] for matched_file in matched_files]
+        # check page 1 is there
         assert f"{root_path}/local_authority/haringey/people1.csv" in matched_keys
+        # check page 2 is there
         assert f"{root_path}/local_authority/haringey/people4.csv" in matched_keys
+        # check that recursive paths are returned
         assert (
             f"{root_path}/local_authority/haringey/nested/nested_people1.csv"
             in matched_keys
         )
+        # check that page 1 of 2nd prefix is returned
         assert f"{root_path}/local_authority/barnet/people1.csv" in matched_keys
+        # check that page 2 of 2nd prefix is returned
         assert f"{root_path}/local_authority/barnet/people4.csv" in matched_keys
         stubber.deactivate()
 
@@ -351,7 +357,21 @@ def test_upload_form_validate(test_session, upload_form_fields, valid_extensions
     validation_status = upload_form_validate(
         upload_form_fields, upload_paths, valid_extensions
     )
+    # valid with fixture data
     assert validation_status["valid"]
+    validation_status = upload_form_validate(
+        upload_form_fields, ["web-app-upload/other/gds"], valid_extensions
+    )
+    # not valid if granted paths don't match
+    assert not validation_status["valid"]
+    invalid_form_fields = {}
+    invalid_form_fields.update(upload_form_fields)
+    invalid_form_fields["file_ext"] = "xls"
+    validation_status = upload_form_validate(
+        invalid_form_fields, upload_paths, valid_extensions
+    )
+    # not valid if file type is not matched
+    assert not validation_status["valid"]
 
 
 @pytest.mark.usefixtures("upload_form_fields")
