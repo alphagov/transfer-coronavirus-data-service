@@ -142,7 +142,7 @@
   </div>
 
   <div>
-    <button name="task" value="{{ 'cancel-new' if new_user else 'cancel-existing' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button" type="submit">Cancel</button>
+    <a name="task" href="{{ '/admin' if new_user else '/admin/user' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Cancel</a>
     <button name="task" value="{{ 'continue-new' if new_user else 'continue-existing' }}" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" data-prevent-double-click="true" type="submit">Continue and check</button>
   </div>
 

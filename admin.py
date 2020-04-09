@@ -119,15 +119,6 @@ def admin_confirm_user(app):
 
     app.logger.debug("admin_confirm_user:task:", task)
 
-    if task == "cancel-existing":
-        app.logger.debug("admin_confirm_user: redirecting back to user")
-        return redirect("/admin/user")
-
-    if task == "cancel-new":
-        clear_session(app)
-        app.logger.debug("admin_confirm_user: redirecting back to admin")
-        return redirect("/admin")
-
     if task in ["edit-exiting", "edit-new"]:
         app.logger.debug("admin_confirm_user: redirecting back to edit")
         return redirect("/admin/user/edit")
