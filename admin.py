@@ -109,6 +109,13 @@ def admin_confirm_user(app):
     elif "task" in args:
         task = args["task"]
 
+    task_redirects = {
+        "cancel-existing": "/admin/user",
+        "cancel-new": "/admin",
+        "edit-exiting": "/admin/user/edit",
+        "edit-new": "/admin/user/edit"
+    }
+
     app.logger.debug("admin_confirm_user:task:", task)
 
     if task == "cancel-existing":
@@ -235,9 +242,6 @@ def admin_edit_user(app):
     task = ""
     if "task" in args:
         task = args["task"]
-
-    if task == "goto-view":
-        return redirect("/admin/user")
 
     if task == "cancel":
         clear_session(app)
