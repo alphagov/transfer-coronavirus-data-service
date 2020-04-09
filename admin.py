@@ -265,8 +265,8 @@ def admin_edit_user(app):
         )
     if task == "do-reinvite-user":
         email = admin_user_object["email"]
-        clear_session(app)
         cognito.reinvite_user(email, True)
+        clear_session(app)
         session["admin_user_email"] = email
         return redirect("/admin/user?done=reinvited")
 
