@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import base64
 import os
 import re
 from datetime import datetime
@@ -173,21 +172,21 @@ def send_browser_config():
 
 
 @app.errorhandler(500)
-def server_error_500(e):
+def server_error_500(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=e), 500
+    return render_template_custom(app, "error.html", hide_logout=True, error=error), 500
 
 
 @app.errorhandler(404)
-def server_error_404(e):
+def server_error_404(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=e), 404
+    return render_template_custom(app, "error.html", hide_logout=True, error=error), 404
 
 
 @app.errorhandler(400)
-def server_error_400(e):
+def server_error_400(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=e), 400
+    return render_template_custom(app, "error.html", hide_logout=True, error=error), 400
 
 
 @app.route("/")
@@ -250,29 +249,39 @@ def logout():
     )
 
 
-@app.route("/download")
+@app.route("/download/<path:path>")
 @login_required
-def download():
-    args = request.args
+def download(path):
+    """
+    Check the user has access to the requested file
+    Generate a presigned S3 URL
+    Redirect to download
+    """
 
-    if "url" in args:
-        redirect_url = args["url"]
+    # We could go to this method which is tigher if required
+    # files = get_files(app.bucket_name, session)
+    # keys = [file["key"] for file in files]
+    # app.logger.debug({"granted_files": keys, "requested_path": path})
+    # if path in keys:
 
-        base64_bytes = redirect_url.encode("utf-8")
-        url_bytes = base64.b64decode(base64_bytes)
-        redirect_url = url_bytes.decode("utf-8")
+    prefixes = load_user_lookup(session)
+    if key_has_granted_prefix(path, prefixes):
+        redirect_url = create_presigned_url(app.bucket_name, path, 60)
+        if redirect_url is not None:
+            app.logger.info(
+                "User {}: generated url for: {}".format(session["user"], path)
+            )
 
-        if "details" in session and "attributes" in session:
-            if redirect_url.startswith(
-                "https://{}.s3.amazonaws.com/".format(app.bucket_name)
-            ):
-                no_scheme = redirect_url.split("https://", 1)[1]
-                no_host = no_scheme.split("/", 1)[1]
-                only_key = no_host.split("?", 1)[0]
-                app.logger.info(
-                    "User {}: downloaded: {}".format(session["user"], only_key)
-                )
-                return redirect(redirect_url, 302)
+            if "details" in session and "attributes" in session:
+                if redirect_url.startswith(
+                    "https://{}.s3.amazonaws.com/".format(app.bucket_name)
+                ):
+                    app.logger.info(
+                        "User {}: downloaded: {}".format(session["user"], path)
+                    )
+                    return redirect(redirect_url, 302)
+        else:
+            return redirect("/404")
     else:
         return redirect("/404")
 
@@ -365,6 +374,19 @@ def upload():
         )
     else:
         return redirect("/")
+
+
+def key_has_granted_prefix(key, prefixes):
+    """
+    Check that the requested s3 key starts with
+    one of the granted file prefixes
+    """
+    granted = False
+    for prefix in prefixes:
+        if key.startswith(prefix):
+            granted = True
+
+    return granted
 
 
 def create_presigned_post(object_name, expiration=3600):
@@ -497,19 +519,10 @@ def get_files(bucket_name: str, user_session: dict):
     for file_key in file_keys:
         print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
 
-        url = create_presigned_url(bucket_name, file_key["key"], 300)
-        if url is not None:
-            app.logger.info(
-                "User {}: generated url for: {}".format(
-                    user_session["user"], file_key["key"]
-                )
-            )
-            url_bytes = url.encode("utf-8")
-            url_base64 = base64.b64encode(url_bytes)
-            url_string = url_base64.decode("utf-8")
-            resp.append(
-                {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
-            )
+        url_string = f"/download/{file_key['key']}"
+        resp.append(
+            {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
+        )
     app.logger.info(resp)
     return resp
 
