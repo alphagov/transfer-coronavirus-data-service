@@ -397,8 +397,15 @@ def add_user_to_group(username, group_name=None):
 
 
 def create_user(
-    name, email_address, phone_number, attr_paths, is_la="0", group_name=None
+    user
 ):
+    name = user["name"]
+    email_address = user["email"]
+    phone_number = user["phone_number"]
+    attr_paths = user["custom:paths"]
+    is_la = user["custom:is_la"]
+    group_name = user["group"]["value"]
+
     client = get_boto3_client()
     email_address = sanitise_email(email_address)
     if email_address == "":
@@ -514,14 +521,15 @@ def delete_user(email_address, confirm=False):
     return False
 
 
-def update_user_attributes(
-    email_address,
-    new_name=None,
-    new_phone_number=None,
-    new_is_la=None,
-    new_paths=None,
-    new_group_name=None,
-):
+def update_user_attributes(user):
+
+    email_address = user["email"]
+    new_name = user["name"]
+    new_phone_number = user["phone_number"]
+    new_paths = user["custom:paths"]
+    new_is_la = user["custom:is_la"]
+    new_group_name = None if "group" not in user else user["group"]["value"]
+
     client = get_boto3_client()
     if (
         new_name is None
@@ -575,15 +583,14 @@ def update_user_attributes(
                 return False
 
         if new_paths is not None:
-            if isinstance(new_paths, list):
-                path_scsl = str.join(";", new_paths)
+            if isinstance(new_paths, str):
 
-                if not return_false_if_paths_bad(is_la_value, path_scsl):
+                if not return_false_if_paths_bad(is_la_value, new_paths):
                     return False
 
-                attrs.append({"Name": "custom:paths", "Value": path_scsl})
+                attrs.append({"Name": "custom:paths", "Value": new_paths})
             else:
-                LOG.error("ERR: %s: new_paths is not list", "user-admin")
+                LOG.error("ERR: %s: new_paths is not a string", "user-admin")
                 return False
 
         if new_group_name is not None:
