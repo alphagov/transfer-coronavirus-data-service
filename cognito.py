@@ -181,12 +181,15 @@ def san_row(row):
 
 def get_user_details(email_address):
     client = get_boto3_client()
-    san_email_address = sanitise_email(email_address)
-    if san_email_address != "":
-        user = client.admin_get_user(
-            UserPoolId=get_env_pool_id(), Username=san_email_address
-        )
-        return normalise_user(user)
+    try:
+        san_email_address = sanitise_email(email_address)
+        if san_email_address != "":
+            user = client.admin_get_user(
+                UserPoolId=get_env_pool_id(), Username=san_email_address
+            )
+            return normalise_user(user)
+    except ClientError as error:
+        LOG.debug({"error":error})
     return {}
 
 
