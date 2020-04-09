@@ -110,18 +110,7 @@ def admin_confirm_user(app):
     elif "task" in args:
         task = args["task"]
 
-    task_redirects = {
-        "cancel-existing": "/admin/user",
-        "cancel-new": "/admin",
-        "edit-exiting": "/admin/user/edit",
-        "edit-new": "/admin/user/edit"
-    }
-
     app.logger.debug("admin_confirm_user:task:", task)
-
-    if task in ["edit-exiting", "edit-new"]:
-        app.logger.debug("admin_confirm_user: redirecting back to edit")
-        return redirect("/admin/user/edit")
 
     user = {}
     new_user = False
