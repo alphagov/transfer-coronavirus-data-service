@@ -1,6 +1,7 @@
 """ Create mock boto3 clients for testing """
 
 import boto3
+import pytest
 from botocore.stub import Stubber
 
 
@@ -57,7 +58,7 @@ def mock_s3_list_objects(bucket_name, prefixes):
     return stubber
 
 
-def mock_cognito(token):
+def mock_cognito_auth_flow(token):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")
 
@@ -94,6 +95,62 @@ def mock_cognito(token):
         mock_admin_list_groups_for_user,
         {"UserPoolId": "eu-west-2_poolid", "Username": "test-secrets", "Limit": 10},
     )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_create_user(admin_user):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [
+            {"Id": "eu-west-2_poolid", "Name": "corona-cognito-pool-development"}
+        ]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_create_user = {
+        "User": {
+            "Username": admin_user["email"],
+            "Attributes": [
+                {"Name": "name", "Value": admin_user["name"]},
+                {"Name": "email", "Value": admin_user["email"]},
+                {"Name": "email_verified", "Value": "true"},
+                {"Name": "phone_number", "Value": admin_user["phone_number"]},
+                {"Name": "phone_number_verified", "Value": "false"},
+                {"Name": "custom:is_la", "Value": admin_user["custom:is_la"]},
+                {"Name": "custom:paths", "Value": admin_user["custom:paths"]},
+            ],
+            "Enabled": True
+        }
+    }
+    params_create_user = {
+        "UserPoolId": "eu-west-2_poolid",
+        "Username": admin_user["email"],
+        "UserAttributes": [
+            {"Name": "name", "Value": admin_user["name"]},
+            {"Name": "email", "Value": admin_user["email"]},
+            {"Name": "email_verified", "Value": "true"},
+            {"Name": "phone_number", "Value": admin_user["phone_number"]},
+            {"Name": "phone_number_verified", "Value": "false"},
+            {"Name": "custom:is_la", "Value": admin_user["custom:is_la"]},
+            {"Name": "custom:paths", "Value": admin_user["custom:paths"]},
+        ],
+        "ForceAliasCreation": False,
+        "DesiredDeliveryMediums": ["EMAIL"],
+    }
+
+    stubber.add_response("admin_create_user", mock_create_user, params_create_user)
+
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    # TODO: stub boto3 calls in cognito 443 & 451
 
     stubber.activate()
     # override boto.client to return the mock client

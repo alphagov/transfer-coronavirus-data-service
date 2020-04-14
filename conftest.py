@@ -124,3 +124,40 @@ def upload_form_fields():
 @pytest.fixture()
 def valid_extensions():
     return {"csv": {"ext": "csv", "display": "CSV"}}
+
+
+@pytest.fixture()
+def admin_user():
+    return {
+        "name": "Justin Casey",
+        "email": "justin.casey@communities.gov.uk",
+        "phone_number": "+447123456789",
+        "group": {
+            "preference": 10,
+            "value": "standard-download",
+            "display": "Standard download user",
+        },
+        "custom:is_la": "1",
+        "custom:paths": ";".join(
+            [
+                "web-app-prod-data/local_authority/barking",
+                "web-app-prod-data/local_authority/haringey",
+            ]
+        ),
+    }
+
+
+@pytest.fixture()
+def user_confirm_form():
+    form = {
+        "full-name": "Justin Casey",
+        "email": "justin.casey@communities.gov.uk",
+        "telephone-number": "07123456789",
+        "account": "standard-upload",
+        "is-la-radio": "yes",
+        "custom_paths": [
+            "web-app-prod-data/local_authority/barnet",
+            "web-app-prod-data/local_authority/hackney",
+        ],
+    }
+    return form

@@ -178,7 +178,7 @@ def test_auth_flow(test_client, test_session, fake_jwt_decoder, **args):
     app.client_id = "123456"
     app.client_secret = "987654"
     app.redirect_host = "test.domain.com"
-    stubber = stubs.mock_cognito(token)
+    stubber = stubs.mock_cognito_auth_flow(token)
 
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)

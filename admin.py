@@ -150,9 +150,19 @@ def admin_confirm_user(app):
 
 
 def parse_edit_form_fields(
-    post_fields: list, admin_user_object: dict, app: Flask
+    post_fields: dict, admin_user_object: dict, app: Flask
 ) -> dict:
 
+    app.logger.debug(
+        {"action": "parse_edit_form_fields", "fields_type": str(type(post_fields))}
+    )
+    app.logger.debug(
+        {
+            "action": "parse_edit_form_fields",
+            "custom_paths": post_fields.getlist("custom_paths"),
+        }
+    )
+    app.logger.debug({"action": "parse_edit_form_fields", "post_fields": post_fields})
     sanitised_fields = {
         "custom_paths": [
             sanitise_string(input_path).replace("&amp;", "&")
