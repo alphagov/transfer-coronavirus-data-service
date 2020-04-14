@@ -100,6 +100,7 @@ def admin_main(app):
 
 def admin_confirm_user(app):
 
+    #
     admin_user_object = get_session_obj("admin_user_object")
 
     task = ""
@@ -129,33 +130,29 @@ def admin_confirm_user(app):
 
     app.logger.debug("admin_confirm_user:user2:", user)
 
-    if "frompage" in args:
-        if "self" == args["frompage"]:
+    # Handle Cognito create and update user logic
+    state = ""
+    is_task_complete = False
 
-            state = ""
+    if task == "confirm-new":
+        is_task_complete = cognito.create_user(admin_user_object)
+        state = "created"
 
-            if task == "confirm-new":
-                response = cognito.create_user(admin_user_object)
-                state = "created"
+    elif task == "confirm-existing":
+        is_task_complete = cognito.update_user_attributes(admin_user_object)
+        state = "updated"
 
-            elif task == "confirm-existing":
-                response = cognito.update_user_attributes(admin_user_object)
-                state = "updated"
-            else:
-                session["admin_user_object"] = admin_user_object
-                return redirect("/admin/user/edit")
+    clear_session(app)
 
-            clear_session(app)
-
-            if response:
-                return redirect(
-                    "/admin/user?done={}&email={}".format(state, quote(admin_user_object["email"]))
-                )
-            else:
-                return redirect("/admin/user/error")
-
+    if state in ["created", "updated"] and is_task_complete:
+        return redirect(
+            "/admin/user?done={}&email={}".format(state, quote(admin_user_object["email"]))
+        )
+    else:
         return redirect("/admin/user/error")
 
+
+    # Render the confirm user page
     user["name"] = sanitise_input(args, "full-name")
     user["phone_number"] = sanitise_input(args, "telephone-number")
 
