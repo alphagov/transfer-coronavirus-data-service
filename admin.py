@@ -132,35 +132,27 @@ def admin_confirm_user(app):
     if "frompage" in args:
         if "self" == args["frompage"]:
 
+            state = ""
+
             if task == "confirm-new":
-                create_res = cognito.create_user(admin_user_object)
+                response = cognito.create_user(admin_user_object)
+                state = "created"
 
-                clear_session(app)
-
-                if create_res:
-                    return redirect(
-                        "/admin/user?done=created&email={}".format(quote(admin_user_object["email"]))
-                    )
-                else:
-                    return redirect("/admin/user/error")
-
-            if task == "confirm-existing":
-                email = admin_user_object["email"]
-
-                update_res = cognito.update_user_attributes(admin_user_object)
-
-                clear_session(app)
-
-                if update_res:
-                    return redirect(
-                        "/admin/user?done=updated&email={}".format(quote(email))
-                    )
-                else:
-                    return redirect("/admin/user/error")
-
+            elif task == "confirm-existing":
+                response = cognito.update_user_attributes(admin_user_object)
+                state = "updated"
             else:
                 session["admin_user_object"] = admin_user_object
                 return redirect("/admin/user/edit")
+
+            clear_session(app)
+
+            if response:
+                return redirect(
+                    "/admin/user?done={}&email={}".format(state, quote(admin_user_object["email"]))
+                )
+            else:
+                return redirect("/admin/user/error")
 
         return redirect("/admin/user/error")
 
