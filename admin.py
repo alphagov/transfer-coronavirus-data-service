@@ -93,12 +93,20 @@ def admin_main(app):
 
 
 def admin_confirm_user(app):
+    """
+    Render the /admin/user/confirm flask route
 
-    # 
+    This route posts back to the same page and performs the 
+    user create/updates against cognito.
+    """
+
+    # Get the edited user content from the session 
+    # or initialise as an empty dictionary
     admin_user_object = session.get("admin_user_object", {})
     task = ""
     new_user = False
     
+    # Redirect to admin home if post data missing
     args = request.form
     if len(args) == 0:
         clear_session(app)
@@ -108,7 +116,7 @@ def admin_confirm_user(app):
 
     app.logger.debug({"action": "admin_confirm_user", "args:": args})
 
-    # Pre-populate the form from 
+    # Sanitise the email address if user edited
     if task in ["new", "continue-new"]:
         new_user = True
         if "email" in args:
