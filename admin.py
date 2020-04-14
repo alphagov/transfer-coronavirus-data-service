@@ -83,12 +83,6 @@ def clear_session(app):
         session.pop("admin_user_object")
 
 
-def get_session_obj(id):
-    if id in session:
-        return session[id]
-    return None
-
-
 def admin_list_users(app):
     return render_template_custom(app, "admin/list-user.html")
 
@@ -100,10 +94,11 @@ def admin_main(app):
 
 def admin_confirm_user(app):
 
-    #
-    admin_user_object = get_session_obj("admin_user_object")
-
+    # 
+    admin_user_object = session.get("admin_user_object", {})
     task = ""
+    new_user = False
+    
     args = request.form
     if len(args) == 0:
         clear_session(app)
@@ -111,61 +106,41 @@ def admin_confirm_user(app):
     elif "task" in args:
         task = args["task"]
 
-    app.logger.debug("admin_confirm_user:task:", task)
+    app.logger.debug({"action": "admin_confirm_user", "args:": args})
 
-    user = {}
-    new_user = False
-
-    app.logger.debug("admin_confirm_user:args:", args)
-
+    # Pre-populate the form from 
     if task in ["new", "continue-new"]:
         new_user = True
         if "email" in args:
-            user = {"email": cognito.sanitise_email(args["email"])}
-
-    app.logger.debug("admin_confirm_user:user1:", user)
-
-    if user == {}:
-        user = admin_user_object
-
-    app.logger.debug("admin_confirm_user:user2:", user)
+            admin_user_object["email"] = cognito.sanitise_email(args["email"])
 
     # Handle Cognito create and update user logic
-    state = ""
-    is_task_complete = False
+    if task in ["confirm-new", "confirm-existing"]:
+        is_task_complete = perform_cognito_task(task, admin_user_object)
 
-    if task == "confirm-new":
-        is_task_complete = cognito.create_user(admin_user_object)
-        state = "created"
-
-    elif task == "confirm-existing":
-        is_task_complete = cognito.update_user_attributes(admin_user_object)
-        state = "updated"
-
-    clear_session(app)
-
-    if state in ["created", "updated"] and is_task_complete:
-        return redirect(
-            "/admin/user?done={}&email={}".format(state, quote(admin_user_object["email"]))
-        )
-    else:
-        return redirect("/admin/user/error")
-
+        target = "/admin/user/error"
+        state = "created" if task == "confirm-new" else "updated"
+        if is_task_complete:
+            target = "/admin/user?done={}&email={}".format(
+                state, quote(admin_user_object["email"])
+            )
+        clear_session(app)
+        return redirect(target)
 
     # Render the confirm user page
-    user["name"] = sanitise_input(args, "full-name")
-    user["phone_number"] = sanitise_input(args, "telephone-number")
+    admin_user_object["name"] = sanitise_input(args, "full-name")
+    admin_user_object["phone_number"] = sanitise_input(args, "telephone-number")
 
     account_type = sanitise_input(args, "account")
     # user_group = return_users_group({"group": account_type})
     user_group = get_group_by_name(account_type)
-    user["group"] = user_group
+    admin_user_object["group"] = user_group
 
     san_is_la = sanitise_input(args, "is-la-radio") == "yes"
     if san_is_la:
-        user["custom:is_la"] = "1"
+        admin_user_object["custom:is_la"] = "1"
     else:
-        user["custom:is_la"] = "0"
+        admin_user_object["custom:is_la"] = "0"
 
     custom_path_multiple = []
     for tmp_arg in args.getlist("custom_paths"):
@@ -176,18 +151,30 @@ def admin_confirm_user(app):
         else:
             custom_path_multiple.append(sanitise_string(tmp_arg).replace("&amp;", "&"))
 
-    user["custom:paths"] = str.join(";", custom_path_multiple)
+    admin_user_object["custom:paths"] = str.join(";", custom_path_multiple)
 
-    session["admin_user_email"] = user["email"]
-    session["admin_user_object"] = user
+    session["admin_user_email"] = admin_user_object["email"]
+    session["admin_user_object"] = admin_user_object
 
     return render_template_custom(
         app,
         "admin/confirm-user.html",
-        user=user,
+        user=admin_user_object,
         new_user=new_user,
         user_group=user_group,
     )
+
+
+def perform_cognito_task(task, admin_user_object): 
+    is_task_complete = False
+
+    if task == "confirm-new":
+        is_task_complete = cognito.create_user(admin_user_object)
+        
+    elif task == "confirm-existing":
+        is_task_complete = cognito.update_user_attributes(admin_user_object)
+        
+    return is_task_complete
 
 
 def admin_edit_user(app):

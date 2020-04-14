@@ -189,7 +189,7 @@ def get_user_details(email_address):
             )
             return normalise_user(user)
     except ClientError as error:
-        LOG.debug({"error":error})
+        LOG.debug({"error": error})
     return {}
 
 
@@ -389,9 +389,7 @@ def add_user_to_group(username, group_name=None):
     return False
 
 
-def create_user(
-    user
-):
+def create_user(user):
     name = user["name"]
     email_address = user["email"]
     phone_number = user["phone_number"]
