@@ -34,6 +34,32 @@ def test_session():
 
 
 @pytest.fixture()
+def test_upload_session():
+    user_paths = (
+        "web-app-prod-data/local_authority/haringey;"
+        "web-app-prod-data/local_authority/barnet"
+    )
+    session = {
+        "details": {
+            "user": "test-user@test-domain.com",
+            "email": "test-user@test-domain.com",
+        },
+        "user": "test-user@test-domain.com",
+        "email": "test-user@test-domain.com",
+        "attributes": [
+            {"Name": "custom:is_la", "Value": "1"},
+            {"Name": "custom:paths", "Value": user_paths},
+        ],
+        "group": {
+            "preference": 20,
+            "value": "standard-upload",
+            "display": "Standard download and upload user",
+        },
+    }
+    return session
+
+
+@pytest.fixture()
 def test_jwt():
     return get_test_jwt()
 
@@ -84,3 +110,17 @@ def standard_upload():
         "value": "standard-upload",
         "display": "Standard download and upload user",
     }
+
+
+@pytest.fixture()
+def upload_form_fields():
+    return {
+        "file_location": "web-app-upload/local_authority/haringey",
+        "file_name": "test_upload",
+        "file_ext": "csv",
+    }
+
+
+@pytest.fixture()
+def valid_extensions():
+    return {"csv": {"ext": "csv", "display": "CSV"}}

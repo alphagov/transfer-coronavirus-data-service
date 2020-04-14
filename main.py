@@ -19,6 +19,7 @@ from flask_helpers import (
     has_upload_rights,
     login_required,
     render_template_custom,
+    upload_rights_required,
 )
 from logger import LOG
 
@@ -288,92 +289,101 @@ def download(path):
 
 @app.route("/upload", methods=["POST", "GET"])
 @login_required
+@upload_rights_required
 def upload():
-    if has_upload_rights():  # in group
-        ucps = user_custom_paths(is_upload=True, session=session)
-        preupload = True
-        file_extensions = [{"ext": "csv", "display": "CSV"}]
-        filepathtoupload = ""
-        presigned_object = ""
+    user_upload_paths = user_custom_paths(is_upload=True, session=session)
+    preupload = True
+    file_path_to_upload = ""
+    presigned_object = ""
 
-        if request.method == "POST":
-            args = request.form
-            if len(args) != 0:
+    file_extensions = {"csv": {"ext": "csv", "display": "CSV"}}
 
-                if "task" in args:
-                    print("task", args["task"])
-                    print("args", args)
+    if request.method == "POST":
+        form_fields = request.form
+        task = form_fields.get("task", None)
 
-                    if args["task"] == "upload":
-                        # handled in javascript
-                        # return a redirect here if JS is disabled
-                        return redirect("/upload?js_disabled=True")
+        app.logger.debug({"form_fields": form_fields})
 
-                    if args["task"] == "cancel-upload":
-                        return redirect("/upload")
+        if task == "preupload":
+            preupload = False
 
-                    if args["task"] == "cancel-preupload":
-                        return redirect("/")
+            validated_form = upload_form_validate(
+                form_fields, user_upload_paths, file_extensions
+            )
 
-                    if args["task"] == "preupload":
-                        preupload = False
-                        complete = 0
-                        file_location = ""
-                        file_name = ""
-                        ext = ""
+            if validated_form["valid"]:
+                file_path_to_upload = generate_upload_file_path(
+                    validated_form["fields"]
+                )
+                app.logger.debug(
+                    {"route": "upload", "file_path_to_upload": file_path_to_upload}
+                )
+                # generate a S3 presigned_object PutObjct based
+                # on s3 key in file_path_to_upload
+                presigned_object = create_presigned_post(file_path_to_upload)
+                if presigned_object is None:
+                    return redirect("/upload?error=True")
+            else:
+                return redirect("/upload?error=True")
 
-                        if "file_location" in args:
-                            arg_fl = args["file_location"]
-                            for fl in ucps:
-                                if fl["key"] == arg_fl:
-                                    file_location = fl["path"]
-                                    print("file_location", file_location)
-                                    complete += 1
-                                    break
+    return render_template_custom(
+        app,
+        "upload.html",
+        user=session["user"],
+        email=session["email"],
+        presigned_object=presigned_object,
+        preupload=preupload,
+        filepathtoupload=file_path_to_upload,
+        file_extensions=list(file_extensions.values()) if preupload else {},
+        upload_keys=user_upload_paths if preupload else [],
+    )
 
-                        if "filename" in args:
-                            arg_fn = args["filename"]
-                            file_name = secure_filename(arg_fn)
-                            print("file_name", file_name)
-                            complete += 1
 
-                        if "file_ext" in args:
-                            arg_ext = args["file_ext"]
-                            for fe in file_extensions:
-                                if fe["ext"] == arg_ext:
-                                    ext = fe["ext"]
-                                    complete += 1
-                                    print("ext", ext)
-                                    break
+def generate_upload_file_path(form_fields):
+    """
+    Use validated form fields to create the key for S3
+    """
+    now = datetime.now().strftime("%Y%m%d-%H%M%S")
+    file_path_to_upload = "{}/{}_{}.{}".format(
+        form_fields["file_location"],
+        now,
+        form_fields["file_name"],
+        form_fields["file_ext"],
+    )
+    return file_path_to_upload
 
-                        if complete == 3:
-                            filedatetime = datetime.now().strftime("%Y%m%d-%H%M%S")
-                            filepathtoupload = "{}/{}_{}.{}".format(
-                                file_location, filedatetime, file_name, ext
-                            )
-                            print("filepathtoupload", filepathtoupload)
-                            # generate a S3 presigned_object PutObjct based
-                            # on filepathtoupload
-                            cpp = create_presigned_post(filepathtoupload)
-                            if cpp is None:
-                                return redirect("/upload?error=True")
-                            presigned_object = cpp
-                        else:
-                            return redirect("/upload?error=True")
 
-        return render_template_custom(
-            app,
-            "upload.html",
-            user=session["user"],
-            email=session["email"],
-            presigned_object=presigned_object,
-            preupload=preupload,
-            filepathtoupload=filepathtoupload,
-            file_extensions=file_extensions if preupload else [],
-            upload_keys=[u["key"] for u in ucps] if preupload else [],
-        )
-    else:
-        return redirect("/")
+def upload_form_validate(form_fields, valid_paths, valid_extensions):
+    """
+    Pass in the submitted form data along with
+    paths granted to the user and
+    file extensions approved for upload
+    """
+
+    status = {"valid": True, "fields": {}}
+    if "file_location" in form_fields:
+        file_location = form_fields["file_location"]
+        field_valid = file_location in valid_paths
+        if field_valid:
+            status["fields"]["file_location"] = file_location
+        else:
+            status["valid"] = False
+
+    if "file_name" in form_fields:
+        file_name = secure_filename(form_fields["file_name"])
+        app.logger.debug({"route": "upload", "file_name": file_name})
+        status["fields"]["file_name"] = file_name
+
+    if "file_ext" in form_fields:
+        ext = form_fields["file_ext"]
+        field_valid = form_fields["file_ext"] in valid_extensions.keys()
+        if field_valid:
+            status["fields"]["file_ext"] = ext
+            app.logger.debug({"route": "upload", "file_ext": ext})
+        else:
+            status["valid"] = False
+
+    return status
 
 
 def key_has_granted_prefix(key, prefixes):
@@ -517,7 +527,9 @@ def get_files(bucket_name: str, user_session: dict):
 
     resp = []
     for file_key in file_keys:
-        print("User {}: file_key: {}".format(user_session["user"], file_key["key"]))
+        app.logger.info(
+            "User {}: file_key: {}".format(user_session["user"], file_key["key"])
+        )
 
         url_string = f"/download/{file_key['key']}"
         resp.append(
@@ -537,39 +549,26 @@ def return_attribute(session: dict, get_attribute: str) -> str:
 
 
 def user_custom_paths(session, is_upload=False):
-    paths = []
+    # paths = []
 
     app_download_path = os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")
     app_upload_path = os.getenv("BUCKET_UPLOAD_PREFIX", "web-app-upload")
 
-    user_key_prefixes = return_attribute(session, "custom:paths")
-    for key_prefix in user_key_prefixes.split(";"):
-        if key_prefix != "" and "/" in key_prefix:
-            if not is_upload and not key_prefix.startswith(app_download_path):
-                continue
+    user_paths_attribute = return_attribute(session, "custom:paths")
+    user_paths = user_paths_attribute.split(";")
 
-            skp = key_prefix.split("/", 1)
-            if is_upload:
-                key = skp[1]
-                path = "{}/{}".format(app_upload_path, skp[1])
-            else:
-                key = key_prefix
-                path = key_prefix
-            if key != "" and path != "":
-                paths.append({"key": key, "path": path})
+    user_paths = [
+        path.replace(app_download_path, app_upload_path) if is_upload else path
+        for path in user_paths
+        if path.startswith(app_download_path)
+    ]
 
-    return paths
+    return user_paths
 
 
 def load_user_lookup(session):
-    paths = []
-
-    ucps = user_custom_paths(session, is_upload=False)
-    for ucp in ucps:
-        paths.append(ucp["path"])
-        app.logger.info("User: {} prefix: {}".format(session["user"], ucp["path"]))
-
-    return paths
+    user_paths = user_custom_paths(session, is_upload=False)
+    return user_paths
 
 
 @app.template_filter("s3_remove_root_path")

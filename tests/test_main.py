@@ -9,10 +9,13 @@ import stubs
 from main import (
     app,
     create_presigned_url,
+    generate_upload_file_path,
     get_files,
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
+    upload_form_validate,
+    user_custom_paths,
 )
 
 
@@ -66,6 +69,76 @@ def test_route_index_logged_in(test_client, test_session):
     assert (
         '<span class="covid-transfer-username">test-user@test-domain.com</span>' in body
     )
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_upload_session")
+def test_route_index_logged_in_upload(test_client, test_upload_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        app.logger.debug(test_upload_session)
+
+    response = test_client.get("/")
+    body = response.data.decode()
+    assert response.status_code == 200
+    assert "<h3>Upload</h3>" in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+def test_route_files(test_client, test_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+        app.logger.debug(test_session)
+
+    root_path = "web-app-prod-data"
+    bucket_name = "test_bucket"
+    paths = load_user_lookup(test_session)
+    stubber = stubs.mock_s3_list_objects(bucket_name, paths)
+
+    with stubber:
+        response = test_client.get("/files")
+        body = response.data.decode()
+
+        assert response.status_code == 200
+        assert "You're currently logged in as" in body
+        assert (
+            '<span class="covid-transfer-username">test-user@test-domain.com</span>'
+            in body
+        )
+        # Check the root path is removed from the presented link  text
+        # This test may need to change if we change the download
+        # behaviour
+        assert f">{root_path}/local_authority" not in body
+        assert "There are 10 files available to download:" in body
+        assert "local_authority/haringey/people1.csv" in body
+        assert "local_authority/haringey/people4.csv" in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+def test_route_upload_denied(test_client, test_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+        app.logger.debug(test_session)
+
+    response = test_client.get("/upload")
+    body = response.data.decode()
+    assert response.status_code == 302
+    assert "<h1>Redirecting...</h1>" in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_upload_session")
+def test_route_upload_allowed(test_client, test_upload_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        app.logger.debug(test_upload_session)
+
+    response = test_client.get("/upload")
+    body = response.data.decode()
+    assert response.status_code == 200
+    assert '<h3 class="govuk-heading-m">File settings</h3>' in body
 
 
 @pytest.mark.usefixtures("test_client")
@@ -218,6 +291,7 @@ def test_load_user_lookup(test_session):
     )
     paths = load_user_lookup(test_session)
     assert len(paths) == 1
+    # check paths outside approved root path are not returned
     assert f"{fake_root_path}/local_authority/haringey" not in paths
     assert f"{root_path}/local_authority/barnet" in paths
 
@@ -236,13 +310,18 @@ def test_get_files(test_session):
         os.environ["AWS_SECRET_ACCESS_KEY"] = "fake"
         matched_files = get_files(bucket_name, test_session)
         matched_keys = [matched_file["key"] for matched_file in matched_files]
+        # check page 1 is there
         assert f"{root_path}/local_authority/haringey/people1.csv" in matched_keys
+        # check page 2 is there
         assert f"{root_path}/local_authority/haringey/people4.csv" in matched_keys
+        # check that recursive paths are returned
         assert (
             f"{root_path}/local_authority/haringey/nested/nested_people1.csv"
             in matched_keys
         )
+        # check that page 1 of 2nd prefix is returned
         assert f"{root_path}/local_authority/barnet/people1.csv" in matched_keys
+        # check that page 2 of 2nd prefix is returned
         assert f"{root_path}/local_authority/barnet/people4.csv" in matched_keys
         stubber.deactivate()
 
@@ -260,6 +339,47 @@ def test_create_presigned_url(test_session):
         url = create_presigned_url(bucket, key, expiration=600)
         assert ".co/test_bucket/test_key" in url
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("test_session")
+def test_user_custom_paths(test_session):
+    download_paths = user_custom_paths(test_session, is_upload=False)
+    assert "web-app-prod-data/local_authority/haringey" in download_paths
+    upload_paths = user_custom_paths(test_session, is_upload=True)
+    assert "web-app-upload/local_authority/barnet" in upload_paths
+
+
+@pytest.mark.usefixtures("test_upload_session")
+@pytest.mark.usefixtures("upload_form_fields")
+@pytest.mark.usefixtures("valid_extensions")
+def test_upload_form_validate(test_session, upload_form_fields, valid_extensions):
+    upload_paths = user_custom_paths(test_session, is_upload=True)
+    validation_status = upload_form_validate(
+        upload_form_fields, upload_paths, valid_extensions
+    )
+    # valid with fixture data
+    assert validation_status["valid"]
+    validation_status = upload_form_validate(
+        upload_form_fields, ["web-app-upload/other/gds"], valid_extensions
+    )
+    # not valid if granted paths don't match
+    assert not validation_status["valid"]
+    invalid_form_fields = {}
+    invalid_form_fields.update(upload_form_fields)
+    invalid_form_fields["file_ext"] = "xls"
+    validation_status = upload_form_validate(
+        invalid_form_fields, upload_paths, valid_extensions
+    )
+    # not valid if file type is not matched
+    assert not validation_status["valid"]
+
+
+@pytest.mark.usefixtures("upload_form_fields")
+def test_generate_upload_file_path(upload_form_fields):
+    file_path = generate_upload_file_path(upload_form_fields)
+    assert file_path.startswith(upload_form_fields["file_location"])
+    assert upload_form_fields["file_name"] in file_path
+    assert file_path.endswith(f".{upload_form_fields['file_ext']}")
 
 
 def test_key_has_granted_prefix():

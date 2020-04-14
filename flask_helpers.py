@@ -12,23 +12,33 @@ def is_development():
     return os.getenv("FLASK_ENV", "production") == "development"
 
 
-def admin_interface(f):
-    @wraps(f)
+def admin_interface(flask_route):
+    @wraps(flask_route)
     def decorated_function(*args, **kwargs):
 
         if not is_admin_interface():
             raise Exception("ADMIN not set when trying /admin")
-        return f(*args, **kwargs)
+        return flask_route(*args, **kwargs)
 
     return decorated_function
 
 
-def login_required(f):
-    @wraps(f)
+def login_required(flask_route):
+    @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if "details" not in session:
             return redirect("/")
-        return f(*args, **kwargs)
+        return flask_route(*args, **kwargs)
+
+    return decorated_function
+
+
+def upload_rights_required(flask_route):
+    @wraps(flask_route)
+    def decorated_function(*args, **kwargs):
+        if not has_upload_rights():
+            return redirect("/")
+        return flask_route(*args, **kwargs)
 
     return decorated_function
 

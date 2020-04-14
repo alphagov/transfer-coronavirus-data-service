@@ -13,10 +13,10 @@ function load_s3upload_js() {
 
   var fs = get_file_settings()
   if (fs !== false) {
-    fs.file_location.addEventListener('change', filename_change);
-    fs.filename.addEventListener('keyup', filename_change);
-    fs.file_ext.addEventListener('change', filename_change);
-    filename_change();
+    fs.file_location.addEventListener('change', file_name_change);
+    fs.file_name.addEventListener('keyup', file_name_change);
+    fs.file_ext.addEventListener('change', file_name_change);
+    file_name_change();
   }
 }
 
@@ -27,32 +27,32 @@ function get_file_settings() {
     return false;
   }
 
-  var filename = document.getElementById("filename");
+  var file_name = document.getElementById("file_name");
   var file_ext = document.getElementById("file_ext");
 
   return {
     "file_location": file_location,
-    "filename": filename,
+    "file_name": file_name,
     "file_ext": file_ext
   }
 }
 
 
-function filename_change() {
+function file_name_change() {
   var fs = get_file_settings()
   if (fs !== false) {
     let flv = fs.file_location.value;
     let cds = current_datetime_string();
-    let fnv = fs.filename.value;
+    let fnv = fs.file_name.value;
     if (fnv.trim() == "") {
       fnv = "{file name}"
     }
     let fev = fs.file_ext.value;
 
-    var new_filename_display = "web-app-upload/" + flv + "/" + cds + "_" + fnv.trim() + "." + fev;
+    var new_file_name_display = flv + "/" + cds + "_" + fnv.trim() + "." + fev;
 
     var dfp = document.getElementById("dynamic_file_path");
-    dfp.innerText = new_filename_display;
+    dfp.innerText = new_file_name_display;
   }
 }
 
