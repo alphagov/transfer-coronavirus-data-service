@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # import os
 
-from flask import escape, redirect, request, session
+from flask import Flask, escape, redirect, request, session
 from requests.utils import quote
 
 import cognito
@@ -96,16 +96,16 @@ def admin_confirm_user(app):
     """
     Render the /admin/user/confirm flask route
 
-    This route posts back to the same page and performs the 
+    This route posts back to the same page and performs the
     user create/updates against cognito.
     """
 
-    # Get the edited user content from the session 
+    # Get the edited user content from the session
     # or initialise as an empty dictionary
     admin_user_object = session.get("admin_user_object", {})
     task = ""
     new_user = False
-    
+
     # Redirect to admin home if post data missing
     args = request.form
     if len(args) == 0:
@@ -135,31 +135,7 @@ def admin_confirm_user(app):
         clear_session(app)
         return redirect(target)
 
-    # Render the confirm user page
-    admin_user_object["name"] = sanitise_input(args, "full-name")
-    admin_user_object["phone_number"] = sanitise_input(args, "telephone-number")
-
-    account_type = sanitise_input(args, "account")
-    # user_group = return_users_group({"group": account_type})
-    user_group = get_group_by_name(account_type)
-    admin_user_object["group"] = user_group
-
-    san_is_la = sanitise_input(args, "is-la-radio") == "yes"
-    if san_is_la:
-        admin_user_object["custom:is_la"] = "1"
-    else:
-        admin_user_object["custom:is_la"] = "0"
-
-    custom_path_multiple = []
-    for tmp_arg in args.getlist("custom_paths"):
-        if not san_is_la and "local_authority" in tmp_arg:
-            app.logger.error("NOT san_is_la and LA in path:{}".format(tmp_arg))
-        elif san_is_la and "local_authority" not in tmp_arg:
-            app.logger.error("san_is_la and not LA in path:{}".format(tmp_arg))
-        else:
-            custom_path_multiple.append(sanitise_string(tmp_arg).replace("&amp;", "&"))
-
-    admin_user_object["custom:paths"] = str.join(";", custom_path_multiple)
+    admin_user_object = parse_edit_form_fields(args, admin_user_object, app)
 
     session["admin_user_email"] = admin_user_object["email"]
     session["admin_user_object"] = admin_user_object
@@ -169,19 +145,71 @@ def admin_confirm_user(app):
         "admin/confirm-user.html",
         user=admin_user_object,
         new_user=new_user,
-        user_group=user_group,
+        user_group=admin_user_object["group"],
     )
 
 
-def perform_cognito_task(task, admin_user_object): 
+def parse_edit_form_fields(
+    post_fields: list, admin_user_object: dict, app: Flask
+) -> dict:
+
+    sanitised_fields = {
+        "custom_paths": [
+            sanitise_string(input_path).replace("&amp;", "&")
+            for input_path in post_fields.getlist("custom_paths")
+        ]
+    }
+
+    for field in post_fields:
+        if field != "custom_paths":
+            sanitised_fields[field] = sanitise_input(post_fields, field)
+
+    admin_user_object["name"] = sanitised_fields["full-name"]
+    admin_user_object["phone_number"] = sanitised_fields["telephone-number"]
+
+    is_local_authority = sanitised_fields["is-la-radio"] == "yes"
+    user_group = get_group_by_name(sanitised_fields["account"])
+
+    admin_user_object["custom:is_la"] = "1" if is_local_authority else "0"
+    admin_user_object["group"] = user_group
+
+    custom_path_multiple = []
+
+    for requested_path in sanitised_fields["custom_paths"]:
+        if requested_path_matches_user_type(is_local_authority, requested_path):
+            custom_path_multiple.append(requested_path)
+        else:
+            app.logger.error(
+                {
+                    "error": "User denied access to requested path",
+                    "user": admin_user_object["email"],
+                    "path": requested_path,
+                }
+            )
+
+    admin_user_object["custom:paths"] = str.join(";", custom_path_multiple)
+    return admin_user_object
+
+
+def requested_path_matches_user_type(is_local_authority, requested_path):
+    is_path_valid = True
+
+    if not is_local_authority and "local_authority" in requested_path:
+        is_path_valid = False
+    elif is_local_authority and "local_authority" not in requested_path:
+        is_path_valid = False
+    return is_path_valid
+
+
+def perform_cognito_task(task, admin_user_object):
     is_task_complete = False
 
     if task == "confirm-new":
         is_task_complete = cognito.create_user(admin_user_object)
-        
+
     elif task == "confirm-existing":
         is_task_complete = cognito.update_user_attributes(admin_user_object)
-        
+
     return is_task_complete
 
 
