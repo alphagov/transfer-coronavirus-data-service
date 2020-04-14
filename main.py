@@ -298,21 +298,11 @@ def upload():
 
     file_extensions = {"csv": {"ext": "csv", "display": "CSV"}}
 
-    upload_redirects = {
-        "upload": "/upload?js_disabled=True",
-        "cancel-upload": "/upload",
-        "cancel-preupload": "/",
-    }
-
     if request.method == "POST":
         form_fields = request.form
         task = form_fields.get("task", None)
 
         app.logger.debug({"form_fields": form_fields})
-
-        if task in upload_redirects.keys():
-            redirect_to = upload_redirects["task"]
-            return redirect(redirect_to)
 
         if task == "preupload":
             preupload = False

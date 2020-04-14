@@ -51,7 +51,7 @@
 
     <p>You'll be asked to select a file when you continue</p>
     <button id="preuploadbut" name="task" value="preupload" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Continue</button>
-    <button id="preupload_cancel" name="task" value="cancel-preupload" class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Cancel</button>
+    <a href="/" id="preupload_cancel" class="govuk-button govuk-button--secondary" data-module="govuk-button">Cancel</a>
   </form>
 
   {% else %}
@@ -79,7 +79,7 @@
       <button id="upload_submit" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
     </form>
 
-    <a href="/upload"><button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="button">Cancel</button></a>
+    <a href="/upload" class="govuk-button govuk-button--secondary" data-module="govuk-button">Cancel</a>
   </div>
   <div id="uploading_panel" class="hidden">
     <div id="uploading_spinner" class="govuk-!-margin-bottom-7 loading-spinner"></div>
