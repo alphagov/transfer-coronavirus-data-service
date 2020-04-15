@@ -5,11 +5,9 @@
 # import csv
 import os
 import re
-import time
 
 import boto3
 from botocore.exceptions import ClientError
-from flask import session
 
 from cognito_groups import get_group_by_name, get_group_map, user_groups
 from logger import LOG
@@ -390,11 +388,11 @@ def add_user_to_group(username, group_name=None):
 
 def create_user(user):
     """
-    Create and set properties of cognito user 
+    Create and set properties of cognito user
 
-    Create user in cognito user pool 
-    If successful then: 
-    - Set MFA preference to SMS 
+    Create user in cognito user pool
+    If successful then:
+    - Set MFA preference to SMS
     - Set MFA SMS phone number
     - Add user to the requested cognito group
     """
@@ -447,7 +445,7 @@ def create_user(user):
             statuses["create_user"] = res
 
     if statuses.get("create_user", False):
-        
+
         try:
             client.admin_set_user_mfa_preference(
                 SMSMfaSettings={"Enabled": True, "PreferredMfa": True},

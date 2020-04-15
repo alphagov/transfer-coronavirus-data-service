@@ -1,7 +1,6 @@
 """ Create mock boto3 clients for testing """
 
 import boto3
-import pytest
 from botocore.stub import Stubber
 
 
