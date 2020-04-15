@@ -78,6 +78,7 @@ def allowed_domains():
         "@coop.co.uk",
         "@asda.co.uk",
         "@johnlewis.co.uk",
+        "@capita.com",
     ]
 
 
