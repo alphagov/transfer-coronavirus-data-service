@@ -1,5 +1,6 @@
 import json
 import os
+from unittest.mock import patch
 
 import flask
 import pytest
@@ -19,48 +20,47 @@ from main import (
 )
 
 
-# Tests for assets helpers
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("test_upload_session")
+@pytest.mark.usefixtures("upload_form_fields")
+@pytest.mark.usefixtures("valid_extensions")
+@pytest.mark.usefixtures("upload_form_fields")
 def test_css():
     with app.test_request_context("/css/govuk-frontend-3.6.0.min.css"):
-
         assert flask.request.view_args["path"] == "govuk-frontend-3.6.0.min.css"
         assert flask.request.url_rule.rule == "/css/<path:path>"
 
 
 def test_js():
     with app.test_request_context("/js/govuk-frontend-3.6.0.min.js"):
-
         assert flask.request.view_args["path"] == "govuk-frontend-3.6.0.min.js"
         assert flask.request.url_rule.rule == "/js/<path:path>"
 
 
 def test_assets():
     with app.test_request_context("/assets/images/govuk-crest-2x.png"):
-
         assert flask.request.view_args["path"] == "images/govuk-crest-2x.png"
         assert flask.request.url_rule.rule == "/assets/<path:path>"
 
 
 def test_dist():
     with app.test_request_context("/dist/html5shiv.min.js"):
-
         assert flask.request.view_args["path"] == "html5shiv.min.js"
         assert flask.request.url_rule.rule == "/dist/<path:path>"
 
 
 # Test the flask routes
-@pytest.mark.usefixtures("test_client")
+
+
 def test_route_index_logged_out(test_client):
     response = test_client.get("/")
     assert response.status_code == 200
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
 def test_route_index_logged_in(test_client, test_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
-        app.logger.debug(test_session)
     response = test_client.get("/")
     body = response.data.decode()
 
@@ -71,12 +71,9 @@ def test_route_index_logged_in(test_client, test_session):
     )
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_upload_session")
 def test_route_index_logged_in_upload(test_client, test_upload_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_upload_session)
-        app.logger.debug(test_upload_session)
 
     response = test_client.get("/")
     body = response.data.decode()
@@ -84,12 +81,9 @@ def test_route_index_logged_in_upload(test_client, test_upload_session):
     assert "<h3>Upload</h3>" in body
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
 def test_route_files(test_client, test_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
-        app.logger.debug(test_session)
 
     root_path = "web-app-prod-data"
     bucket_name = "test_bucket"
@@ -115,12 +109,9 @@ def test_route_files(test_client, test_session):
         assert "local_authority/haringey/people4.csv" in body
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
 def test_route_upload_denied(test_client, test_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
-        app.logger.debug(test_session)
 
     response = test_client.get("/upload")
     body = response.data.decode()
@@ -128,12 +119,9 @@ def test_route_upload_denied(test_client, test_session):
     assert "<h1>Redirecting...</h1>" in body
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_upload_session")
 def test_route_upload_allowed(test_client, test_upload_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_upload_session)
-        app.logger.debug(test_upload_session)
 
     response = test_client.get("/upload")
     body = response.data.decode()
@@ -141,7 +129,6 @@ def test_route_upload_allowed(test_client, test_upload_session):
     assert '<h3 class="govuk-heading-m">File settings</h3>' in body
 
 
-@pytest.mark.usefixtures("test_client")
 def test_route_css(test_client):
     """ Check CSS actually resolves successfully """
     response = test_client.get("/css/govuk-frontend-3.6.0.min.css")
@@ -150,7 +137,6 @@ def test_route_css(test_client):
     assert ".govuk-link{" in body
 
 
-@pytest.mark.usefixtures("test_client")
 def test_route_js(test_client):
     """ Check JS actually resolves successfully """
     response = test_client.get("/js/govuk-frontend-3.6.0.min.js")
@@ -165,8 +151,6 @@ def test_route_js(test_client):
     assert "!function(a,b)" in body
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
 @requests_mock.Mocker(kw="mocker")
 def test_auth_flow(test_client, test_session, fake_jwt_decoder, **args):
     """ Test mocked oauth exchange """
@@ -183,7 +167,8 @@ def test_auth_flow(test_client, test_session, fake_jwt_decoder, **args):
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
 
-    with stubber:
+    with patch("main.User.group") as mocked_user_get_details:
+        mocked_user_get_details.return_value = {"value": "admin-full"}
         """Test using request mocker and boto stub."""
 
         oauth_response = json.dumps({"id_token": token, "access_token": token})
@@ -197,13 +182,13 @@ def test_auth_flow(test_client, test_session, fake_jwt_decoder, **args):
 
 
 # Test access management functions
-@pytest.mark.usefixtures("test_session")
+
+
 def test_return_attribute(test_session):
     user_attribute_value = return_attribute(test_session, "custom:is_la")
     assert user_attribute_value == "1"
 
 
-@pytest.mark.usefixtures("test_session")
 def test_load_user_lookup(test_session):
     root_path = "web-app-prod-data"
     paths = load_user_lookup(test_session)
@@ -326,7 +311,6 @@ def test_get_files(test_session):
         stubber.deactivate()
 
 
-@pytest.mark.usefixtures("test_session")
 def test_create_presigned_url(test_session):
     """ Test creation of presigned url """
     bucket = "test_bucket"
@@ -341,7 +325,6 @@ def test_create_presigned_url(test_session):
         stubber.deactivate()
 
 
-@pytest.mark.usefixtures("test_session")
 def test_user_custom_paths(test_session):
     download_paths = user_custom_paths(test_session, is_upload=False)
     assert "web-app-prod-data/local_authority/haringey" in download_paths
@@ -349,9 +332,6 @@ def test_user_custom_paths(test_session):
     assert "web-app-upload/local_authority/barnet" in upload_paths
 
 
-@pytest.mark.usefixtures("test_upload_session")
-@pytest.mark.usefixtures("upload_form_fields")
-@pytest.mark.usefixtures("valid_extensions")
 def test_upload_form_validate(test_session, upload_form_fields, valid_extensions):
     upload_paths = user_custom_paths(test_session, is_upload=True)
     validation_status = upload_form_validate(
@@ -374,7 +354,6 @@ def test_upload_form_validate(test_session, upload_form_fields, valid_extensions
     assert not validation_status["valid"]
 
 
-@pytest.mark.usefixtures("upload_form_fields")
 def test_generate_upload_file_path(upload_form_fields):
     file_path = generate_upload_file_path(upload_form_fields)
     assert file_path.startswith(upload_form_fields["file_location"])

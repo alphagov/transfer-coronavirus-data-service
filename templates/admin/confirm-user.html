@@ -7,7 +7,7 @@
       Full name
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ user.name }}
+      {{ user.name() }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -15,7 +15,7 @@
       Email address
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ user.email }}
+      {{ user.email_address }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -23,7 +23,7 @@
       UK mobile number
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ user.phone_number }}
+      {{ user.phone_number() }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -39,7 +39,7 @@
       Local authority user?
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ "Yes" if user["custom:is_la"] == "1" else "No" }}
+      {{ "Yes" if user.is_la() else "No" }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -47,7 +47,7 @@
       Paths
     </dt>
     <dd class="govuk-summary-list__value">
-      {% for attr_path in user["custom:paths"].split(";") %}
+      {% for attr_path in user.custom_paths() %}
         <p class="govuk-body">{{ attr_path }}</p>
       {% endfor %}
     </dd>

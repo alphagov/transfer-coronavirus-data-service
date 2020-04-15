@@ -8,14 +8,14 @@
     <label class="govuk-label" for="full-name">
       Full name
     </label>
-    <input class="govuk-input" id="full-name" name="full-name" type="text" autocomplete="false" spellcheck="false" value="{{ user.name }}">
+    <input class="govuk-input" id="full-name" name="full-name" type="text" autocomplete="false" spellcheck="false" value="{{ user.name() }}">
   </div>
 
   <div class="govuk-form-group">
     <label class="govuk-label" for="email">
       Email address
     </label>
-    <input class="govuk-input" id="email" name="email" type="text" {{ "readonly disabled='disabled'" if not new_user }} autocomplete="false" spellcheck="false" value="{{ user.email }}">
+    <input class="govuk-input" id="email" name="email" type="text" {{ "readonly" if not new_user }} autocomplete="false" spellcheck="false" value="{{ user.email_address }}">
     {% if new_user %}
     <span class="govuk-hint">
       <br>
@@ -31,7 +31,7 @@
     <label class="govuk-label" for="telephone-number">
       UK mobile number
     </label>
-    <input class="govuk-input govuk-input--width-20" id="telephone-number" name="telephone-number" type="tel" autocomplete="false" value="{{ user.phone_number }}">
+    <input class="govuk-input govuk-input--width-20" id="telephone-number" name="telephone-number" type="tel" autocomplete="false" value="{{ user.phone_number() }}">
   </div>
 
   <div class="govuk-form-group">
@@ -43,7 +43,7 @@
       </legend>
       <select class="govuk-select" id="account-select" name="account">
         {% for group in available_groups %}
-        <option value="{{ group['value'] }}" {% if "group" in user and user["group"]["value"] == group["value"] %} selected {% endif %}>{{ group['display'] }}</option>
+        <option value="{{ group['value'] }}" {% if user.group_value() == group["value"] %} selected {% endif %}>{{ group['display'] }}</option>
         {% endfor %}
       </select>
     </fieldset>
@@ -60,13 +60,13 @@
         </legend>
         <div class="govuk-radios govuk-radios--inline">
           <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="is-la-radio" name="is-la-radio" type="radio" value="yes" {{ 'checked="checked"' if is_la }}>
+            <input class="govuk-radios__input" id="is-la-radio" name="is-la-radio" type="radio" value="yes" {{ 'checked="checked"' if user.is_la() }}>
             <label class="govuk-label govuk-radios__label" for="is-la-radio">
               Yes
             </label>
           </div>
           <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="is-la-radio-2" name="is-la-radio" type="radio" value="no" {{ 'checked="checked"' if not is_la }}>
+            <input class="govuk-radios__input" id="is-la-radio-2" name="is-la-radio" type="radio" value="no" {{ 'checked="checked"' if not user.is_la() }}>
             <label class="govuk-label govuk-radios__label" for="is-la-radio-2">
               No
             </label>
@@ -85,7 +85,7 @@
         <div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
 
           <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="other_cond" type="radio" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if is_other }} aria-expanded="true">
+            <input class="govuk-radios__input" id="other_cond" type="radio" data-aria-controls="conditional-other_cond" {{ 'checked="checked"' if not user.is_la() }} aria-expanded="true">
             <label class="govuk-label govuk-radios__label" for="other_cond">
               Other
             </label>
@@ -93,7 +93,7 @@
           <div class="govuk-radios__conditional govuk-radios__conditional" id="conditional-other_cond">
             <div class="govuk-form-group">
               <div class="govuk-checkboxes">
-                {% for i in other.subs %}
+                {% for i in other_download_paths.subs %}
                 <div class="govuk-checkboxes__item">
                   <input class="govuk-checkboxes__input"
                          name="custom_paths" type="checkbox"
@@ -112,7 +112,7 @@
           </div>
 
           <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="la_cond" type="radio" data-aria-controls="conditional-la_cond" {{ 'checked="checked"' if is_la }}>
+            <input class="govuk-radios__input" id="la_cond" type="radio" data-aria-controls="conditional-la_cond" {{ 'checked="checked"' if user.is_la() }}>
             <label class="govuk-label govuk-radios__label" for="la_cond">
               Local authority
             </label>
@@ -120,7 +120,7 @@
           <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-la_cond">
             <div class="govuk-form-group">
               <div class="govuk-checkboxes">
-                {% for i in local_authority.subs %}
+                {% for i in local_authority_download_paths.subs %}
                 <div class="govuk-checkboxes__item">
                   <input class="govuk-checkboxes__input" name="custom_paths" id="custom_path_{{ i['val'] }}" type="checkbox" value="{{ i['val'] }}" {{
                     'checked="checked"' if i['val'] in user_custom_paths

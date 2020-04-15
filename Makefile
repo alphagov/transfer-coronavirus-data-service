@@ -17,7 +17,7 @@ clean:
 	rm -rf __pycache__ .coverage *.zip *.egg-info .tox venv .pytest_cache htmlcov **/__pycache__ **/*.pyc .target setup.cfg
 	echo "✔️ Cleanup of files completed!"
 
-test: checks
+test:
 	pytest -c pytest.ini -sqx --disable-warnings
 	echo "✔️ Tests passed!"
 

@@ -5,6 +5,7 @@ the test module includes to resolve successfully
 import pytest
 
 from main import app, load_environment
+from user import User
 
 
 def get_standard_download_group():
@@ -161,3 +162,132 @@ def user_confirm_form():
         ],
     }
     return form
+
+
+@pytest.fixture
+def mock_env_staging(monkeypatch):
+    monkeypatch.setenv("CF_SPACE", "staging")
+
+
+@pytest.fixture
+def mock_env_production(monkeypatch):
+    monkeypatch.setenv("CF_SPACE", "production")
+
+
+@pytest.fixture
+def valid_user():
+    return User("justin.casey@communities.gov.uk")
+
+
+@pytest.fixture
+def user_with_invalid_email():
+    return User("not_an_email")
+
+
+@pytest.fixture
+def user_with_invalid_domain():
+    return User("justin.casey@hotmail.com")
+
+
+@pytest.fixture()
+def admin_get_user():
+    return {
+        "Username": "justin.casey@communities.gov.uk",
+        "UserStatus": "a_status",
+        "UserCreateDate": "a_date",
+        "UserLastModifiedDate": "another_date",
+        "Enabled": "is_enabled",
+        "UserAttributes": [
+            {"Name": "sub", "Value": "a_uuid"},
+            {"Name": "email_verified", "Value": "true"},
+            {"Name": "custom:paths", "Value": "some_custom_paths"},
+            {"Name": "name", "Value": "group_name"},
+            {"Name": "phone_number_verified", "Value": "false"},
+            {"Name": "custom:is_la", "Value": "0"},
+            {"Name": "phone_number", "Value": "a_phone"},
+            {"Name": "email", "Value": "justin.casey@communities.gov.uk"},
+        ],
+    }
+
+
+@pytest.fixture()
+def user_details_response(group_result):
+    return {
+        "username": "justin.casey@communities.gov.uk",
+        "status": "a_status",
+        "createdate": "a_date",
+        "lastmodifieddate": "another_date",
+        "enabled": "is_enabled",
+        "sub": "a_uuid",
+        "email_verified": "true",
+        "custom:paths": "some_custom_paths",
+        "name": "group_name",
+        "phone_number_verified": "false",
+        "custom:is_la": "0",
+        "phone_number": "a_phone",
+        "email": "justin.casey@communities.gov.uk",
+        "group": group_result,
+    }
+
+
+@pytest.fixture()
+def standard_download_group_response():
+    return {"Groups": [{"GroupName": "standard-download"}]}
+
+
+@pytest.fixture()
+def group_result():
+    return {
+        "preference": 10,
+        "value": "standard-download",
+        "display": "Standard download user",
+    }
+
+
+@pytest.fixture()
+def create_user_arguments():
+    return {
+        "UserAttributes": [
+            {"Name": "name", "Value": "justin"},
+            {"Name": "email", "Value": "justin.casey@communities.gov.uk"},
+            {"Name": "email_verified", "Value": "true"},
+            {"Name": "phone_number", "Value": "+44201234567890"},
+            {"Name": "phone_number_verified", "Value": "false"},
+            {"Name": "custom:is_la", "Value": "0"},
+            {"Name": "custom:paths", "Value": "web-app-prod-data"},
+        ],
+        "ForceAliasCreation": False,
+        "DesiredDeliveryMediums": ["EMAIL"],
+    }
+
+
+@pytest.fixture()
+def list_users_arguments():
+    return {
+        "AttributesToGet": [
+            "name",
+            "email",
+            "email_verified",
+            "phone_number",
+            "phone_number_verified",
+            "cognito:user_status",
+            "custom:paths",
+            "custom:is_la",
+        ],
+        "Limit": 20,
+    }
+
+
+@pytest.fixture()
+def list_users_response(admin_get_user):
+    return {
+        "Users": [admin_get_user],
+    }
+
+
+@pytest.fixture()
+def list_users_result(user_details_response):
+    return {
+        "users": [user_details_response],
+        "token": "",
+    }

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # import os
 
-from flask import Flask, escape, redirect, request, session
+from flask import Flask, escape, redirect, request, session, url_for
 from requests.utils import quote
 
-import cognito
 import s3paths
 from cognito_groups import get_group_by_name, return_users_group, user_groups
 from flask_helpers import render_template_custom
 from logger import LOG
+from user import User
 
 local_valid_paths_var = []
 
@@ -48,11 +48,10 @@ def admin_user(app):
         email = session["admin_user_email"]
 
     if email != "":
-        user = cognito.get_user_details(email)
+        user = User(email)
 
-        if user != {}:
-            session["admin_user_email"] = user["email"]
-            session["admin_user_object"] = user
+        if user.get_details() != {}:
+            session["admin_user_email"] = user.email_address
 
             user_group = return_users_group(user)
 
@@ -115,13 +114,15 @@ def admin_confirm_user(app):
     elif "task" in args:
         task = args["task"]
 
-    app.logger.debug({"action": "admin_confirm_user", "args:": args})
-
     # Sanitise the email address if user edited
     if task in ["new", "continue-new"]:
         new_user = True
         if "email" in args:
-            admin_user_object["email"] = cognito.sanitise_email(args["email"])
+            user = User(args["email"])
+            if user.email_address_is_valid():
+                admin_user_object["email_address"] = user.email_address
+            else:
+                return redirect(url_for("admin_edit_user"))
 
     # Handle Cognito create and update user logic
     if task in ["confirm-new", "confirm-existing"]:
@@ -131,39 +132,28 @@ def admin_confirm_user(app):
         state = "created" if task == "confirm-new" else "updated"
         if is_task_complete:
             target = "/admin/user?done={}&email={}".format(
-                state, quote(admin_user_object["email"])
+                state, quote(admin_user_object["email_address"])
             )
         clear_session(app)
         return redirect(target)
 
-    admin_user_object = parse_edit_form_fields(args, admin_user_object, app)
+    user = parse_edit_form_fields(args, admin_user_object, app)
 
-    session["admin_user_email"] = admin_user_object["email"]
-    session["admin_user_object"] = admin_user_object
+    session["admin_user_email"] = user.email_address
+    session["admin_user_object"] = user.details
 
     return render_template_custom(
         app,
         "admin/confirm-user.html",
-        user=admin_user_object,
+        user=user,
         new_user=new_user,
-        user_group=admin_user_object["group"],
+        user_group=user.group_dict(),
     )
 
 
 def parse_edit_form_fields(
     post_fields: dict, admin_user_object: dict, app: Flask
-) -> dict:
-
-    app.logger.debug(
-        {"action": "parse_edit_form_fields", "fields_type": str(type(post_fields))}
-    )
-    app.logger.debug(
-        {
-            "action": "parse_edit_form_fields",
-            "custom_paths": post_fields.getlist("custom_paths"),
-        }
-    )
-    app.logger.debug({"action": "parse_edit_form_fields", "post_fields": post_fields})
+):
     sanitised_fields = {
         "custom_paths": [
             sanitise_string(input_path).replace("&amp;", "&")
@@ -175,17 +165,8 @@ def parse_edit_form_fields(
         if field != "custom_paths":
             sanitised_fields[field] = sanitise_input(post_fields, field)
 
-    admin_user_object["name"] = sanitised_fields["full-name"]
-    admin_user_object["phone_number"] = sanitised_fields["telephone-number"]
-
     is_local_authority = sanitised_fields["is-la-radio"] == "yes"
-    user_group = get_group_by_name(sanitised_fields["account"])
-
-    admin_user_object["custom:is_la"] = "1" if is_local_authority else "0"
-    admin_user_object["group"] = user_group
-
     custom_path_multiple = []
-
     for requested_path in sanitised_fields["custom_paths"]:
         if requested_path_matches_user_type(is_local_authority, requested_path):
             custom_path_multiple.append(requested_path)
@@ -193,13 +174,20 @@ def parse_edit_form_fields(
             app.logger.error(
                 {
                     "error": "User denied access to requested path",
-                    "user": admin_user_object["email"],
+                    "user": admin_user_object["email_address"],
                     "path": requested_path,
                 }
             )
 
-    admin_user_object["custom:paths"] = str.join(";", custom_path_multiple)
-    return admin_user_object
+    user = User(post_fields["email"])
+    user.from_form(
+        sanitised_fields["full-name"],
+        sanitised_fields["telephone-number"],
+        str.join(";", custom_path_multiple),
+        "1" if is_local_authority else "0",
+        get_group_by_name(sanitised_fields["account"])
+    )
+    return user
 
 
 def requested_path_matches_user_type(
@@ -224,18 +212,7 @@ def remove_invalid_user_paths(user: dict) -> dict:
             is_local_authority_user, custom_path
         )
         if is_path_valid:
-            LOG.debug(
-                "path: %s is valid for %s",
-                custom_path,
-                "LA user" if is_local_authority_user else "non-LA user",
-            )
             valid_user_paths.append(custom_path)
-        else:
-            LOG.debug(
-                "path: %s is not valid for %s",
-                custom_path,
-                "LA user" if is_local_authority_user else "non-LA user",
-            )
 
     user["custom:paths"] = ";".join(valid_user_paths)
 
@@ -244,12 +221,27 @@ def remove_invalid_user_paths(user: dict) -> dict:
 
 def perform_cognito_task(task: str, admin_user_object: dict) -> bool:
     is_task_complete = False
+    user = User(admin_user_object["email_address"])
+
+    print(task)
+    print(admin_user_object)
 
     if task == "confirm-new":
-        is_task_complete = cognito.create_user(admin_user_object)
-
+        is_task_complete = user.create(
+            admin_user_object["name"],
+            admin_user_object["phone_number"],
+            admin_user_object["custom:paths"],
+            admin_user_object["custom:is_la"],
+            admin_user_object["group"]["value"]
+        )
     elif task == "confirm-existing":
-        is_task_complete = cognito.update_user_attributes(admin_user_object)
+        is_task_complete = user.update(
+            admin_user_object["name"],
+            admin_user_object["phone_number"],
+            admin_user_object["custom:paths"],
+            admin_user_object["custom:is_la"],
+            admin_user_object["group"]["value"]
+        )
 
     return is_task_complete
 
@@ -270,36 +262,21 @@ def admin_edit_user(app):
         session["admin_user_object"] = {}
 
     admin_user_email = session["admin_user_email"]
-    admin_user_object = session["admin_user_object"]
+    user = User(admin_user_email)
 
     # If the user doesn't exist, allow editing of email/username
     # and don't pre-set user account type options.
-    if admin_user_email == "" or cognito.get_user_details(admin_user_email) == {}:
+    if admin_user_email == "" or user.get_details() == {}:
         new_user = True
-        is_local_authority_user = False
-        is_other_user = False
-    else:
-        # If you are editing an existing user:
-        # - check that all the granted paths are valid for the user's type.
-        # - and remove any paths where the account type doesn't match
-        if "custom:paths" not in admin_user_object:
-            admin_user_object["custom:paths"] = ""
-        is_local_authority_user = admin_user_object["custom:is_la"] == "1"
-        is_other_user = not is_local_authority_user
-        admin_user_object = remove_invalid_user_paths(admin_user_object)
-        user_custom_paths = admin_user_object["custom:paths"].split(";")
 
     return render_template_custom(
         app,
         "admin/edit-user.html",
-        user=admin_user_object,
+        user=user,
         new_user=new_user,
-        user_custom_paths=user_custom_paths,
-        local_authority=value_paths_by_type("local_authority"),
-        is_la=is_local_authority_user,
-        other=value_paths_by_type("other"),
-        is_other=is_other_user,
-        allowed_domains=(cognito.allowed_domains() if new_user else []),
+        local_authority_download_paths=value_paths_by_type("local_authority"),
+        other_download_paths=value_paths_by_type("other"),
+        allowed_domains=(User("").allowed_domains() if new_user else []),
         available_groups=user_groups(),
     )
 
@@ -314,8 +291,8 @@ def admin_reinvite_user(app):
     admin_user_object = session["admin_user_object"]
 
     if task == "do-reinvite-user":
-        email = admin_user_object["email"]
-        cognito.reinvite_user(email, True)
+        email = admin_user_object["email_address"]
+        User(email).reinvite()
         clear_session(app)
         session["admin_user_email"] = email
         return redirect("/admin/user?done=reinvited")
@@ -323,8 +300,8 @@ def admin_reinvite_user(app):
     return render_template_custom(
         app,
         "admin/confirm-reinvite.html",
-        email=quote(admin_user_object["email"]),
-        user_email=admin_user_object["email"],
+        email=quote(admin_user_object["email_address"]),
+        user_email=admin_user_object["email_address"],
     )
 
 
@@ -339,17 +316,17 @@ def admin_enable_user(app):
     admin_user_object = session["admin_user_object"]
 
     if task == "do-enable-user":
-        email = admin_user_object["email"]
+        email = admin_user_object["email_address"]
         clear_session(app)
-        cognito.enable_user(email, True)
+        User(email).enable()
         session["admin_user_email"] = email
         return redirect("/admin/user?done=enabled")
 
     return render_template_custom(
         app,
         "admin/confirm-enable.html",
-        email=quote(admin_user_object["email"]),
-        user_email=admin_user_object["email"],
+        email=quote(admin_user_object["email_address"]),
+        user_email=admin_user_object["email_address"],
     )
 
 
@@ -364,17 +341,17 @@ def admin_disable_user(app):
     admin_user_object = session["admin_user_object"]
 
     if task == "do-disable-user":
-        email = admin_user_object["email"]
+        email = admin_user_object["email_address"]
         clear_session(app)
-        cognito.disable_user(email, True)
+        User(email).disable()
         session["admin_user_email"] = email
         return redirect("/admin/user?done=disabled")
 
     return render_template_custom(
         app,
         "admin/confirm-disable.html",
-        email=quote(admin_user_object["email"]),
-        user_email=admin_user_object["email"],
+        email=quote(admin_user_object["email_address"]),
+        user_email=admin_user_object["email_address"],
     )
 
 
@@ -389,16 +366,16 @@ def admin_delete_user(app):
     admin_user_object = session["admin_user_object"]
 
     if task == "do-delete-user":
-        email = admin_user_object["email"]
+        email = admin_user_object["email_address"]
         clear_session(app)
-        cognito.delete_user(email, True)
+        User(email).delete()
         return redirect("/admin?done=deleted")
 
     return render_template_custom(
         app,
         "admin/confirm-delete.html",
-        email=quote(admin_user_object["email"]),
-        user_email=admin_user_object["email"],
+        email=quote(admin_user_object["email_address"]),
+        user_email=admin_user_object["email_address"],
     )
 
 

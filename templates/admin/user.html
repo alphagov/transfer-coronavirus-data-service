@@ -17,7 +17,7 @@
       Enabled
     </dt>
     <dd class="govuk-summary-list__value" id="user_enabled">
-      {{ "Yes" if user.enabled|string == 'True' else "No" }}
+      {{ "Yes" if user.enabled()|string == 'True' else "No" }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -25,7 +25,7 @@
       Status
     </dt>
     <dd class="govuk-summary-list__value" id="user_status">
-      {{ user.status }}
+      {{ user.status() }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -33,7 +33,7 @@
       Full name
     </dt>
     <dd class="govuk-summary-list__value" id="user_name">
-      {{ user.name|e }}
+      {{ user.name()|e }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -41,7 +41,7 @@
       Email address
     </dt>
     <dd class="govuk-summary-list__value" id="user_email">
-      {{ user.email }}
+      {{ user.email_address }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -49,10 +49,10 @@
       UK mobile number
     </dt>
     <dd class="govuk-summary-list__value" id="user_phone_number">
-      {% if user.phone_number_verified == 'true' %}
-        {{ user.phone_number }} (VERIFIED)
+      {% if user.phone_number_verified() == 'true' %}
+        {{ user.phone_number() }} (VERIFIED)
       {% else %}
-        {{ user.phone_number }} (AWAITING VERIFICATION)
+        {{ user.phone_number() }} (AWAITING VERIFICATION)
       {% endif %}
     </dd>
   </div>
@@ -72,13 +72,13 @@
       {{ "Yes" if user["custom:is_la"] == "1" else "No" }}
     </dd>
   </div>
-  {% if "custom:paths" in user %}
+  {% if user.custom_paths() != [] %}
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
       Paths
     </dt>
     <dd class="govuk-summary-list__value" id="user_granted_paths">
-      {% for attr_path in user["custom:paths"].split(";") %}
+      {% for attr_path in user.custom_paths() %}
         <p class="govuk-body">{{ attr_path }}</p>
       {% endfor %}
     </dd>
@@ -89,7 +89,7 @@
       Created date (last invited)
     </dt>
     <dd class="govuk-summary-list__value" id="user_created">
-      {{ user.createdate }}
+      {{ user.created_at() }}
     </dd>
   </div>
   <div class="govuk-summary-list__row">
@@ -97,7 +97,7 @@
       Last modified date
     </dt>
     <dd class="govuk-summary-list__value" id="user_modified">
-      {{ user.lastmodifieddate }}
+      {{ user.modified_at() }}
     </dd>
   </div>
 </dl>
