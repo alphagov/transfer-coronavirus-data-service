@@ -473,6 +473,12 @@ def admin_disable_user():
     return admin.admin_disable_user(app)
 
 
+@app.route("/admin/user/delete", methods=["POST"])
+@admin_interface
+def admin_delete_user():
+    return admin.admin_delete_user(app)
+
+
 @app.route("/admin/user/error")
 @admin_interface
 def admin_user_error():

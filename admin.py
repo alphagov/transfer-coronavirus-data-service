@@ -245,19 +245,6 @@ def admin_edit_user(app):
     if admin_user_email == "" or cognito.get_user_details(admin_user_email) == {}:
         new_user = True
 
-    if task == "delete":
-        return render_template_custom(
-            app,
-            "admin/confirm-delete.html",
-            email=quote(admin_user_object["email"]),
-            user_email=admin_user_object["email"],
-        )
-    if task == "do-delete-user":
-        email = admin_user_object["email"]
-        clear_session(app)
-        cognito.delete_user(email, True)
-        return redirect("/admin?done=deleted")
-
     is_la = False
     is_other = False
 
@@ -359,6 +346,30 @@ def admin_disable_user(app):
         user_email=admin_user_object["email"],
     )
 
+
+def admin_delete_user(app):
+
+    args = request.values
+
+    task = ""
+    if "task" in args:
+        task = args["task"]
+
+    admin_user_object = session["admin_user_object"]
+
+    if task == "do-delete-user":
+        email = admin_user_object["email"]
+        clear_session(app)
+        cognito.delete_user(email, True)
+        return redirect("/admin?done=deleted")
+
+    return render_template_custom(
+        app,
+        "admin/confirm-delete.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
+    
 
 def admin_user_not_found(app):
     return "User not found"

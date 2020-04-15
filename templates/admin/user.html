@@ -107,10 +107,10 @@
 
 <p>The following actions will ask for confirmation</p>
 <div>
-  <form action="/admin/user/edit" method="post">
+  <form method="post">
     <button formaction="/admin/user/reinvite" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Reinvite</button>
     <button formaction="/admin/user/{{ 'disable' if user.enabled else 'enable' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">{{ 'Disable' if user.enabled else 'Enable' }}</button>
-    <button name="task" value="delete" class="govuk-button govuk-button--secondary" data-module="govuk-button">Delete</button>
+    <button formaction="/admin/user/delete" class="govuk-button govuk-button--secondary" data-module="govuk-button">Delete</button>
   </form>
 
 </div>
