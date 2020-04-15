@@ -4,11 +4,11 @@
 <h1 class="govuk-heading-l">Manage user</h1>
 
 {%if done != "None" %}
-  <div class="govuk-panel govuk-panel--confirmation">
-    <h2 class="govuk-panel__title">
-      {{ done|e|title }} successfully
-    </h2>
-  </div>
+<div class="govuk-panel govuk-panel--confirmation">
+  <h2 class="govuk-panel__title">
+    {{ done|e|title }} successfully
+  </h2>
+</div>
 {% endif %}
 
 <dl class="govuk-summary-list">
@@ -50,9 +50,9 @@
     </dt>
     <dd class="govuk-summary-list__value" id="user_phone_number">
       {% if user.phone_number_verified == 'true' %}
-        {{ user.phone_number }} (VERIFIED)
+      {{ user.phone_number }} (VERIFIED)
       {% else %}
-        {{ user.phone_number }} (AWAITING VERIFICATION)
+      {{ user.phone_number }} (AWAITING VERIFICATION)
       {% endif %}
     </dd>
   </div>
@@ -79,7 +79,7 @@
     </dt>
     <dd class="govuk-summary-list__value" id="user_granted_paths">
       {% for attr_path in user["custom:paths"].split(";") %}
-        <p class="govuk-body">{{ attr_path }}</p>
+      <p class="govuk-body">{{ attr_path }}</p>
       {% endfor %}
     </dd>
   </div>

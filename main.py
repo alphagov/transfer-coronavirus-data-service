@@ -24,6 +24,7 @@ from flask_helpers import (
     requires_group_in_list,
 )
 from logger import LOG
+from user import User
 
 app = Flask(__name__)
 app.cf_space = os.getenv("CF_SPACE", "testing")
@@ -107,13 +108,11 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
     client = boto3.client("cognito-idp")
     response = client.get_user(AccessToken=oauth_response_body["access_token"])
 
-    group = cognito.users_group(response["Username"])
-
     session["attributes"] = response["UserAttributes"]
     session["user"] = response["Username"]
     session["email"] = return_attribute(session, "email")
     session["details"] = id_token
-    session["group"] = group
+    session["group"] = User.group(response["Username"])
 
     app.logger.info(
         "Successful login - user: %s email: %s", session["user"], session["email"]
@@ -215,7 +214,6 @@ def index():
         cognito.delegate_auth_to_aws(session)
 
     if "code" in args:
-        app.logger.debug("Perform auth exchange")
         oauth_code = args["code"]
         response = exchange_code_for_tokens(oauth_code)
         if response.status_code != 200:
@@ -223,7 +221,6 @@ def index():
         return redirect("/admin" if has_admin_role() else "/")
 
     if "details" in session:
-        app.logger.debug("Logged in")
         upload_rights = has_upload_rights()
         is_admin_role = has_admin_role()
         return render_template_custom(
@@ -235,7 +232,6 @@ def index():
             is_admin_role=is_admin_role,
         )
     else:
-        app.logger.debug("Logged out")
         login_url = (
             f"https://{app.cognito_domain}/oauth2/authorize?"
             f"client_id={app.client_id}&"
@@ -277,13 +273,6 @@ def download(path):
     Generate a presigned S3 URL
     Redirect to download
     """
-
-    # We could go to this method which is tigher if required
-    # files = get_files(app.bucket_name, session)
-    # keys = [file["key"] for file in files]
-    # app.logger.debug({"granted_files": keys, "requested_path": path})
-    # if path in keys:
-
     prefixes = load_user_lookup(session)
     if key_has_granted_prefix(path, prefixes):
         redirect_url = create_presigned_url(app.bucket_name, path, 60)
@@ -322,8 +311,6 @@ def upload():
         form_fields = request.form
         task = form_fields.get("task", None)
 
-        app.logger.debug({"form_fields": form_fields})
-
         if task == "preupload":
             preupload = False
 
@@ -335,9 +322,7 @@ def upload():
                 file_path_to_upload = generate_upload_file_path(
                     validated_form["fields"]
                 )
-                app.logger.debug(
-                    {"route": "upload", "file_path_to_upload": file_path_to_upload}
-                )
+
                 # generate a S3 presigned_object PutObjct based
                 # on s3 key in file_path_to_upload
                 presigned_object = create_presigned_post(file_path_to_upload)
@@ -391,7 +376,6 @@ def upload_form_validate(form_fields, valid_paths, valid_extensions):
 
     if "file_name" in form_fields:
         file_name = secure_filename(form_fields["file_name"])
-        app.logger.debug({"route": "upload", "file_name": file_name})
         status["fields"]["file_name"] = file_name
 
     if "file_ext" in form_fields:
@@ -399,7 +383,6 @@ def upload_form_validate(form_fields, valid_paths, valid_extensions):
         field_valid = form_fields["file_ext"] in valid_extensions.keys()
         if field_valid:
             status["fields"]["file_ext"] = ext
-            app.logger.debug({"route": "upload", "file_ext": ext})
         else:
             status["valid"] = False
 
