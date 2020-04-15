@@ -108,10 +108,10 @@ def mock_cognito_create_user(admin_user):
 
     stubber = Stubber(client)
 
+    user_pool_id = "eu-west-2_poolid"
+
     mock_list_user_pools = {
-        "UserPools": [
-            {"Id": "eu-west-2_poolid", "Name": "corona-cognito-pool-development"}
-        ]
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
     }
     stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
 
@@ -127,7 +127,7 @@ def mock_cognito_create_user(admin_user):
                 {"Name": "custom:is_la", "Value": admin_user["custom:is_la"]},
                 {"Name": "custom:paths", "Value": admin_user["custom:paths"]},
             ],
-            "Enabled": True
+            "Enabled": True,
         }
     }
     params_create_user = {
@@ -148,9 +148,49 @@ def mock_cognito_create_user(admin_user):
 
     stubber.add_response("admin_create_user", mock_create_user, params_create_user)
 
+    # list_user_pools
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+    # admin_set_user_mfa_preference
+    mock_admin_set_user_mfa_preference = {}
+    params_admin_set_user_mfa_preference = {
+        "SMSMfaSettings": {"Enabled": True, "PreferredMfa": True},
+        "Username": admin_user["email"],
+        "UserPoolId": user_pool_id,
+    }
+    stubber.add_response(
+        "admin_set_user_mfa_preference",
+        mock_admin_set_user_mfa_preference,
+        params_admin_set_user_mfa_preference,
+    )
+    # list_user_pools
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+    # admin_set_user_settings
+    mock_admin_set_user_settings = {}
+    params_admin_set_user_settings = {
+        "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+        "Username": admin_user["email"],
+        "UserPoolId": user_pool_id,
+    }
+    stubber.add_response(
+        "admin_set_user_settings",
+        mock_admin_set_user_settings,
+        params_admin_set_user_settings,
+    )
+    # list_user_pools
     stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
 
-    # TODO: stub boto3 calls in cognito 443 & 451
+    # admin_add_user_to_group
+    mock_admin_add_user_to_group = {"ResponseMetadata": {"HTTPStatusCode": 200}}
+    params_admin_add_user_to_group = {
+        "GroupName": admin_user["group"]["value"],
+        "Username": admin_user["email"],
+        "UserPoolId": user_pool_id,
+    }
+    stubber.add_response(
+        "admin_add_user_to_group",
+        mock_admin_add_user_to_group,
+        params_admin_add_user_to_group,
+    )
 
     stubber.activate()
     # override boto.client to return the mock client

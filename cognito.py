@@ -381,7 +381,6 @@ def add_user_to_group(username, group_name=None):
         if "ResponseMetadata" in response:
             if "HTTPStatusCode" in response["ResponseMetadata"]:
                 if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                    session["admin_user_object"]["group"] = group_map[group_name]
                     return True
         else:
             LOG.debug("Failed to add user to group: %s", group_name)
@@ -390,6 +389,15 @@ def add_user_to_group(username, group_name=None):
 
 
 def create_user(user):
+    """
+    Create and set properties of cognito user 
+
+    Create user in cognito user pool 
+    If successful then: 
+    - Set MFA preference to SMS 
+    - Set MFA SMS phone number
+    - Add user to the requested cognito group
+    """
     name = user["name"]
     email_address = user["email"]
     phone_number = user["phone_number"]
@@ -409,7 +417,9 @@ def create_user(user):
     if not return_false_if_paths_bad(is_la, attr_paths):
         return False
 
-    response = []
+    response = {}
+
+    statuses = {}
 
     try:
         response = client.admin_create_user(
@@ -431,34 +441,36 @@ def create_user(user):
         LOG.error("ERROR:  %s - %s", email_address, e.response["Error"]["Code"])
         return False
 
-    res = False
-
     if "User" in response:
         if "Enabled" in response["User"]:
             res = response["User"]["Enabled"]
+            statuses["create_user"] = res
 
-    if res:
-        time.sleep(0.1)
+    if statuses.get("create_user", False):
+        
+        try:
+            client.admin_set_user_mfa_preference(
+                SMSMfaSettings={"Enabled": True, "PreferredMfa": True},
+                Username=email_address,
+                UserPoolId=get_env_pool_id(),
+            )
+            statuses["mfa"] = True
+        except ClientError:
+            statuses["mfa"] = False
 
-        client.admin_set_user_mfa_preference(
-            SMSMfaSettings={"Enabled": True, "PreferredMfa": True},
-            Username=email_address,
-            UserPoolId=get_env_pool_id(),
-        )
+        try:
+            client.admin_set_user_settings(
+                Username=email_address,
+                UserPoolId=get_env_pool_id(),
+                MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+            )
+            statuses["user_settings"] = True
+        except ClientError:
+            statuses["user_settings"] = False
 
-        time.sleep(0.1)
+        statuses["group"] = add_user_to_group(email_address, group_name)
 
-        client.admin_set_user_settings(
-            Username=email_address,
-            UserPoolId=get_env_pool_id(),
-            MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
-        )
-
-        time.sleep(0.1)
-
-        add_user_to_group(email_address, group_name)
-
-    return res
+    return False not in statuses
 
 
 def disable_user(email_address, confirm=False):
