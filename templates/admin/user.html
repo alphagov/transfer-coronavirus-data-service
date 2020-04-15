@@ -108,10 +108,11 @@
 <p>The following actions will ask for confirmation</p>
 <div>
   <form action="/admin/user/edit" method="post">
-    <button name="task" value="reinvite" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Reinvite</button>
-    <button name="task" value="{{ 'disable' if user.enabled|string == 'True' else 'enable' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">{{ 'Disable' if user.enabled|string == 'True' else 'Enable' }}</button>
+    <button formaction="/admin/user/reinvite" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Reinvite</button>
+    <button name="task" value="{{ 'disable' if user.enabled|string == 'True' else 'enable' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">{{ 'Disable' if user.enabled|string == 'True' else 'Enable' }}</button><form action="/admin/user/edit" method="post">
     <button name="task" value="delete" class="govuk-button govuk-button--secondary" data-module="govuk-button">Delete</button>
   </form>
+
 </div>
 
 {% endblock %}

@@ -455,6 +455,12 @@ def admin_edit_user():
     return admin.admin_edit_user(app)
 
 
+@app.route("/admin/user/reinvite", methods=["POST", "GET"])
+@admin_interface
+def admin_reinvite_user():
+    return admin.admin_reinvite_user(app)
+
+
 @app.route("/admin/user/error")
 @admin_interface
 def admin_user_error():

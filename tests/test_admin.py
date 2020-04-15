@@ -1,7 +1,7 @@
 import pytest
+import stubs
 from werkzeug.datastructures import ImmutableMultiDict
 
-import stubs
 from admin import (
     parse_edit_form_fields,
     perform_cognito_task,
@@ -75,7 +75,6 @@ def test_requested_path_matches_user_type():
 @pytest.mark.usefixtures("admin_user")
 def test_perform_cognito_task(admin_user):
     stubber = stubs.mock_cognito_create_user(admin_user)
-    # TODO: stub additional responses in stubs.mock_cognito_create_user
     with stubber:
         assert perform_cognito_task("confirm-new", admin_user)
 

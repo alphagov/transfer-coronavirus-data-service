@@ -245,20 +245,6 @@ def admin_edit_user(app):
     if admin_user_email == "" or cognito.get_user_details(admin_user_email) == {}:
         new_user = True
 
-    if task == "reinvite":
-        return render_template_custom(
-            app,
-            "admin/confirm-reinvite.html",
-            email=quote(admin_user_object["email"]),
-            user_email=admin_user_object["email"],
-        )
-    if task == "do-reinvite-user":
-        email = admin_user_object["email"]
-        cognito.reinvite_user(email, True)
-        clear_session(app)
-        session["admin_user_email"] = email
-        return redirect("/admin/user?done=reinvited")
-
     if task == "enable":
         return render_template_custom(
             app,
@@ -325,6 +311,30 @@ def admin_edit_user(app):
         is_other=is_other,
         allowed_domains=(cognito.allowed_domains() if new_user else []),
         available_groups=user_groups(),
+    )
+
+
+def admin_reinvite_user(app):
+    args = request.values
+
+    task = ""
+    if "task" in args:
+        task = args["task"]
+
+    admin_user_object = session["admin_user_object"]
+
+    if task == "do-reinvite-user":
+        email = admin_user_object["email"]
+        cognito.reinvite_user(email, True)
+        clear_session(app)
+        session["admin_user_email"] = email
+        return redirect("/admin/user?done=reinvited")
+
+    return render_template_custom(
+        app,
+        "admin/confirm-reinvite.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
     )
 
 
