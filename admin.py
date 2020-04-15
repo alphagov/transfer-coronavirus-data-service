@@ -245,34 +245,6 @@ def admin_edit_user(app):
     if admin_user_email == "" or cognito.get_user_details(admin_user_email) == {}:
         new_user = True
 
-    if task == "enable":
-        return render_template_custom(
-            app,
-            "admin/confirm-enable.html",
-            email=quote(admin_user_object["email"]),
-            user_email=admin_user_object["email"],
-        )
-    if task == "do-enable-user":
-        email = admin_user_object["email"]
-        clear_session(app)
-        cognito.enable_user(email, True)
-        session["admin_user_email"] = email
-        return redirect("/admin/user?done=enabled")
-
-    if task == "disable":
-        return render_template_custom(
-            app,
-            "admin/confirm-disable.html",
-            email=quote(admin_user_object["email"]),
-            user_email=admin_user_object["email"],
-        )
-    if task == "do-disable-user":
-        email = admin_user_object["email"]
-        clear_session(app)
-        cognito.disable_user(email, True)
-        session["admin_user_email"] = email
-        return redirect("/admin/user?done=disabled")
-
     if task == "delete":
         return render_template_custom(
             app,
@@ -333,6 +305,56 @@ def admin_reinvite_user(app):
     return render_template_custom(
         app,
         "admin/confirm-reinvite.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
+
+
+def admin_enable_user(app):
+
+    args = request.values
+
+    task = ""
+    if "task" in args:
+        task = args["task"]
+
+    admin_user_object = session["admin_user_object"]
+
+    if task == "do-enable-user":
+        email = admin_user_object["email"]
+        clear_session(app)
+        cognito.enable_user(email, True)
+        session["admin_user_email"] = email
+        return redirect("/admin/user?done=enabled")
+
+    return render_template_custom(
+        app,
+        "admin/confirm-enable.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
+
+
+def admin_disable_user(app):
+
+    args = request.values
+
+    task = ""
+    if "task" in args:
+        task = args["task"]
+
+    admin_user_object = session["admin_user_object"]
+
+    if task == "do-disable-user":
+        email = admin_user_object["email"]
+        clear_session(app)
+        cognito.disable_user(email, True)
+        session["admin_user_email"] = email
+        return redirect("/admin/user?done=disabled")
+    
+    return render_template_custom(
+        app,
+        "admin/confirm-disable.html",
         email=quote(admin_user_object["email"]),
         user_email=admin_user_object["email"],
     )

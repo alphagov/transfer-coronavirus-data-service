@@ -455,10 +455,22 @@ def admin_edit_user():
     return admin.admin_edit_user(app)
 
 
-@app.route("/admin/user/reinvite", methods=["POST", "GET"])
+@app.route("/admin/user/reinvite", methods=["POST"])
 @admin_interface
 def admin_reinvite_user():
     return admin.admin_reinvite_user(app)
+
+
+@app.route("/admin/user/enable", methods=["POST"])
+@admin_interface
+def admin_enable_user():
+    return admin.admin_enable_user(app)
+
+
+@app.route("/admin/user/disable", methods=["POST"])
+@admin_interface
+def admin_disable_user():
+    return admin.admin_disable_user(app)
 
 
 @app.route("/admin/user/error")

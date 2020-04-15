@@ -109,7 +109,7 @@
 <div>
   <form action="/admin/user/edit" method="post">
     <button formaction="/admin/user/reinvite" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">Reinvite</button>
-    <button name="task" value="{{ 'disable' if user.enabled|string == 'True' else 'enable' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">{{ 'Disable' if user.enabled|string == 'True' else 'Enable' }}</button><form action="/admin/user/edit" method="post">
+    <button formaction="/admin/user/{{ 'disable' if user.enabled else 'enable' }}" class="govuk-button govuk-button--secondary govuk-!-margin-right-1" data-module="govuk-button">{{ 'Disable' if user.enabled else 'Enable' }}</button>
     <button name="task" value="delete" class="govuk-button govuk-button--secondary" data-module="govuk-button">Delete</button>
   </form>
 
