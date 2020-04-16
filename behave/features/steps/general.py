@@ -15,6 +15,15 @@ def click_on_step(context, selector):
     time.sleep(5)
 
 
+@when('I click on button "{text}"')
+def click_on_button(context, text):
+    elem = context.browser.find_element_by_xpath(
+        "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(text)
+    )
+    elem.click()
+    time.sleep(5)
+
+
 @when('field with name "{selector}" is given "{value}"')
 def set_field_value_step(context, selector, value):
     elem = context.browser.find_element_by_name(selector)
