@@ -1,7 +1,7 @@
 {% extends 'primary.html' %}
 {% block content %}
 
-
+<h1 class="govuk-heading-l">User administration</h1>
 <fieldset class="govuk-fieldset">
   <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
     <h2 class="govuk-fieldset__heading">
@@ -11,10 +11,10 @@
 
   <form action="/admin/user" method="post">
     <div class="govuk-form-group">
-      <label class="govuk-label" for="name">
+      <label class="govuk-label" for="email">
         Email address
       </label>
-      <input class="govuk-input" name="email" type="email" spellcheck="false">
+      <input class="govuk-input" id="email" name="email" type="email" spellcheck="false">
     </div>
     <button name="task" value="view" class="govuk-button" data-module="govuk-button" type=submit>Go to user</button>
   </form>
