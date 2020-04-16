@@ -8,6 +8,8 @@ import cognito
 import s3paths
 from cognito_groups import get_group_by_name, return_users_group, user_groups
 from flask_helpers import render_template_custom
+from logger import LOG
+
 
 local_valid_paths_var = []
 
@@ -203,12 +205,40 @@ def parse_edit_form_fields(
 
 def requested_path_matches_user_type(is_local_authority, requested_path):
     is_path_valid = True
-
-    if not is_local_authority and "local_authority" in requested_path:
+    if requested_path == "":
+        is_path_valid = False 
+    elif (not is_local_authority) and "local_authority" in requested_path:
         is_path_valid = False
-    elif is_local_authority and "local_authority" not in requested_path:
+    elif is_local_authority and ("local_authority" not in requested_path):
         is_path_valid = False
     return is_path_valid
+
+
+def remove_invalid_user_paths(user):
+    user_custom_paths = user["custom:paths"].split(";")
+    is_local_authority_user = user["custom:is_la"] == "1"
+    valid_user_paths = []
+    for custom_path in user_custom_paths:
+        is_path_valid = requested_path_matches_user_type(
+            is_local_authority_user, custom_path
+        )
+        if is_path_valid:
+            LOG.debug(
+                "path: %s is valid for %s", 
+                custom_path, 
+                "LA user" if is_local_authority_user else "non-LA user"
+            )
+            valid_user_paths.append(custom_path)
+        else: 
+            LOG.debug(
+                "path: %s is not valid for %s", 
+                custom_path,
+                "LA user" if is_local_authority_user else "non-LA user"
+            )
+
+    user["custom:paths"] = ";".join(valid_user_paths)
+    
+    return user
 
 
 def perform_cognito_task(task, admin_user_object):
@@ -241,22 +271,19 @@ def admin_edit_user(app):
     admin_user_email = session["admin_user_email"]
     admin_user_object = session["admin_user_object"]
 
-    # if the user doesn't exist, allow editng of email/userame
+    # If the user doesn't exist, allow editing of email/username
+    # and don't pre-set user account type options.
     if admin_user_email == "" or cognito.get_user_details(admin_user_email) == {}:
         new_user = True
-
-    is_la = False
-    is_other = False
-
-    if task != "new":
-        user_is_la = admin_user_object["custom:is_la"] == "1"
-        user_custom_paths = admin_user_object["custom:paths"].split(";")
-        for path_test in user_custom_paths:
-            if "/local_authority/" in path_test and user_is_la:
-                is_la = True
-                break
-            else:
-                is_other = True
+        is_local_authority_user = False
+        is_other_user = False
+    else:
+        # If you are editing an existing user:
+        # - check that all the granted paths are valid for the user's type.
+        # - and remove any paths where the account type doesn't match
+        is_local_authority_user = admin_user_object["custom:is_la"] == "1"
+        is_other_user = not is_local_authority_user
+        admin_user_object = remove_invalid_user_paths(admin_user_object)
 
     return render_template_custom(
         app,
@@ -265,9 +292,9 @@ def admin_edit_user(app):
         new_user=new_user,
         user_custom_paths=user_custom_paths,
         local_authority=value_paths_by_type("local_authority"),
-        is_la=is_la,
+        is_la=is_local_authority_user,
         other=value_paths_by_type("other"),
-        is_other=is_other,
+        is_other=is_other_user,
         allowed_domains=(cognito.allowed_domains() if new_user else []),
         available_groups=user_groups(),
     )
@@ -338,7 +365,7 @@ def admin_disable_user(app):
         cognito.disable_user(email, True)
         session["admin_user_email"] = email
         return redirect("/admin/user?done=disabled")
-    
+
     return render_template_custom(
         app,
         "admin/confirm-disable.html",
@@ -369,7 +396,7 @@ def admin_delete_user(app):
         email=quote(admin_user_object["email"]),
         user_email=admin_user_object["email"],
     )
-    
+
 
 def admin_user_not_found(app):
     return "User not found"

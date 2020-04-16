@@ -1,10 +1,11 @@
 import pytest
-import stubs
 from werkzeug.datastructures import ImmutableMultiDict
 
+import stubs
 from admin import (
     parse_edit_form_fields,
     perform_cognito_task,
+    remove_invalid_user_paths,
     requested_path_matches_user_type,
 )
 from main import app
@@ -70,6 +71,34 @@ def test_requested_path_matches_user_type():
     )
     assert requested_path_matches_user_type(False, "web-app-prod-data/other/nhs")
     assert not requested_path_matches_user_type(True, "web-app-prod-data/other/nhs")
+    assert not requested_path_matches_user_type(True, "")
+    assert not requested_path_matches_user_type(False, "")
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_remove_invalid_user_paths(admin_user):
+    granted_paths = admin_user["custom:paths"].split(";")
+    granted_paths.sort()
+    user = remove_invalid_user_paths(admin_user)
+    valid_paths = user["custom:paths"].split(";")
+    valid_paths.sort()
+    assert granted_paths == valid_paths
+
+    other_path = "web-app-prod-data/other/nhs"
+    admin_user["custom:is_la"] = "1"
+    invalid_paths = []
+    invalid_paths += granted_paths
+    invalid_paths.append(other_path)
+    admin_user["custom:paths"] = ";".join(invalid_paths)
+    app.logger.debug({"invalid_paths": admin_user["custom:paths"]})
+    user = remove_invalid_user_paths(admin_user)
+    assert other_path not in user["custom:paths"]
+
+    admin_user["custom:is_la"] = "0"
+    admin_user["custom:paths"] = ";".join(granted_paths)
+    app.logger.debug({"invalid_paths": admin_user["custom:paths"]})
+    user = remove_invalid_user_paths(admin_user)
+    assert user["custom:paths"] == ""
 
 
 @pytest.mark.usefixtures("admin_user")
