@@ -21,7 +21,11 @@ def body_has_element_with_attributes(body: str, attributes: dict) -> bool:
     for element in matches:
         attributes_found = {}
         for attribute_name, attribute_value in attributes.items():
-            find_string = f'{attribute_name}="{attribute_value}"'
+            if attribute_value:
+                find_string = f'{attribute_name}="{attribute_value}"'
+            else:
+                find_string = attribute_name
+
             attributes_found[attribute_name] = find_string in element
 
         # Print out the stuff you've found for partial matches
