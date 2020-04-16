@@ -5,11 +5,9 @@
 # import csv
 import os
 import re
-import time
 
 import boto3
 from botocore.exceptions import ClientError
-from flask import session
 
 from cognito_groups import get_group_by_name, get_group_map, user_groups
 from logger import LOG
@@ -181,12 +179,15 @@ def san_row(row):
 
 def get_user_details(email_address):
     client = get_boto3_client()
-    san_email_address = sanitise_email(email_address)
-    if san_email_address != "":
-        user = client.admin_get_user(
-            UserPoolId=get_env_pool_id(), Username=san_email_address
-        )
-        return normalise_user(user)
+    try:
+        san_email_address = sanitise_email(email_address)
+        if san_email_address != "":
+            user = client.admin_get_user(
+                UserPoolId=get_env_pool_id(), Username=san_email_address
+            )
+            return normalise_user(user)
+    except ClientError as error:
+        LOG.debug({"error": error})
     return {}
 
 
@@ -208,7 +209,7 @@ def users_group(username):
     # return return_users_group(groups)
     # Currently you can attach a list of users in cognito
     # but we're currently only interested in the first group
-    group_name = groups[0] if len(groups) > 0 else None
+    group_name = None if len(groups) == 0 else groups[0]
     return get_group_by_name(group_name)
 
 
@@ -323,14 +324,7 @@ def reinvite_user(email_address, confirm=False):
             del_res = delete_user(email_address, confirm)
             LOG.debug({"action": "delete-user", "response": del_res})
             if del_res:
-                cre_res = create_user(
-                    name=user["name"],
-                    email_address=user["email"],
-                    phone_number=user["phone_number"],
-                    attr_paths=user["custom:paths"],
-                    is_la=user["custom:is_la"],
-                    group_name=user["group"]["value"],
-                )
+                cre_res = create_user(user)
                 LOG.debug({"action": "create-user", "response": "cre_res"})
                 return cre_res
     return False
@@ -385,7 +379,6 @@ def add_user_to_group(username, group_name=None):
         if "ResponseMetadata" in response:
             if "HTTPStatusCode" in response["ResponseMetadata"]:
                 if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                    session["admin_user_object"]["group"] = group_map[group_name]
                     return True
         else:
             LOG.debug("Failed to add user to group: %s", group_name)
@@ -393,9 +386,23 @@ def add_user_to_group(username, group_name=None):
     return False
 
 
-def create_user(
-    name, email_address, phone_number, attr_paths, is_la="0", group_name=None
-):
+def create_user(user):
+    """
+    Create and set properties of cognito user
+
+    Create user in cognito user pool
+    If successful then:
+    - Set MFA preference to SMS
+    - Set MFA SMS phone number
+    - Add user to the requested cognito group
+    """
+    name = user["name"]
+    email_address = user["email"]
+    phone_number = user["phone_number"]
+    attr_paths = user["custom:paths"]
+    is_la = user["custom:is_la"]
+    group_name = user["group"]["value"]
+
     client = get_boto3_client()
     email_address = sanitise_email(email_address)
     if email_address == "":
@@ -408,7 +415,9 @@ def create_user(
     if not return_false_if_paths_bad(is_la, attr_paths):
         return False
 
-    response = []
+    response = {}
+
+    statuses = {}
 
     try:
         response = client.admin_create_user(
@@ -430,34 +439,36 @@ def create_user(
         LOG.error("ERROR:  %s - %s", email_address, e.response["Error"]["Code"])
         return False
 
-    res = False
-
     if "User" in response:
         if "Enabled" in response["User"]:
             res = response["User"]["Enabled"]
+            statuses["create_user"] = res
 
-    if res:
-        time.sleep(0.1)
+    if statuses.get("create_user", False):
 
-        client.admin_set_user_mfa_preference(
-            SMSMfaSettings={"Enabled": True, "PreferredMfa": True},
-            Username=email_address,
-            UserPoolId=get_env_pool_id(),
-        )
+        try:
+            client.admin_set_user_mfa_preference(
+                SMSMfaSettings={"Enabled": True, "PreferredMfa": True},
+                Username=email_address,
+                UserPoolId=get_env_pool_id(),
+            )
+            statuses["mfa"] = True
+        except ClientError:
+            statuses["mfa"] = False
 
-        time.sleep(0.1)
+        try:
+            client.admin_set_user_settings(
+                Username=email_address,
+                UserPoolId=get_env_pool_id(),
+                MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+            )
+            statuses["user_settings"] = True
+        except ClientError:
+            statuses["user_settings"] = False
 
-        client.admin_set_user_settings(
-            Username=email_address,
-            UserPoolId=get_env_pool_id(),
-            MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
-        )
+        statuses["group"] = add_user_to_group(email_address, group_name)
 
-        time.sleep(0.1)
-
-        add_user_to_group(email_address, group_name)
-
-    return res
+    return False not in statuses
 
 
 def disable_user(email_address, confirm=False):
@@ -511,14 +522,15 @@ def delete_user(email_address, confirm=False):
     return False
 
 
-def update_user_attributes(
-    email_address,
-    new_name=None,
-    new_phone_number=None,
-    new_is_la=None,
-    new_paths=None,
-    new_group_name=None,
-):
+def update_user_attributes(user):
+
+    email_address = user["email"]
+    new_name = user["name"]
+    new_phone_number = user["phone_number"]
+    new_paths = user["custom:paths"]
+    new_is_la = user["custom:is_la"]
+    new_group_name = None if "group" not in user else user["group"]["value"]
+
     client = get_boto3_client()
     if (
         new_name is None
@@ -572,15 +584,14 @@ def update_user_attributes(
                 return False
 
         if new_paths is not None:
-            if isinstance(new_paths, list):
-                path_scsl = str.join(";", new_paths)
+            if isinstance(new_paths, str):
 
-                if not return_false_if_paths_bad(is_la_value, path_scsl):
+                if not return_false_if_paths_bad(is_la_value, new_paths):
                     return False
 
-                attrs.append({"Name": "custom:paths", "Value": path_scsl})
+                attrs.append({"Name": "custom:paths", "Value": new_paths})
             else:
-                LOG.error("ERR: %s: new_paths is not list", "user-admin")
+                LOG.error("ERR: %s: new_paths is not a string", "user-admin")
                 return False
 
         if new_group_name is not None:
