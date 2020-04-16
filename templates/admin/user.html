@@ -1,6 +1,8 @@
 {% extends 'primary.html' %}
 {% block content %}
 
+<h1 class="govuk-heading-l">Manage user</h1>
+
 {%if done != "None" %}
   <div class="govuk-panel govuk-panel--confirmation">
     <h2 class="govuk-panel__title">
@@ -14,7 +16,7 @@
     <dt class="govuk-summary-list__key">
       Enabled
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_enabled">
       {{ "Yes" if user.enabled|string == 'True' else "No" }}
     </dd>
   </div>
@@ -22,7 +24,7 @@
     <dt class="govuk-summary-list__key">
       Status
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_status">
       {{ user.status }}
     </dd>
   </div>
@@ -30,7 +32,7 @@
     <dt class="govuk-summary-list__key">
       Full name
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_name">
       {{ user.name|e }}
     </dd>
   </div>
@@ -38,7 +40,7 @@
     <dt class="govuk-summary-list__key">
       Email address
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_email">
       {{ user.email }}
     </dd>
   </div>
@@ -46,7 +48,7 @@
     <dt class="govuk-summary-list__key">
       UK mobile number
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_phone_number">
       {% if user.phone_number_verified == 'true' %}
         {{ user.phone_number }} (VERIFIED)
       {% else %}
@@ -58,7 +60,7 @@
     <dt class="govuk-summary-list__key">
       Account type
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_account_type">
       <p class="govuk-body">{{ user_group['display'] }}</p>
     </dd>
   </div>
@@ -66,7 +68,7 @@
     <dt class="govuk-summary-list__key">
       Local authority user?
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_is_local_authority">
       {{ "Yes" if user["custom:is_la"] == "1" else "No" }}
     </dd>
   </div>
@@ -74,9 +76,9 @@
     <dt class="govuk-summary-list__key">
       Paths
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_granted_paths">
       {% for attr_path in user["custom:paths"].split(";") %}
-        <p class="govuk-body">{{ attr_path }}</p>
+        <p class="govuk-body">{{ attr_path | s3_remove_root_path }}</p>
       {% endfor %}
     </dd>
   </div>
@@ -84,7 +86,7 @@
     <dt class="govuk-summary-list__key">
       Created date (last invited)
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_created">
       {{ user.createdate }}
     </dd>
   </div>
@@ -92,7 +94,7 @@
     <dt class="govuk-summary-list__key">
       Last modified date
     </dt>
-    <dd class="govuk-summary-list__value">
+    <dd class="govuk-summary-list__value" id="user_modified">
       {{ user.lastmodifieddate }}
     </dd>
   </div>

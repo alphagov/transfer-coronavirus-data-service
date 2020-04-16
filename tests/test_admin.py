@@ -8,6 +8,7 @@ from admin import (
     remove_invalid_user_paths,
     requested_path_matches_user_type,
 )
+from helpers import body_has_element_with_attributes, flatten_html
 from main import app
 
 
@@ -108,3 +109,66 @@ def test_perform_cognito_task(admin_user):
         assert perform_cognito_task("confirm-new", admin_user)
 
         stubber.deactivate()
+
+
+# ROUTE tests - The flask routes are actually defined in main.py
+# but the route functions are delegated to the admin module
+# so they seem to fit better in here.
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+def test_route_admin(test_client, test_upload_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        app.logger.debug(test_upload_session)
+
+    response = test_client.get("/admin")
+    body = response.data.decode()
+    assert response.status_code == 200
+    assert '<h1 class="govuk-heading-l">User administration</h1>' in body
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("admin_user")
+def test_route_admin_user(test_client, test_upload_session, admin_user):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        client_session["admin_user_object"] = admin_user
+        client_session["admin_user_email"] = admin_user["email"]
+        app.logger.debug(test_upload_session)
+
+    stubber = stubs.mock_cognito_get_user_details(admin_user)
+    with stubber:
+        response = test_client.post("/admin/user", data={"task": "view"})
+        body = response.data.decode()
+        flat = flatten_html(body)
+        assert response.status_code == 200
+        assert '<h1 class="govuk-heading-l">Manage user</h1>' in body
+        assert 'id="user_email">' + admin_user["email"] + "<" in flat
+
+
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("admin_user")
+def test_route_admin_user_edit(test_client, test_upload_session, admin_user):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_upload_session)
+        client_session["admin_user_object"] = admin_user
+        client_session["admin_user_email"] = admin_user["email"]
+        app.logger.debug(test_upload_session)
+
+    stubber = stubs.mock_cognito_get_user_details(admin_user)
+    with stubber:
+        response = test_client.post("/admin/user/edit", data={"task": "edit"})
+        body = response.data.decode()
+        # flat = flatten_html(body)
+        assert response.status_code == 200
+        assert '<h1 class="govuk-heading-l">Edit user</h1>' in body
+        assert body_has_element_with_attributes(
+            body, {"name": "email", "value": admin_user["email"]}
+        )
+        assert body_has_element_with_attributes(
+            body, {"name": "telephone-number", "value": admin_user["phone_number"]}
+        )

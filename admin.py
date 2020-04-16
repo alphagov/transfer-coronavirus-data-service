@@ -10,7 +10,6 @@ from cognito_groups import get_group_by_name, return_users_group, user_groups
 from flask_helpers import render_template_custom
 from logger import LOG
 
-
 local_valid_paths_var = []
 
 
@@ -203,10 +202,12 @@ def parse_edit_form_fields(
     return admin_user_object
 
 
-def requested_path_matches_user_type(is_local_authority, requested_path):
+def requested_path_matches_user_type(
+    is_local_authority: bool, requested_path: str
+) -> bool:
     is_path_valid = True
     if requested_path == "":
-        is_path_valid = False 
+        is_path_valid = False
     elif (not is_local_authority) and "local_authority" in requested_path:
         is_path_valid = False
     elif is_local_authority and ("local_authority" not in requested_path):
@@ -214,7 +215,7 @@ def requested_path_matches_user_type(is_local_authority, requested_path):
     return is_path_valid
 
 
-def remove_invalid_user_paths(user):
+def remove_invalid_user_paths(user: dict) -> dict:
     user_custom_paths = user["custom:paths"].split(";")
     is_local_authority_user = user["custom:is_la"] == "1"
     valid_user_paths = []
@@ -224,24 +225,24 @@ def remove_invalid_user_paths(user):
         )
         if is_path_valid:
             LOG.debug(
-                "path: %s is valid for %s", 
-                custom_path, 
-                "LA user" if is_local_authority_user else "non-LA user"
+                "path: %s is valid for %s",
+                custom_path,
+                "LA user" if is_local_authority_user else "non-LA user",
             )
             valid_user_paths.append(custom_path)
-        else: 
+        else:
             LOG.debug(
-                "path: %s is not valid for %s", 
+                "path: %s is not valid for %s",
                 custom_path,
-                "LA user" if is_local_authority_user else "non-LA user"
+                "LA user" if is_local_authority_user else "non-LA user",
             )
 
     user["custom:paths"] = ";".join(valid_user_paths)
-    
+
     return user
 
 
-def perform_cognito_task(task, admin_user_object):
+def perform_cognito_task(task: str, admin_user_object: dict) -> bool:
     is_task_complete = False
 
     if task == "confirm-new":
@@ -399,4 +400,4 @@ def admin_delete_user(app):
 
 
 def admin_user_not_found(app):
-    return "User not found"
+    return render_template_custom(app, "error.html", error="User not found")

@@ -1,4 +1,5 @@
 """ Create mock boto3 clients for testing """
+from datetime import datetime
 
 import boto3
 from botocore.stub import Stubber
@@ -189,6 +190,72 @@ def mock_cognito_create_user(admin_user):
         "admin_add_user_to_group",
         mock_admin_add_user_to_group,
         params_admin_add_user_to_group,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_get_user_details(admin_user):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    user_pool_id = "eu-west-2_poolid"
+    now = datetime.utcnow()
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_get_user = {
+        "Username": admin_user["email"],
+        "UserAttributes": [
+            {"Name": "email", "Value": admin_user["email"]},
+            {"Name": "phone_number", "Value": admin_user["phone_number"]},
+            {"Name": "custom:is_la", "Value": admin_user["custom:is_la"]},
+            {"Name": "custom:paths", "Value": admin_user["custom:paths"]},
+        ],
+        "UserCreateDate": now,
+        "UserLastModifiedDate": now,
+        "Enabled": True,
+        "UserStatus": "UNCONFIRMED",
+        "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+        "PreferredMfaSetting": "SMS",
+    }
+    params_admin_get_user = {
+        "UserPoolId": user_pool_id,
+        "Username": admin_user["email"],
+    }
+    stubber.add_response("admin_get_user", mock_admin_get_user, params_admin_get_user)
+
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_list_groups_for_user = {
+        "Groups": [
+            {
+                "GroupName": admin_user["group"]["value"],
+                "UserPoolId": user_pool_id,
+                "Description": admin_user["group"]["display"],
+                "Precedence": admin_user["group"]["preference"],
+                "LastModifiedDate": now,
+                "CreationDate": now,
+            },
+        ],
+    }
+    params_admin_list_groups_for_user = {
+        "UserPoolId": user_pool_id,
+        "Username": admin_user["email"],
+        "Limit": 10,
+    }
+    stubber.add_response(
+        "admin_list_groups_for_user",
+        mock_admin_list_groups_for_user,
+        params_admin_list_groups_for_user,
     )
 
     stubber.activate()
