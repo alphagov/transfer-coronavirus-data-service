@@ -72,6 +72,7 @@
       {{ "Yes" if user["custom:is_la"] == "1" else "No" }}
     </dd>
   </div>
+  {% if "custom:paths" in user %}
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
       Paths
@@ -82,6 +83,7 @@
       {% endfor %}
     </dd>
   </div>
+  {% endif %}
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
       Created date (last invited)

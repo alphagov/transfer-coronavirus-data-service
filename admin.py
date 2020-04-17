@@ -282,9 +282,12 @@ def admin_edit_user(app):
         # If you are editing an existing user:
         # - check that all the granted paths are valid for the user's type.
         # - and remove any paths where the account type doesn't match
+        if "custom:paths" not in admin_user_object:
+            admin_user_object["custom:paths"] = ""
         is_local_authority_user = admin_user_object["custom:is_la"] == "1"
         is_other_user = not is_local_authority_user
         admin_user_object = remove_invalid_user_paths(admin_user_object)
+
 
     return render_template_custom(
         app,
