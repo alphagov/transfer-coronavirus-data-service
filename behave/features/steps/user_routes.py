@@ -8,10 +8,7 @@ from behave import given, then, when
 def get_plus_string(group_name):
     # To keep things short I've truncated the stage name
     # in the plus string from the CF_SPACE env var
-    stages = {
-        "testing": "test",
-        "staging": "stage"
-    }
+    stages = {"testing": "test", "staging": "stage"}
     env = stages[os.environ.get("CF_SPACE", "testing")]
 
     # for a stupid reason I created all the test users
@@ -119,13 +116,13 @@ def user_path_step(context, path):
 
 
 @then("you get redirected to user home")
-def user_redirect_step(context):
+def user_redirect_home_step(context):
     url = os.environ["E2E_STAGING_ROOT_URL"]
     assert context.browser.current_url == url
 
 
 @then('you get redirected to route: "{route}"')
-def user_redirect_step(context, route):
+def user_redirect_to_route_step(context, route):
     url = re.sub("/$", route, os.environ["E2E_STAGING_ROOT_URL"])
     print(url)
     assert context.browser.current_url == url
