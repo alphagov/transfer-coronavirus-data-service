@@ -95,10 +95,11 @@
               <div class="govuk-checkboxes">
                 {% for i in other.subs %}
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
-                    'checked="checked"' if i['val'] in user_custom_paths
-                  }}>
-                  <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
+                  <input class="govuk-checkboxes__input"
+                         name="custom_paths" type="checkbox"
+                         id="custom_path_{{ i['val'] }}"
+                         value="{{ i['val'] }}" {{ 'checked="checked"' if i['val'] in user_custom_paths }}>
+                  <label class="govuk-label govuk-checkboxes__label" for="custom_path_{{ i['val'] }}">
                     {{ i['disp'] }}<br>
                     <span class="govuk-hint">
                       {{ i['val'] }}
@@ -121,10 +122,10 @@
               <div class="govuk-checkboxes">
                 {% for i in local_authority.subs %}
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" name="custom_paths" type="checkbox" value="{{ i['val'] }}" {{
+                  <input class="govuk-checkboxes__input" name="custom_paths" id="custom_path_{{ i['val'] }}" type="checkbox" value="{{ i['val'] }}" {{
                     'checked="checked"' if i['val'] in user_custom_paths
                   }}>
-                  <label class="govuk-label govuk-checkboxes__label" for="custom_paths">
+                  <label class="govuk-label govuk-checkboxes__label" for="custom_path_{{ i['val'] }}">
                     {{ i['disp'] }}<br>
                     <span class="govuk-hint">
                       {{ i['val'] }}

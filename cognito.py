@@ -282,13 +282,14 @@ def list_users(email_starts_filter="", token="", limit=20):
     return {"users": users, "token": token}
 
 
-def return_false_if_paths_bad(is_la_value, paths_semicolon_seperated):
-    if paths_semicolon_seperated == "":
+def are_user_paths_valid(is_la_value, paths_semicolon_separated, group_name):
+
+    if "admin" not in group_name and paths_semicolon_separated == "":
         return False
 
     app_authorised_paths = [os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")]
     for authed_path in app_authorised_paths:
-        for path_re_split_for_check in paths_semicolon_seperated.split(";"):
+        for path_re_split_for_check in paths_semicolon_separated.split(";"):
 
             # if current/new attr for is_la is 0 (not a local authority)
             # then don't allow local local_authority paths to be set
@@ -412,7 +413,8 @@ def create_user(user):
     if phone_number == "":
         return False
 
-    if not return_false_if_paths_bad(is_la, attr_paths):
+    # only check paths for non-admin users
+    if not are_user_paths_valid(is_la, attr_paths, group_name):
         return False
 
     response = {}
@@ -585,8 +587,8 @@ def update_user_attributes(user):
 
         if new_paths is not None:
             if isinstance(new_paths, str):
-
-                if not return_false_if_paths_bad(is_la_value, new_paths):
+                group_name = new_group_name if new_group_name is not None else user["group"]["value"]
+                if not are_user_paths_valid(is_la_value, new_paths, group_name):
                     return False
 
                 attrs.append({"Name": "custom:paths", "Value": new_paths})

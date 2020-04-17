@@ -21,6 +21,7 @@ function load_account_switch_js() {
   var x = document.getElementById("account-select");
   if (x != null) {
     x.addEventListener('change', function() { account_switch(this.value); });
+    account_switch(x.value)
   }
 }
 
