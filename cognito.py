@@ -588,7 +588,11 @@ def update_user_attributes(user):
 
         if new_paths is not None:
             if isinstance(new_paths, str):
-                group_name = new_group_name if new_group_name is not None else user["group"]["value"]
+                group_name = (
+                    new_group_name
+                    if new_group_name is not None
+                    else user["group"]["value"]
+                )
                 if not are_user_paths_valid(is_la_value, new_paths, group_name):
                     return False
 

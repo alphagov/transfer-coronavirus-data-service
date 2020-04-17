@@ -21,8 +21,8 @@ from flask_helpers import (
     has_upload_rights,
     login_required,
     render_template_custom,
+    requires_group_in_list,
     requires_group_matching,
-    requires_group_in_list
 )
 from logger import LOG
 
@@ -179,7 +179,12 @@ def send_browser_config():
 def server_error_403():
     error_message = session.get("error_message", "Access denied")
     app.logger.error(f"Server error: {error_message}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=error_message), 403
+    return (
+        render_template_custom(
+            app, "error.html", hide_logout=True, error=error_message
+        ),
+        403,
+    )
 
 
 @app.errorhandler(500)

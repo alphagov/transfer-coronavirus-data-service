@@ -288,7 +288,6 @@ def admin_edit_user(app):
         is_other_user = not is_local_authority_user
         admin_user_object = remove_invalid_user_paths(admin_user_object)
 
-
     return render_template_custom(
         app,
         "admin/edit-user.html",
