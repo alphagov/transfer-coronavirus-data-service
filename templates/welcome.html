@@ -1,6 +1,19 @@
 {% extends 'primary.html' %}
 {% block content %}
 
+  {% if is_admin_role %}
+  <p>
+    You have been granted access to manage users of this service.
+  </p>
+  <p>
+    <a href="/admin" role="button" draggable="false" class="govuk-button govuk-button--start covid-transfer-files-button" data-module="govuk-button">
+      User admin
+      <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
+      </svg>
+    </a>
+  </p>
+  {% else %}
   <p>
     This service allows you to access data on people who have asked for help and who are considered medically vulnerable to a COVID-19 infection.
   </p>
@@ -15,7 +28,6 @@
   <p>
     Click the following button to get links to available files:
   </p>
-
   <p>
     <a href="/files" role="button" draggable="false" class="govuk-button govuk-button--start covid-transfer-files-button" data-module="govuk-button">
       Downloads
@@ -39,6 +51,7 @@
       </svg>
     </a>
   </p>
+  {% endif %}
   {% endif %}
 
 {% endblock %}

@@ -8,6 +8,14 @@ def is_admin_interface():
     return os.getenv("ADMIN", "false") == "true"
 
 
+def has_admin_role():
+    is_admin_role = False
+    group = session.get("group", None)
+    if group:
+        is_admin_role = "admin-" in group["value"]
+    return is_admin_role
+
+
 def is_development():
     return os.getenv("FLASK_ENV", "production") == "development"
 
@@ -16,8 +24,18 @@ def admin_interface(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
 
-        if not is_admin_interface():
-            raise Exception("ADMIN not set when trying /admin")
+        if not has_admin_role():
+            raise Exception("User not authorised to access this route")
+        return flask_route(*args, **kwargs)
+
+    return decorated_function
+
+
+def end_user_interface(flask_route):
+    @wraps(flask_route)
+    def decorated_function(*args, **kwargs):
+        if has_admin_role():
+            raise Exception("User not authorised to access this route")
         return flask_route(*args, **kwargs)
 
     return decorated_function

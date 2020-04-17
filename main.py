@@ -15,8 +15,11 @@ from werkzeug.utils import secure_filename
 import admin
 import cognito
 from flask_helpers import (
+    is_admin_interface,
     admin_interface,
+    end_user_interface,
     has_upload_rights,
+    has_admin_role,
     login_required,
     render_template_custom,
     upload_rights_required,
@@ -194,9 +197,6 @@ def server_error_400(error):
 @app.route("/index")
 def index():
 
-    if os.getenv("ADMIN", "false") == "true":
-        return redirect("/admin")
-
     args = request.args
 
     if "code" in args:
@@ -205,17 +205,20 @@ def index():
         response = exchange_code_for_tokens(oauth_code)
         if response.status_code != 200:
             app.logger.error({"error": "OAuth failed", "response": response})
-        return redirect("/")
+        return redirect("/admin" if has_admin_role() else "/")
+
 
     if "details" in session:
         app.logger.debug("Logged in")
         upload_rights = has_upload_rights()
+        is_admin_role = has_admin_role()
         return render_template_custom(
             app,
             "welcome.html",
             user=session["user"],
             email=session["email"],
             upload_rights=upload_rights,
+            is_admin_role=is_admin_role
         )
     else:
         app.logger.debug("Logged out")
@@ -252,6 +255,7 @@ def logout():
 
 @app.route("/download/<path:path>")
 @login_required
+@end_user_interface
 def download(path):
     """
     Check the user has access to the requested file
@@ -289,6 +293,7 @@ def download(path):
 
 @app.route("/upload", methods=["POST", "GET"])
 @login_required
+@end_user_interface
 @upload_rights_required
 def upload():
     user_upload_paths = user_custom_paths(is_upload=True, session=session)
@@ -417,6 +422,7 @@ def create_presigned_post(object_name, expiration=3600):
 
 @app.route("/files")
 @login_required
+@end_user_interface
 def files():
     files = get_files(app.bucket_name, session)
 
