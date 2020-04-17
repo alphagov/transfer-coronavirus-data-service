@@ -117,11 +117,11 @@ def test_perform_cognito_task(admin_user):
 
 
 @pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
-def test_route_admin(test_client, test_upload_session):
+@pytest.mark.usefixtures("test_admin_session")
+def test_route_admin(test_client, test_admin_session):
     with test_client.session_transaction() as client_session:
-        client_session.update(test_upload_session)
-        app.logger.debug(test_upload_session)
+        client_session.update(test_admin_session)
+        app.logger.debug(test_admin_session)
 
     response = test_client.get("/admin")
     body = response.data.decode()
@@ -132,12 +132,12 @@ def test_route_admin(test_client, test_upload_session):
 @pytest.mark.usefixtures("test_client")
 @pytest.mark.usefixtures("test_session")
 @pytest.mark.usefixtures("admin_user")
-def test_route_admin_user(test_client, test_upload_session, admin_user):
+def test_route_admin_user(test_client, test_admin_session, admin_user):
     with test_client.session_transaction() as client_session:
-        client_session.update(test_upload_session)
+        client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
-        app.logger.debug(test_upload_session)
+        app.logger.debug(test_admin_session)
 
     stubber = stubs.mock_cognito_get_user_details(admin_user)
     with stubber:
@@ -150,14 +150,14 @@ def test_route_admin_user(test_client, test_upload_session, admin_user):
 
 
 @pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("test_admin_session")
 @pytest.mark.usefixtures("admin_user")
-def test_route_admin_user_edit(test_client, test_upload_session, admin_user):
+def test_route_admin_user_edit(test_client, test_admin_session, admin_user):
     with test_client.session_transaction() as client_session:
-        client_session.update(test_upload_session)
+        client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
-        app.logger.debug(test_upload_session)
+        app.logger.debug(test_admin_session)
 
     stubber = stubs.mock_cognito_get_user_details(admin_user)
     with stubber:
