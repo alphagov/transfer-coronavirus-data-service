@@ -1,4 +1,5 @@
 import os
+import re
 from functools import wraps
 
 from flask import redirect, render_template, session
@@ -16,6 +17,15 @@ def has_admin_role():
     return is_admin_role
 
 
+def current_group_name():
+    default_group_name = "group-not-available"
+    group_name = default_group_name
+    group = session.get("group", None)
+    if group:
+        group_name = group.get("value", default_group_name)
+    return group_name
+
+
 def is_development():
     return os.getenv("FLASK_ENV", "production") == "development"
 
@@ -25,7 +35,9 @@ def admin_interface(flask_route):
     def decorated_function(*args, **kwargs):
 
         if not has_admin_role():
-            raise Exception("User not authorised to access this route")
+            # raise Exception("User not authorised to access this route")
+            session["error_message"] = "User not authorised to access this route"
+            return redirect("/403")
         return flask_route(*args, **kwargs)
 
     return decorated_function
@@ -35,17 +47,51 @@ def end_user_interface(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if has_admin_role():
-            raise Exception("User not authorised to access this route")
+            # raise Exception("User not authorised to access this route")
+            session["error_message"] = "User not authorised to access this route"
+            return redirect("/403")
         return flask_route(*args, **kwargs)
 
     return decorated_function
+
+
+def requires_group_matching(role_like):
+    def decorate_route(flask_route):
+        @wraps(flask_route)
+        def decorated_function(*args, **kwargs):
+            if not bool(re.search(role_like, current_group_name())):
+                # raise Exception("User not authorised to access this route")
+                session["error_message"] = "User not authorised to access this route"
+                return redirect("/403")
+            return flask_route(*args, **kwargs)
+
+        return decorated_function
+
+    return decorate_route
+
+
+def requires_group_in_list(valid_roles):
+    def decorate_route(flask_route):
+        @wraps(flask_route)
+        def decorated_function(*args, **kwargs):
+            if current_group_name() not in valid_roles:
+                # raise Exception("User not authorised to access this route")
+                session["error_message"] = "User not authorised to access this route"
+                return redirect("/403")
+            return flask_route(*args, **kwargs)
+
+        return decorated_function
+
+    return decorate_route
 
 
 def login_required(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if "details" not in session:
-            return redirect("/")
+            # return redirect("/")
+            session["error_message"] = "User not authorised to access this route"
+            return redirect("/403")
         return flask_route(*args, **kwargs)
 
     return decorated_function
@@ -55,7 +101,9 @@ def upload_rights_required(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if not has_upload_rights():
-            return redirect("/")
+            # return redirect("/")
+            session["error_message"] = "User not authorised to access this route"
+            return redirect("/403")
         return flask_route(*args, **kwargs)
 
     return decorated_function
