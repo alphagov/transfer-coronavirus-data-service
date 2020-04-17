@@ -1,13 +1,49 @@
 import os
+import re
 import time
 
 from behave import given, then, when
+
+
+def get_plus_string(group_name):
+    # To keep things short I've truncated the stage name
+    # in the plus string from the CF_SPACE env var
+    stages = {
+        "testing": "test",
+        "staging": "stage"
+    }
+    env = stages[os.environ.get("CF_SPACE", "testing")]
+
+    # for a stupid reason I created all the test users
+    # with a slightly different naming convention
+    groups = {
+        "standard-download": "user-download",
+        "standard-upload": "user-upload",
+    }
+    if group_name in groups:
+        group_suffix = groups[group_name]
+    else:
+        group_suffix = group_name
+
+    plus_string = f"+c19-{env}-{group_suffix}"
+    return plus_string
 
 
 @given("the credentials")
 def credentials_step(context):
     context.browser.header_overrides = {
         "e2e_username": os.environ["E2E_STAGING_USERNAME"],
+        "e2e_password": os.environ["E2E_STAGING_PASSWORD"],
+    }
+
+
+@given('credentials for the "{group_name}" group')
+def group_credentials_step(context, group_name):
+    plus_string = get_plus_string(group_name)
+    root_email = os.environ["E2E_STAGING_USERNAME"]
+    e2e_username = root_email.replace("@", f"{plus_string}@")
+    context.browser.header_overrides = {
+        "e2e_username": e2e_username,
         "e2e_password": os.environ["E2E_STAGING_PASSWORD"],
     }
 
@@ -85,6 +121,13 @@ def user_path_step(context, path):
 @then("you get redirected to user home")
 def user_redirect_step(context):
     url = os.environ["E2E_STAGING_ROOT_URL"]
+    assert context.browser.current_url == url
+
+
+@then('you get redirected to route: "{route}"')
+def user_redirect_step(context, route):
+    url = re.sub("/$", route, os.environ["E2E_STAGING_ROOT_URL"])
+    print(url)
     assert context.browser.current_url == url
 
 
