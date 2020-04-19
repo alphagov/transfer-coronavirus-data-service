@@ -79,7 +79,7 @@
     </dt>
     <dd class="govuk-summary-list__value" id="user_granted_paths">
       {% for attr_path in user["custom:paths"].split(";") %}
-        <p class="govuk-body">{{ attr_path | s3_remove_root_path }}</p>
+        <p class="govuk-body">{{ attr_path }}</p>
       {% endfor %}
     </dd>
   </div>

@@ -257,7 +257,7 @@ def perform_cognito_task(task: str, admin_user_object: dict) -> bool:
 def admin_edit_user(app):
     args = request.values
     new_user = False
-    user_custom_paths = ""
+    user_custom_paths = []
 
     task = ""
     if "task" in args:
@@ -287,7 +287,7 @@ def admin_edit_user(app):
         is_local_authority_user = admin_user_object["custom:is_la"] == "1"
         is_other_user = not is_local_authority_user
         admin_user_object = remove_invalid_user_paths(admin_user_object)
-
+        user_custom_paths = admin_user_object["custom:paths"].split(";")
 
     return render_template_custom(
         app,
