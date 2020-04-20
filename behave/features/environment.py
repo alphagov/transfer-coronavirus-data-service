@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-def before_all(context):
+def before_scenario(context, _scenario):
     context.api_session = requests.Session()
     # options = webdriver.FirefoxOptions()
     # options.headless = os.environ["E2E_HEADLESS"] == "true"
@@ -21,5 +21,5 @@ def before_all(context):
     context.browser.set_window_size(1080, 800)
 
 
-def after_all(context):
+def after_scenario(context, _scenario):
     context.browser.quit()

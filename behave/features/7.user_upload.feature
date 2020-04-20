@@ -1,16 +1,9 @@
 # COVID19 - User upload files feature
 Feature: COVID19 Data Transfer - User upload files
-    Scenario: user can login
+    @user
+    Scenario: user can upload files
         Given credentials for the "standard-upload" group
-        When you navigate to user home
-        When you click on "#main-content .covid-transfer-signin-button"
-        Then wait "5" seconds
-        When oauth username is set
-        When oauth password is set
-        When oauth form is submitted
-        Then wait "5" seconds
-        Then the content of element with selector ".covid-transfer-page-title" contains "COVID-19 Data Transfer"
-        Then the content of element with selector "#main-content .covid-transfer-username" contains username
+        When you login with these credentials
         When I click on button "Upload"
         Then wait "5" seconds
         Then I fill in a filename
