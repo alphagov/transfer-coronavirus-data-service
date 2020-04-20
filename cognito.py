@@ -665,11 +665,11 @@ def delegate_auth_to_aws(session):
     caller = client.get_caller_identity()
     role_arn = caller.get("Arn", "")
     matched = re.search("assumed-role/([^/]+)/", role_arn)
+    # role_name should look like `first.last-role_type`
     role_name = matched.group(1)
     role_name_components = role_name.split("-")
     user_name = role_name_components[0]
     role_type = role_name_components[1]
-
 
     LOG.debug(role_name)
     if role_type in ["admin", "cognito"]:
@@ -679,7 +679,7 @@ def delegate_auth_to_aws(session):
         session["attributes"] = {
             "custom:is_la": "0",
             "custom:paths": "",
-            "email": user_email
+            "email": user_email,
         }
         session["user"] = user_email
         session["email"] = user_email
