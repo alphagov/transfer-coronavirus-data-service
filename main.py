@@ -211,6 +211,10 @@ def index():
 
     args = request.args
 
+    # TODO remove below if statement once admin app running online
+    if "details" not in session and cognito.is_aws_authenticated():
+        cognito.delegate_auth_to_aws(session)
+
     if "code" in args:
         app.logger.debug("Perform auth exchange")
         oauth_code = args["code"]
