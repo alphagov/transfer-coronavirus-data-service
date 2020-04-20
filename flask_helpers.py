@@ -4,6 +4,8 @@ from functools import wraps
 
 from flask import redirect, render_template, session
 
+from logger import LOG
+
 
 def is_admin_interface():
     return os.getenv("ADMIN", "false") == "true"
@@ -33,10 +35,19 @@ def is_development():
 def admin_interface(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
-
+        if not is_admin_interface():
+            session["error_message"] = "The requested route is not available"
+            LOG.error({"action": "access denied", "reason": "ADMIN env var missing"})
+            return redirect("/403")
         if not has_admin_role():
-            # raise Exception("User not authorised to access this route")
             session["error_message"] = "User not authorised to access this route"
+            LOG.error(
+                {
+                    "action": "access denied",
+                    "reason": "User not authorised",
+                    "username": session.get("user", None),
+                }
+            )
             return redirect("/403")
         return flask_route(*args, **kwargs)
 
