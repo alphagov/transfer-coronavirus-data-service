@@ -1,5 +1,4 @@
 import os
-import re
 from functools import wraps
 
 from flask import redirect, render_template, session
@@ -15,7 +14,7 @@ def has_admin_role():
     is_admin_role = False
     group = session.get("group", None)
     if group:
-        is_admin_role = group["value"] in ["admin-view",  "admin-power", "admin-full"]
+        is_admin_role = group["value"] in ["admin-view", "admin-power", "admin-full"]
     return is_admin_role
 
 
@@ -63,7 +62,7 @@ def end_user_interface(flask_route):
                 {
                     "action": "access denied",
                     "reason": "Admin user trying to access end-user interface",
-                    "user": session["user"]
+                    "user": session["user"],
                 }
             )
             return redirect("/403")
@@ -81,7 +80,7 @@ def requires_group_in_list(valid_roles):
                     {
                         "action": "access denied",
                         "reason": "User does not have required group",
-                        "user": session["user"]
+                        "user": session["user"],
                     }
                 )
                 session["error_message"] = "User not authorised to access this route"
@@ -101,7 +100,7 @@ def login_required(flask_route):
             LOG.error(
                 {
                     "action": "access denied",
-                    "reason": "Login required to access this route"
+                    "reason": "Login required to access this route",
                 }
             )
             return redirect("/403")
@@ -119,7 +118,7 @@ def upload_rights_required(flask_route):
                 {
                     "action": "access denied",
                     "reason": "User does not have upload permission",
-                    "user": session["user"]
+                    "user": session["user"],
                 }
             )
             return redirect("/403")

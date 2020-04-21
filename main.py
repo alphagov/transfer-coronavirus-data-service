@@ -270,7 +270,7 @@ def logout():
 @app.route("/download/<path:path>")
 @login_required
 @end_user_interface
-@requires_group_in_list(["standard-download","standard-upload"])
+@requires_group_in_list(["standard-download", "standard-upload"])
 def download(path):
     """
     Check the user has access to the requested file
@@ -438,7 +438,7 @@ def create_presigned_post(object_name, expiration=3600):
 @app.route("/files")
 @login_required
 @end_user_interface
-@requires_group_in_list(["standard-download","standard-upload"])
+@requires_group_in_list(["standard-download", "standard-upload"])
 def files():
     files = get_files(app.bucket_name, session)
 
