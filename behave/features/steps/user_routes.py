@@ -124,7 +124,6 @@ def user_redirect_home_step(context):
 @then('you get redirected to route: "{route}"')
 def user_redirect_to_route_step(context, route):
     url = re.sub("/$", route, os.environ["E2E_STAGING_ROOT_URL"])
-    print(url)
     assert context.browser.current_url == url
 
 

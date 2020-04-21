@@ -22,7 +22,6 @@ from flask_helpers import (
     login_required,
     render_template_custom,
     requires_group_in_list,
-    requires_group_matching,
 )
 from logger import LOG
 
@@ -271,7 +270,7 @@ def logout():
 @app.route("/download/<path:path>")
 @login_required
 @end_user_interface
-@requires_group_matching("^standard-")
+@requires_group_in_list(["standard-download","standard-upload"])
 def download(path):
     """
     Check the user has access to the requested file
@@ -439,7 +438,7 @@ def create_presigned_post(object_name, expiration=3600):
 @app.route("/files")
 @login_required
 @end_user_interface
-@requires_group_matching("^standard-")
+@requires_group_in_list(["standard-download","standard-upload"])
 def files():
     files = get_files(app.bucket_name, session)
 
@@ -456,21 +455,21 @@ def files():
 
 @app.route("/admin")
 @admin_interface
-@requires_group_matching("^admin-")
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_main():
     return admin.admin_main(app)
 
 
 @app.route("/admin/user/list")
 @admin_interface
-@requires_group_matching("^admin-")
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_list_users():
     return admin.admin_list_users(app)
 
 
 @app.route("/admin/user", methods=["POST", "GET"])
 @admin_interface
-@requires_group_matching("^admin-")
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_user():
     return admin.admin_user(app)
 
@@ -512,21 +511,21 @@ def admin_delete_user():
 
 @app.route("/admin/user/error")
 @admin_interface
-@requires_group_matching("^admin-")
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_user_error():
     return admin.admin_user_error(app)
 
 
 @app.route("/admin/user/confirm", methods=["POST"])
 @admin_interface
-@requires_group_matching("^admin-")
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_confirm_user():
     return admin.admin_confirm_user(app)
 
 
 @app.route("/admin/user/not-found")
 @admin_interface
-@requires_group_matching("^admin-")
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_user_not_found():
     return admin.admin_user_not_found(app)
 

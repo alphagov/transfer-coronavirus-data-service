@@ -15,7 +15,7 @@ def has_admin_role():
     is_admin_role = False
     group = session.get("group", None)
     if group:
-        is_admin_role = "admin-" in group["value"]
+        is_admin_role = group["value"] in ["admin-view",  "admin-power", "admin-full"]
     return is_admin_role
 
 
@@ -58,27 +58,18 @@ def end_user_interface(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if has_admin_role():
-            # raise Exception("User not authorised to access this route")
             session["error_message"] = "User not authorised to access this route"
+            LOG.error(
+                {
+                    "action": "access denied",
+                    "reason": "Admin user trying to access end-user interface",
+                    "user": session["user"]
+                }
+            )
             return redirect("/403")
         return flask_route(*args, **kwargs)
 
     return decorated_function
-
-
-def requires_group_matching(role_like):
-    def decorate_route(flask_route):
-        @wraps(flask_route)
-        def decorated_function(*args, **kwargs):
-            if not bool(re.search(role_like, current_group_name())):
-                # raise Exception("User not authorised to access this route")
-                session["error_message"] = "User not authorised to access this route"
-                return redirect("/403")
-            return flask_route(*args, **kwargs)
-
-        return decorated_function
-
-    return decorate_route
 
 
 def requires_group_in_list(valid_roles):
@@ -86,7 +77,13 @@ def requires_group_in_list(valid_roles):
         @wraps(flask_route)
         def decorated_function(*args, **kwargs):
             if current_group_name() not in valid_roles:
-                # raise Exception("User not authorised to access this route")
+                LOG.error(
+                    {
+                        "action": "access denied",
+                        "reason": "User does not have required group",
+                        "user": session["user"]
+                    }
+                )
                 session["error_message"] = "User not authorised to access this route"
                 return redirect("/403")
             return flask_route(*args, **kwargs)
@@ -100,8 +97,13 @@ def login_required(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if "details" not in session:
-            # return redirect("/")
-            session["error_message"] = "User not authorised to access this route"
+            session["error_message"] = "Login required to access this route"
+            LOG.error(
+                {
+                    "action": "access denied",
+                    "reason": "Login required to access this route"
+                }
+            )
             return redirect("/403")
         return flask_route(*args, **kwargs)
 
@@ -112,8 +114,14 @@ def upload_rights_required(flask_route):
     @wraps(flask_route)
     def decorated_function(*args, **kwargs):
         if not has_upload_rights():
-            # return redirect("/")
             session["error_message"] = "User not authorised to access this route"
+            LOG.error(
+                {
+                    "action": "access denied",
+                    "reason": "User does not have upload permission",
+                    "user": session["user"]
+                }
+            )
             return redirect("/403")
         return flask_route(*args, **kwargs)
 
