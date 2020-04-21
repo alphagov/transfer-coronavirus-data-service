@@ -588,7 +588,11 @@ def update_user_attributes(user):
 
         if new_paths is not None:
             if isinstance(new_paths, str):
-                group_name = new_group_name if new_group_name is not None else user["group"]["value"]
+                group_name = (
+                    new_group_name
+                    if new_group_name is not None
+                    else user["group"]["value"]
+                )
                 if not are_user_paths_valid(is_la_value, new_paths, group_name):
                     return False
 
@@ -636,3 +640,48 @@ def update_user_attributes(user):
 
     LOG.error("ERR: %s: no actions to take", "user-admin")
     return False
+
+
+# TODO remove below once admin app running online
+def is_aws_authenticated():
+    """
+    If the app is being run locally for staging or production
+    you can't redirect through cognito to login
+    """
+    is_aws_auth = os.getenv("ADMIN_AWS_AUTH", "false") == "true"
+    is_testing = os.getenv("CF_SPACE", "testing") not in ["staging", "production"]
+    return is_aws_auth and not is_testing
+
+
+# TODO remove below once admin app running online
+def delegate_auth_to_aws(session):
+    """
+    When running the admin interface locally delegate the
+    authentication step to get the user credentials and
+    role from the assumed IAM role
+    """
+
+    client = boto3.client("sts")
+    caller = client.get_caller_identity()
+    role_arn = caller.get("Arn", "")
+    matched = re.search("assumed-role/([^/]+)/", role_arn)
+    # role_name should look like `first.last-role_type`
+    role_name = matched.group(1)
+    role_name_components = role_name.split("-")
+    user_name = role_name_components[0]
+    role_type = role_name_components[1]
+
+    LOG.debug(role_name)
+    if role_type in ["admin", "cognito"]:
+        user_group = get_group_by_name("admin-full")
+        user_email = f"{user_name}@aws"
+
+        session["attributes"] = {
+            "custom:is_la": "0",
+            "custom:paths": "",
+            "email": user_email,
+        }
+        session["user"] = user_email
+        session["email"] = user_email
+        session["details"] = "yes"
+        session["group"] = user_group

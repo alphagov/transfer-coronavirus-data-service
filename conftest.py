@@ -7,8 +7,31 @@ import pytest
 from main import app, load_environment
 
 
-@pytest.fixture()
-def test_session():
+def get_standard_download_group():
+    return {
+        "preference": 10,
+        "value": "standard-download",
+        "display": "Standard download user",
+    }
+
+
+def get_standard_upload_group():
+    return {
+        "preference": 20,
+        "value": "standard-upload",
+        "display": "Standard download and upload user",
+    }
+
+
+def get_admin_full_group():
+    return {
+        "preference": 90,
+        "value": "admin-full",
+        "display": "User administrator full access",
+    }
+
+
+def get_default_session():
     user_paths = (
         "web-app-prod-data/local_authority/haringey;"
         "web-app-prod-data/local_authority/barnet"
@@ -24,38 +47,27 @@ def test_session():
             {"Name": "custom:is_la", "Value": "1"},
             {"Name": "custom:paths", "Value": user_paths},
         ],
-        "group": {
-            "preference": 10,
-            "value": "standard-download",
-            "display": "Standard download user",
-        },
+        "group": get_standard_download_group(),
     }
     return session
 
 
 @pytest.fixture()
+def test_session():
+    return get_default_session()
+
+
+@pytest.fixture()
 def test_upload_session():
-    user_paths = (
-        "web-app-prod-data/local_authority/haringey;"
-        "web-app-prod-data/local_authority/barnet"
-    )
-    session = {
-        "details": {
-            "user": "test-user@test-domain.com",
-            "email": "test-user@test-domain.com",
-        },
-        "user": "test-user@test-domain.com",
-        "email": "test-user@test-domain.com",
-        "attributes": [
-            {"Name": "custom:is_la", "Value": "1"},
-            {"Name": "custom:paths", "Value": user_paths},
-        ],
-        "group": {
-            "preference": 20,
-            "value": "standard-upload",
-            "display": "Standard download and upload user",
-        },
-    }
+    session = get_default_session()
+    session["group"] = get_standard_upload_group()
+    return session
+
+
+@pytest.fixture()
+def test_admin_session():
+    session = get_default_session()
+    session["group"] = get_admin_full_group()
     return session
 
 
@@ -96,20 +108,12 @@ def test_client():
 
 @pytest.fixture()
 def standard_download():
-    return {
-        "preference": 10,
-        "value": "standard-download",
-        "display": "Standard download user",
-    }
+    return get_standard_download_group()
 
 
 @pytest.fixture()
 def standard_upload():
-    return {
-        "preference": 20,
-        "value": "standard-upload",
-        "display": "Standard download and upload user",
-    }
+    return get_standard_upload_group()
 
 
 @pytest.fixture()
@@ -132,11 +136,7 @@ def admin_user():
         "name": "Justin Casey",
         "email": "justin.casey@communities.gov.uk",
         "phone_number": "+447123456789",
-        "group": {
-            "preference": 10,
-            "value": "standard-download",
-            "display": "Standard download user",
-        },
+        "group": get_standard_download_group(),
         "custom:is_la": "1",
         "custom:paths": ";".join(
             [

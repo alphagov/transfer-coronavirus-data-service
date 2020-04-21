@@ -1,7 +1,7 @@
 # COVID19 - User upload files feature
 Feature: COVID19 Data Transfer - User upload files
     Scenario: user can login
-        Given the credentials
+        Given credentials for the "standard-upload" group
         When you navigate to user home
         When you click on "#main-content .covid-transfer-signin-button"
         Then wait "5" seconds

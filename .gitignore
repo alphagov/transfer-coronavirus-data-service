@@ -34,3 +34,4 @@ venv.bak/
 .idea
 
 behave_env.sh
+builds/*

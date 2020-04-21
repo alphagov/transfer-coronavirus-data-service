@@ -15,6 +15,8 @@ def setup_local_environment(
     region = "eu-west-2"
 
     os.environ["ADMIN"] = "true" if is_admin else "false"
+    # TODO remove once admin app running online
+    os.environ["ADMIN_AWS_AUTH"] = "true" if is_admin else "false"
 
     if environment:
         os.environ["CF_SPACE"] = environment
