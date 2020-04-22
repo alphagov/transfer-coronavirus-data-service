@@ -26,6 +26,12 @@ def get_plus_string(group_name):
     return plus_string
 
 
+def username_for_group_name(group_name):
+    plus_string = get_plus_string(group_name)
+    root_email = os.environ["E2E_STAGING_USERNAME"]
+    return root_email.replace("@", f"{plus_string}@")
+
+
 @given("the credentials")
 def credentials_step(context):
     context.browser.header_overrides = {
@@ -36,9 +42,7 @@ def credentials_step(context):
 
 @given('credentials for the "{group_name}" group')
 def group_credentials_step(context, group_name):
-    plus_string = get_plus_string(group_name)
-    root_email = os.environ["E2E_STAGING_USERNAME"]
-    e2e_username = root_email.replace("@", f"{plus_string}@")
+    e2e_username = username_for_group_name(group_name)
     context.browser.header_overrides = {
         "e2e_username": e2e_username,
         "e2e_password": os.environ["E2E_STAGING_PASSWORD"],
@@ -155,3 +159,21 @@ def wait_step(context, seconds):
 def session_cookie_step(context):
     cookie = context.browser.get_cookie("session")
     assert cookie is not None
+
+
+@when("you login with these credentials")
+def login_with_credentials(context):
+    context.execute_steps(
+        """
+    When you navigate to user home
+    When you click on "#main-content .covid-transfer-signin-button"
+    Then wait "5" seconds
+    When oauth username is set
+    When oauth password is set
+    When oauth form is submitted
+    Then wait "5" seconds
+    Then the content of element with selector"""
+        + """ ".covid-transfer-page-title" contains "COVID-19 Data Transfer"
+    Then the content of element with selector"""
+        + """ "#main-content .covid-transfer-username" contains username"""
+    )

@@ -85,7 +85,8 @@ zip: build
 	echo "✔️ zip file built!"
 
 e2e: rebuild
-	docker-compose run chrome-driver bash -c "python3 run.py main testing & cd behave && behave"
+	docker-compose run chrome-driver bash -c "python3 run.py main testing & cd behave && behave --tags='@user'"
+	docker-compose run chrome-driver bash -c "python3 run.py admin testing & cd behave && behave --tags='@admin'"
 
 concourse_e2e:
-	cd behave && behave
+	cd behave && behave --tags='@user'

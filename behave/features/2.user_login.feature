@@ -1,5 +1,6 @@
 # COVID19 - User login feature
 Feature: COVID19 Data Transfer - User login
+    @user
     Scenario: user can login
         Given credentials for the "standard-upload" group
         When you navigate to user home
