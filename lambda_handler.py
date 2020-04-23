@@ -1,5 +1,5 @@
 import os
-import app
+from main import app, setup_talisman, load_environment
 import serverless_wsgi
 
 
@@ -10,7 +10,7 @@ def web_app(event, context):
         :returns: An AWS ALB event
         :rtype: dict
     """
-    return serverless_wsgi.handle_request(app.app, event, context)
+    return run(event, context)
 
 
 def admin(event, context):
@@ -24,4 +24,10 @@ def admin(event, context):
         :rtype: dict
     """
     os.environ["ADMIN"] = "true"
-    return serverless_wsgi.handle_request(app.app, event, context)
+    return run(event, context)
+
+
+def run(event, context):
+    setup_talisman(app)
+    load_environment(app)
+    return serverless_wsgi.handle_request(app, event, context)
