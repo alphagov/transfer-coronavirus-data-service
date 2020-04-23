@@ -29,6 +29,7 @@ def valid_paths(input_path=None):
         {"path": "other/gds", "disp": "GDS"},
         {"path": "other/nhs", "disp": "NHS"},
         {"path": "dwp", "disp": "DWP"},
+        {"path": "dwp-upload-only", "disp": "DWP Upload Only"},
         {"path": "wholesaler/brakes", "disp": "Brakes"},
         {"path": "supermarket", "disp": "Supermarket"},
     ]
