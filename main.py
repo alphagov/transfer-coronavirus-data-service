@@ -16,10 +16,12 @@ import admin
 import cognito
 from flask_helpers import (
     admin_interface,
+    end_user_interface,
+    has_admin_role,
     has_upload_rights,
     login_required,
     render_template_custom,
-    upload_rights_required,
+    requires_group_in_list,
 )
 from logger import LOG
 
@@ -172,6 +174,18 @@ def send_browser_config():
     )
 
 
+@app.route("/403")
+def server_error_403():
+    error_message = session.get("error_message", "Access denied")
+    app.logger.error(f"Server error: {error_message}")
+    return (
+        render_template_custom(
+            app, "error.html", hide_logout=True, error=error_message
+        ),
+        403,
+    )
+
+
 @app.errorhandler(500)
 def server_error_500(error):
     app.logger.error(f"Server error: {request.url}")
@@ -194,10 +208,11 @@ def server_error_400(error):
 @app.route("/index")
 def index():
 
-    if os.getenv("ADMIN", "false") == "true":
-        return redirect("/admin")
-
     args = request.args
+
+    # TODO remove below if statement once admin app running online
+    if "details" not in session and cognito.is_aws_authenticated():
+        cognito.delegate_auth_to_aws(session)
 
     if "code" in args:
         app.logger.debug("Perform auth exchange")
@@ -205,17 +220,19 @@ def index():
         response = exchange_code_for_tokens(oauth_code)
         if response.status_code != 200:
             app.logger.error({"error": "OAuth failed", "response": response})
-        return redirect("/")
+        return redirect("/admin" if has_admin_role() else "/")
 
     if "details" in session:
         app.logger.debug("Logged in")
         upload_rights = has_upload_rights()
+        is_admin_role = has_admin_role()
         return render_template_custom(
             app,
             "welcome.html",
             user=session["user"],
             email=session["email"],
             upload_rights=upload_rights,
+            is_admin_role=is_admin_role,
         )
     else:
         app.logger.debug("Logged out")
@@ -252,6 +269,8 @@ def logout():
 
 @app.route("/download/<path:path>")
 @login_required
+@end_user_interface
+@requires_group_in_list(["standard-download", "standard-upload"])
 def download(path):
     """
     Check the user has access to the requested file
@@ -289,7 +308,8 @@ def download(path):
 
 @app.route("/upload", methods=["POST", "GET"])
 @login_required
-@upload_rights_required
+@end_user_interface
+@requires_group_in_list(["standard-upload"])
 def upload():
     user_upload_paths = user_custom_paths(is_upload=True, session=session)
     preupload = True
@@ -417,6 +437,8 @@ def create_presigned_post(object_name, expiration=3600):
 
 @app.route("/files")
 @login_required
+@end_user_interface
+@requires_group_in_list(["standard-download", "standard-upload"])
 def files():
     files = get_files(app.bucket_name, session)
 
@@ -433,66 +455,77 @@ def files():
 
 @app.route("/admin")
 @admin_interface
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_main():
     return admin.admin_main(app)
 
 
 @app.route("/admin/user/list")
 @admin_interface
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_list_users():
     return admin.admin_list_users(app)
 
 
 @app.route("/admin/user", methods=["POST", "GET"])
 @admin_interface
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_user():
     return admin.admin_user(app)
 
 
 @app.route("/admin/user/edit", methods=["POST", "GET"])
 @admin_interface
+@requires_group_in_list(["admin-edit", "admin-full"])
 def admin_edit_user():
     return admin.admin_edit_user(app)
 
 
 @app.route("/admin/user/reinvite", methods=["POST"])
 @admin_interface
+@requires_group_in_list(["admin-edit", "admin-full"])
 def admin_reinvite_user():
     return admin.admin_reinvite_user(app)
 
 
 @app.route("/admin/user/enable", methods=["POST"])
 @admin_interface
+@requires_group_in_list(["admin-edit", "admin-full"])
 def admin_enable_user():
     return admin.admin_enable_user(app)
 
 
 @app.route("/admin/user/disable", methods=["POST"])
 @admin_interface
+@requires_group_in_list(["admin-edit", "admin-full"])
 def admin_disable_user():
     return admin.admin_disable_user(app)
 
 
 @app.route("/admin/user/delete", methods=["POST"])
 @admin_interface
+@requires_group_in_list(["admin-full"])
 def admin_delete_user():
     return admin.admin_delete_user(app)
 
 
 @app.route("/admin/user/error")
 @admin_interface
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_user_error():
     return admin.admin_user_error(app)
 
 
 @app.route("/admin/user/confirm", methods=["POST"])
 @admin_interface
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_confirm_user():
     return admin.admin_confirm_user(app)
 
 
 @app.route("/admin/user/not-found")
 @admin_interface
+@requires_group_in_list(["admin-view", "admin-power", "admin-full"])
 def admin_user_not_found():
     return admin.admin_user_not_found(app)
 

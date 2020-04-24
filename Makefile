@@ -44,6 +44,9 @@ target_dir:
 	rm -rf .target/
 	mkdir -p .target
 
+add_deps:
+	pip3 install -r requirements.txt -t .target
+
 copy_dir:
 	set -e
 	echo "⏳ copying..."
@@ -56,7 +59,7 @@ copy_dir:
 	cp -R js .target
 	cp -R templates .target
 
-build: clean target_dir copy_dir
+build: clean target_dir add_deps copy_dir
 
 run: rebuild
 	docker-compose run --service-ports chrome-driver python3 run.py main testing
@@ -85,7 +88,8 @@ zip: build
 	echo "✔️ zip file built!"
 
 e2e: rebuild
-	docker-compose run chrome-driver bash -c "python3 run.py main testing & cd behave && behave"
+	docker-compose run chrome-driver bash -c "python3 run.py main testing & cd behave && behave --tags='@user'"
+	docker-compose run chrome-driver bash -c "python3 run.py admin testing & cd behave && behave --tags='@admin'"
 
 concourse_e2e:
-	cd behave && behave
+	cd behave && behave --tags='@user'
