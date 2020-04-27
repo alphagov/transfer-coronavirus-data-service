@@ -51,7 +51,7 @@ copy_dir:
 	set -e
 	echo "⏳ copying..."
 	cp *.py .target
-	cp hubs.csv .target
+	cp hub.csv .target
 	cp *.yml .target
 	cp *.txt .target
 	cp -R assets .target
