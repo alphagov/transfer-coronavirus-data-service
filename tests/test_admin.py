@@ -19,6 +19,7 @@ from main import app
 @pytest.mark.usefixtures("test_session")
 @pytest.mark.usefixtures("user_details_response")
 @pytest.mark.usefixtures("test_admin_session")
+@pytest.mark.usefixtures("update_admin_user")
 def test_parse_edit_form_fields(admin_user, user_confirm_form):
 
     # Check that correct changes are made for valid form data
@@ -155,7 +156,6 @@ def test_route_admin_user_edit(
         mocked_user_get_details.return_value = user_details_response
         response = test_client.post("/admin/user/edit", data={"task": "edit"})
         body = response.data.decode()
-        # flat = flatten_html(body)
         assert response.status_code == 200
         assert '<h1 class="govuk-heading-l">Edit user</h1>' in body
         assert body_has_element_with_attributes(
@@ -164,3 +164,252 @@ def test_route_admin_user_edit(
         assert body_has_element_with_attributes(
             body, {"name": "telephone-number", "value": admin_user["phone_number"]}
         )
+
+
+def test_route_admin_confirm_user_confirm_new(
+    test_client, test_admin_session, admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = admin_user
+        client_session["admin_user_email"] = admin_user["email"]
+
+    with patch("admin.User.create") as mocked_user_create:
+        mocked_user_create.return_value = True
+        with patch("admin.User.get_details") as mocked_user_get_details:
+            mocked_user_get_details.return_value = user_details_response
+            response = test_client.post(
+                "/admin/user/confirm",
+                data={"task": "confirm-new"},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            body = response.data.decode()
+            assert "Created successfully" in body
+            mocked_user_create.assert_called_with(
+                "Justin Casey",
+                "+447123456789",
+                admin_user["custom:paths"],
+                "1",
+                "standard-download",
+            )
+
+
+def test_route_admin_confirm_user_confirm_existing(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    with patch("admin.User.update") as mocked_user_update:
+        with patch("admin.User.get_details") as mocked_user_get_details:
+            mocked_user_get_details.return_value = user_details_response
+            mocked_user_update.return_value = True
+            response = test_client.post(
+                "/admin/user/confirm",
+                data={"task": "confirm-existing"},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            body = response.data.decode()
+            assert "Updated successfully" in body
+            mocked_user_update.assert_called_with(
+                "Justine Hindsight",
+                "+447987654321",
+                "web-app-prod-data/local_authority/newham",
+                "1",
+                "standard-upload",
+            )
+
+
+def test_route_admin_reinvite_user_can_reinvite(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    with patch("admin.User.reinvite") as mocked_user_reinvite:
+        with patch("admin.User.get_details") as mocked_user_get_details:
+            mocked_user_get_details.return_value = user_details_response
+            mocked_user_reinvite.return_value = True
+            response = test_client.post(
+                "/admin/user/reinvite",
+                data={"task": "do-reinvite-user"},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            body = response.data.decode()
+            assert "Reinvited successfully" in body
+            mocked_user_reinvite.assert_called()
+
+
+def test_route_admin_reinvite_user(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    response = test_client.post("/admin/user/reinvite", follow_redirects=True,)
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "Are you sure you want to reinvite" in body
+
+
+def test_route_admin_enable_user_can_enable(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    with patch("admin.User.enable") as mocked_user_enable:
+        with patch("admin.User.get_details") as mocked_user_get_details:
+            mocked_user_get_details.return_value = user_details_response
+            mocked_user_enable.return_value = True
+            response = test_client.post(
+                "/admin/user/enable",
+                data={"task": "do-enable-user"},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            body = response.data.decode()
+            assert "Enabled successfully" in body
+            mocked_user_enable.assert_called()
+
+
+def test_route_admin_enable_user(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    response = test_client.post("/admin/user/enable", follow_redirects=True,)
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "Are you sure you want to enable" in body
+
+
+def test_route_admin_enable_user_can_disable(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    with patch("admin.User.disable") as mocked_user_disable:
+        with patch("admin.User.get_details") as mocked_user_get_details:
+            mocked_user_get_details.return_value = user_details_response
+            mocked_user_disable.return_value = True
+            response = test_client.post(
+                "/admin/user/disable",
+                data={"task": "do-disable-user"},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            body = response.data.decode()
+            assert "Disabled successfully" in body
+            mocked_user_disable.assert_called()
+
+
+def test_route_admin_disable_user(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    response = test_client.post("/admin/user/disable", follow_redirects=True,)
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "Are you sure you want to disable" in body
+
+
+def test_route_admin_enable_user_can_delete(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    with patch("admin.User.delete") as mocked_user_delete:
+        with patch("admin.User.get_details") as mocked_user_get_details:
+            mocked_user_get_details.return_value = user_details_response
+            mocked_user_delete.return_value = True
+            response = test_client.post(
+                "/admin/user/delete",
+                data={"task": "do-delete-user"},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            body = response.data.decode()
+            # Successful deletes take the user to the admin index page
+            assert "User administration" in body
+            mocked_user_delete.assert_called()
+
+
+def test_route_admin_delete_user(
+    test_client, test_admin_session, update_admin_user, user_details_response
+):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+        client_session["admin_user_object"] = update_admin_user
+        client_session["admin_user_email"] = update_admin_user["email"]
+
+    response = test_client.post("/admin/user/delete", follow_redirects=True,)
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "Are you sure you want to delete" in body
+
+
+def test_admin_routes_redirect_if_do_not_have_permission(test_client, test_session):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+        client_session["admin_user_object"] = test_session
+        client_session["admin_user_email"] = test_session["email"]
+
+    paths = [
+        "admin/user",
+        "/admin/user/delete",
+        "/admin/user/disable",
+        "/admin/user/enable",
+        "/admin/user/reinvite",
+        "/admin/user/confirm",
+        "/admin/user/edit",
+    ]
+    for path in paths:
+        response = test_client.post(path, follow_redirects=True)
+        assert response.status_code == 403
+        body = response.data.decode()
+        assert "User not authorised to access this route" in body
+
+
+def test_admin_routes_redirect_if_not_logged_in(test_client):
+    with test_client.session_transaction() as client_session:
+        client_session.clear()
+
+    paths = [
+        "admin/user",
+        "/admin/user/delete",
+        "/admin/user/disable",
+        "/admin/user/enable",
+        "/admin/user/reinvite",
+        "/admin/user/confirm",
+        "/admin/user/edit",
+    ]
+    for path in paths:
+        response = test_client.post(path, follow_redirects=True)
+        assert response.status_code == 403
+        body = response.data.decode()
+        assert "User not authorised to access this route" in body

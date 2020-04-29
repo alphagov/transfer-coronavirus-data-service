@@ -149,6 +149,18 @@ def admin_user():
 
 
 @pytest.fixture()
+def update_admin_user():
+    return {
+        "name": "Justine Hindsight",
+        "email": "justine.casey@communities.gov.uk",
+        "phone_number": "+447987654321",
+        "group": get_standard_upload_group(),
+        "custom:is_la": "1",
+        "custom:paths": ";".join(["web-app-prod-data/local_authority/newham"]),
+    }
+
+
+@pytest.fixture()
 def user_confirm_form():
     form = {
         "full-name": "Justin Casey",
