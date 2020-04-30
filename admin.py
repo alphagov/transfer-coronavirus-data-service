@@ -6,7 +6,7 @@ from requests.utils import quote
 
 import s3paths
 from cognito_groups import get_group_by_name, return_users_group, user_groups
-from flask_helpers import render_template_custom
+from flask_helpers import render_template_custom, user_has_a_valid_role
 from user import User
 
 local_valid_paths_var = []
@@ -89,7 +89,11 @@ def admin_list_users(app):
 
 def admin_main(app):
     clear_session(app)
-    return render_template_custom(app, "admin/index.html")
+    return render_template_custom(
+        app,
+        "admin/index.html",
+        can_create_users=user_has_a_valid_role(["admin-full"])
+    )
 
 
 def admin_confirm_user(app):
@@ -257,6 +261,10 @@ def admin_edit_user(app):
 
         session["admin_user_email"] = ""
         session["admin_user_object"] = {}
+
+        # only admin-full can create a new user
+        if not user_has_a_valid_role(["admin-full"]):
+            return redirect("/403")
 
     admin_user_email = session["admin_user_email"]
     admin_user_object = session["admin_user_object"]
