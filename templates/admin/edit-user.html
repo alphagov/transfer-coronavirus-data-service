@@ -123,7 +123,7 @@
                 {% for i in local_authority.subs %}
                 <div class="govuk-checkboxes__item">
                   <input class="govuk-checkboxes__input" name="custom_paths" id="custom_path_{{ i['val'] }}" type="checkbox" value="{{ i['val'] }}" {{
-                    'checked="checked"' if i['val'] in user_custom_paths
+                  'checked="checked"' if i['val'] in user_custom_paths
                   }}>
                   <label class="govuk-label govuk-checkboxes__label" for="custom_path_{{ i['val'] }}">
                     {{ i['disp'] }}<br>
@@ -148,4 +148,4 @@
     <button name="task" value="{{ 'continue-new' if new_user else 'continue-existing' }}" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" data-prevent-double-click="true" type="submit">Continue and check</button>
   </div>
 
-{% endblock %}
+  {% endblock %}

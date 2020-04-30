@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 import pytest
 from werkzeug.datastructures import ImmutableMultiDict
 
-import stubs
 from admin import (
     parse_edit_form_fields,
     perform_cognito_task,
@@ -14,6 +15,10 @@ from main import app
 
 @pytest.mark.usefixtures("admin_user")
 @pytest.mark.usefixtures("user_confirm_form")
+@pytest.mark.usefixtures("test_client")
+@pytest.mark.usefixtures("test_session")
+@pytest.mark.usefixtures("user_details_response")
+@pytest.mark.usefixtures("test_admin_session")
 def test_parse_edit_form_fields(admin_user, user_confirm_form):
 
     # Check that correct changes are made for valid form data
@@ -76,7 +81,6 @@ def test_requested_path_matches_user_type():
     assert not requested_path_matches_user_type(False, "")
 
 
-@pytest.mark.usefixtures("admin_user")
 def test_remove_invalid_user_paths(admin_user):
     granted_paths = admin_user["custom:paths"].split(";")
     granted_paths.sort()
@@ -91,24 +95,19 @@ def test_remove_invalid_user_paths(admin_user):
     invalid_paths += granted_paths
     invalid_paths.append(other_path)
     admin_user["custom:paths"] = ";".join(invalid_paths)
-    app.logger.debug({"invalid_paths": admin_user["custom:paths"]})
     user = remove_invalid_user_paths(admin_user)
     assert other_path not in user["custom:paths"]
 
     admin_user["custom:is_la"] = "0"
     admin_user["custom:paths"] = ";".join(granted_paths)
-    app.logger.debug({"invalid_paths": admin_user["custom:paths"]})
     user = remove_invalid_user_paths(admin_user)
     assert user["custom:paths"] == ""
 
 
-@pytest.mark.usefixtures("admin_user")
 def test_perform_cognito_task(admin_user):
-    stubber = stubs.mock_cognito_create_user(admin_user)
-    with stubber:
+    with patch("admin.User.create") as mocked_user_get_details:
+        mocked_user_get_details.return_value = True
         assert perform_cognito_task("confirm-new", admin_user)
-
-        stubber.deactivate()
 
 
 # ROUTE tests - The flask routes are actually defined in main.py
@@ -116,12 +115,9 @@ def test_perform_cognito_task(admin_user):
 # so they seem to fit better in here.
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_admin_session")
 def test_route_admin(test_client, test_admin_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
-        app.logger.debug(test_admin_session)
 
     response = test_client.get("/admin")
     body = response.data.decode()
@@ -129,18 +125,16 @@ def test_route_admin(test_client, test_admin_session):
     assert '<h1 class="govuk-heading-l">User administration</h1>' in body
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
-@pytest.mark.usefixtures("admin_user")
-def test_route_admin_user(test_client, test_admin_session, admin_user):
+def test_route_admin_user(
+    test_client, test_admin_session, admin_user, user_details_response
+):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
-        app.logger.debug(test_admin_session)
 
-    stubber = stubs.mock_cognito_get_user_details(admin_user)
-    with stubber:
+    with patch("admin.User.get_details") as mocked_user_get_details:
+        mocked_user_get_details.return_value = user_details_response
         response = test_client.post("/admin/user", data={"task": "view"})
         body = response.data.decode()
         flat = flatten_html(body)
@@ -149,18 +143,16 @@ def test_route_admin_user(test_client, test_admin_session, admin_user):
         assert 'id="user_email">' + admin_user["email"] + "<" in flat
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_admin_session")
-@pytest.mark.usefixtures("admin_user")
-def test_route_admin_user_edit(test_client, test_admin_session, admin_user):
+def test_route_admin_user_edit(
+    test_client, test_admin_session, admin_user, user_details_response
+):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
-        app.logger.debug(test_admin_session)
 
-    stubber = stubs.mock_cognito_get_user_details(admin_user)
-    with stubber:
+    with patch("admin.User.get_details") as mocked_user_get_details:
+        mocked_user_get_details.return_value = user_details_response
         response = test_client.post("/admin/user/edit", data={"task": "edit"})
         body = response.data.decode()
         # flat = flatten_html(body)

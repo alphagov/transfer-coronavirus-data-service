@@ -41,8 +41,7 @@ def get_group_map():
 def get_group_by_name(group_name):
     if group_name is None:
         group_name = "standard-download"
-    group_map = get_group_map()
-    return group_map[group_name]
+    return get_group_map()[group_name]
 
 
 def user_groups(group_value=None):

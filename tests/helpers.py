@@ -1,7 +1,5 @@
 import re
 
-from logger import LOG
-
 
 def flatten_html(body: str) -> str:
     """
@@ -27,14 +25,6 @@ def body_has_element_with_attributes(body: str, attributes: dict) -> bool:
                 find_string = attribute_name
 
             attributes_found[attribute_name] = find_string in element
-
-        # Print out the stuff you've found for partial matches
-        # for test debugging
-        if True in list(attributes_found.values()):
-            LOG.debug(element)
-            LOG.debug(attributes)
-            LOG.debug(attributes_found)
-            LOG.debug(list(attributes_found.values()))
 
         # You don't want to assign the variable directly
         if all(attributes_found.values()):
