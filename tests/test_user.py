@@ -71,6 +71,7 @@ def test_allowed_domains(valid_user):
         "@johnlewis.co.uk",
         "@capita.com",
         "@coreconsultants.io",
+        "@antmarketing.com",
     ] == valid_user.allowed_domains()
 
 
