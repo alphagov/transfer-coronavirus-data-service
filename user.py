@@ -286,6 +286,7 @@ class User:
             "@johnlewis.co.uk",
             "@capita.com",
             "@coreconsultants.io",
+            "@antmarketing.com",
         ]
 
     @staticmethod
