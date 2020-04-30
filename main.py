@@ -476,28 +476,28 @@ def admin_user():
 
 @app.route("/admin/user/edit", methods=["POST", "GET"])
 @admin_interface
-@requires_group_in_list(["admin-edit", "admin-full"])
+@requires_group_in_list(["admin-power", "admin-full"])
 def admin_edit_user():
     return admin.admin_edit_user(app)
 
 
 @app.route("/admin/user/reinvite", methods=["POST"])
 @admin_interface
-@requires_group_in_list(["admin-edit", "admin-full"])
+@requires_group_in_list(["admin-power", "admin-full"])
 def admin_reinvite_user():
     return admin.admin_reinvite_user(app)
 
 
 @app.route("/admin/user/enable", methods=["POST"])
 @admin_interface
-@requires_group_in_list(["admin-edit", "admin-full"])
+@requires_group_in_list(["admin-power", "admin-full"])
 def admin_enable_user():
     return admin.admin_enable_user(app)
 
 
 @app.route("/admin/user/disable", methods=["POST"])
 @admin_interface
-@requires_group_in_list(["admin-edit", "admin-full"])
+@requires_group_in_list(["admin-power", "admin-full"])
 def admin_disable_user():
     return admin.admin_disable_user(app)
 
