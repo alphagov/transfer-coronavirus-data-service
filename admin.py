@@ -90,9 +90,7 @@ def admin_list_users(app):
 def admin_main(app):
     clear_session(app)
     return render_template_custom(
-        app,
-        "admin/index.html",
-        can_create_users=user_has_a_valid_role(["admin-full"])
+        app, "admin/index.html", can_create_users=user_has_a_valid_role(["admin-full"])
     )
 
 
