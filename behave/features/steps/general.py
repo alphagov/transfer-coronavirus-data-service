@@ -1,7 +1,7 @@
 import time
 
-from selenium.common.exceptions import NoSuchElementException
 from behave import then, when
+from selenium.common.exceptions import NoSuchElementException
 
 
 @when('visit url "{url}"')
@@ -29,7 +29,9 @@ def click_on_button(context, text):
 def button_is_there(context, text):
     try:
         context.browser.find_element_by_xpath(
-            "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(text)
+            "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(
+                text
+            )
         )
         element_found = True
     except NoSuchElementException:
@@ -42,7 +44,9 @@ def button_is_there(context, text):
 def button_is_not_there(context, text):
     try:
         context.browser.find_element_by_xpath(
-            "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(text)
+            "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(
+                text
+            )
         )
         element_found = True
     except NoSuchElementException:

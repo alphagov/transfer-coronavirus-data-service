@@ -5,8 +5,8 @@ from unittest.mock import patch
 import flask
 import pytest
 import requests_mock
-
 import stubs
+
 from main import (
     app,
     create_presigned_url,
