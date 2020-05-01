@@ -5,6 +5,8 @@ Feature: COVID19 Data Transfer - Admin page
         Given credentials for the "admin-view" group
         When you login with these credentials
         Then you can go to the admin page
+        Then the button "Go to user" does exist
+        Then the button "New user" does not exist
 
     @admin
     Scenario: Logged in as an admin-power user
@@ -19,6 +21,8 @@ Feature: COVID19 Data Transfer - Admin page
         Given credentials for the "admin-full" group
         When you login with these credentials
         Then you can go to the admin page
+        Then the button "Go to user" does exist
+        Then the button "New user" does exist
 
     @admin
     Scenario: Logged in as a standard-download user
