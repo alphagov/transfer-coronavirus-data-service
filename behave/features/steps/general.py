@@ -1,5 +1,6 @@
 import time
 
+from selenium.common.exceptions import NoSuchElementException
 from behave import then, when
 
 
@@ -22,6 +23,32 @@ def click_on_button(context, text):
     )
     elem.click()
     time.sleep(5)
+
+
+@then('the button "{text}" does exist')
+def button_is_there(context, text):
+    try:
+        context.browser.find_element_by_xpath(
+            "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(text)
+        )
+        element_found = True
+    except NoSuchElementException:
+        element_found = False
+
+    assert element_found
+
+
+@then('the button "{text}" does not exist')
+def button_is_not_there(context, text):
+    try:
+        context.browser.find_element_by_xpath(
+            "//*[contains(@class, 'govuk-button')][text()[contains(., '{}')]]".format(text)
+        )
+        element_found = True
+    except NoSuchElementException:
+        element_found = False
+
+    assert not element_found
 
 
 @when('field with name "{selector}" is given "{value}"')
