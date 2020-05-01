@@ -248,14 +248,24 @@ def group_result():
 def create_user_arguments():
     return {
         "UserAttributes": [
-            {"Name": "name", "Value": "justin"},
+            {"Name": "name", "Value": "Justin Casey"},
             {"Name": "email", "Value": "justin.casey@communities.gov.uk"},
             {"Name": "email_verified", "Value": "true"},
-            {"Name": "phone_number", "Value": "+44201234567890"},
+            {"Name": "phone_number", "Value": "+447123456789"},
             {"Name": "phone_number_verified", "Value": "false"},
-            {"Name": "custom:is_la", "Value": "0"},
-            {"Name": "custom:paths", "Value": "web-app-prod-data"},
+            {"Name": "custom:is_la", "Value": "1"},
+            {
+                "Name": "custom:paths",
+                "Value": ";".join(
+                    [
+                        "web-app-prod-data/local_authority/barking",
+                        "web-app-prod-data/local_authority/haringey",
+                    ]
+                ),
+            },
         ],
+        "UserPoolId": "eu-west-2_poolid",
+        "Username": "justin.casey@communities.gov.uk",
         "ForceAliasCreation": False,
         "DesiredDeliveryMediums": ["EMAIL"],
     }

@@ -63,6 +63,11 @@ class User:
 
     def create(self, name, phone_number, custom_paths, is_la, group_name):
         phone_number = self.sanitise_phone(phone_number)
+
+        set_mfa = False
+        set_settings = False
+        added_to_group = False
+
         if not self.email_address_is_valid():
             return False
         if phone_number == "":
@@ -74,11 +79,9 @@ class User:
         )
 
         if user_created:
-            return True
-
-        set_mfa = self.set_mfa_preferences()
-        set_settings = self.set_user_settings()
-        added_to_group = self.add_to_group(group_name)
+            set_mfa = self.set_mfa_preferences()
+            set_settings = self.set_user_settings()
+            added_to_group = self.add_to_group(group_name)
         return set_mfa and set_settings and added_to_group
 
     def set_mfa_preferences(self):
