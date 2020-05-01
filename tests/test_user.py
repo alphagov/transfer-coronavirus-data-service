@@ -5,18 +5,6 @@ import pytest
 from user import User
 
 
-@pytest.mark.usefixtures("valid_user")
-@pytest.mark.usefixtures("user_with_invalid_email")
-@pytest.mark.usefixtures("user_with_invalid_domain")
-@pytest.mark.usefixtures("group_result")
-@pytest.mark.usefixtures("admin_get_user")
-@pytest.mark.usefixtures("user_details_response")
-@pytest.mark.usefixtures("standard_download_group_response")
-@pytest.mark.usefixtures("user_details_response")
-@pytest.mark.usefixtures("create_user_arguments")
-@pytest.mark.usefixtures("list_users_arguments")
-@pytest.mark.usefixtures("list_users_response")
-@pytest.mark.usefixtures("list_users_result")
 def test_email_sanitised_on_init():
     test1 = "anormalemail@example.gov.uk"
     assert User(test1).email_address == test1
@@ -25,6 +13,9 @@ def test_email_sanitised_on_init():
     assert User(" anemail@example.gov.uk ").email_address == "anemail@example.gov.uk"
 
 
+@pytest.mark.usefixtures(
+    "valid_user", "user_with_invalid_email", "user_with_invalid_domain"
+)
 def test_email_address_is_valid(
     valid_user, user_with_invalid_email, user_with_invalid_domain
 ):
@@ -33,6 +24,9 @@ def test_email_address_is_valid(
     assert not user_with_invalid_domain.email_address_is_valid()
 
 
+@pytest.mark.usefixtures(
+    "valid_user", "admin_get_user", "standard_download_group_response"
+)
 def test_accessor_functions(
     valid_user, admin_get_user, standard_download_group_response
 ):
@@ -51,11 +45,13 @@ def test_accessor_functions(
         assert not valid_user.is_la()
 
 
+@pytest.mark.usefixtures("valid_user", "user_with_invalid_domain")
 def test_allowed_domains_rejects_invalid_domain(valid_user, user_with_invalid_domain):
     assert valid_user.domain_is_allowed()
     assert not user_with_invalid_domain.domain_is_allowed()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_allowed_domains(valid_user):
     assert [
         ".gov.uk",
@@ -74,36 +70,43 @@ def test_allowed_domains(valid_user):
     ] == valid_user.allowed_domains()
 
 
+@pytest.mark.usefixtures("user_with_invalid_email")
 def test_delete_with_invalid_email(user_with_invalid_email):
     assert not user_with_invalid_email.delete()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_delete_with_valid_email(monkeypatch, valid_user):
     with patch("user.make_request") as mocked_send:
         assert valid_user.delete()
         mocked_send.assert_called_with("admin_delete_user", valid_user.email_address)
 
 
+@pytest.mark.usefixtures("user_with_invalid_email")
 def test_enable_with_invalid_email(user_with_invalid_email):
     assert not user_with_invalid_email.enable()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_enable_with_valid_email(monkeypatch, valid_user):
     with patch("user.make_request") as mocked_send:
         assert valid_user.enable()
         mocked_send.assert_called_with("admin_enable_user", valid_user.email_address)
 
 
+@pytest.mark.usefixtures("user_with_invalid_email")
 def test_disable_with_invalid_email(user_with_invalid_email):
     assert not user_with_invalid_email.disable()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_disable_with_valid_email(monkeypatch, valid_user):
     with patch("user.make_request") as mocked_send:
         assert valid_user.disable()
         mocked_send.assert_called_with("admin_disable_user", valid_user.email_address)
 
 
+@pytest.mark.usefixtures("valid_user", "admin_get_user", "user_details_response")
 def test_normalise(valid_user, admin_get_user, user_details_response):
     with patch("user.make_request") as mocked_send:
         result = User.normalise(admin_get_user)
@@ -113,6 +116,12 @@ def test_normalise(valid_user, admin_get_user, user_details_response):
         assert result == user_details_response
 
 
+@pytest.mark.usefixtures(
+    "valid_user",
+    "admin_get_user",
+    "standard_download_group_response",
+    "user_details_response",
+)
 def test_details(
     monkeypatch,
     valid_user,
@@ -131,6 +140,7 @@ def test_details(
         mocked_send.assert_has_calls(expected_calls)
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_sanitise_phone(valid_user):
     assert valid_user.sanitise_phone("+441234567890") == "+441234567890"
     assert valid_user.sanitise_phone("441234567890") == "+441234567890"
@@ -139,12 +149,14 @@ def test_sanitise_phone(valid_user):
     assert valid_user.sanitise_phone("notaphonenumber") == ""
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_sanitise_name(valid_user):
     assert valid_user.sanitise_name("joe bloggs") == "joebloggs"
     assert valid_user.sanitise_name("joe_bloggs") == "joe_bloggs"
     assert valid_user.sanitise_name("joe bloggs 2") == "joebloggs2"
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_update_returns_false_if_user_not_found(valid_user):
     with patch.object(valid_user, "get_details", return_value={}):
         assert not valid_user.update(
@@ -152,11 +164,13 @@ def test_update_returns_false_if_user_not_found(valid_user):
         )
 
 
+@pytest.mark.usefixtures("valid_user", "admin_get_user")
 def test_update_returns_false_if_new_details_are_all_none(valid_user, admin_get_user):
     with patch.object(valid_user, "get_details", return_value=admin_get_user):
         assert not valid_user.update(None, None, None, None, None)
 
 
+@pytest.mark.usefixtures("valid_user", "admin_get_user")
 def test_update_returns_false_if_new_details_are_not_strings(
     valid_user, admin_get_user
 ):
@@ -164,6 +178,9 @@ def test_update_returns_false_if_new_details_are_not_strings(
         assert not valid_user.update(0, 1, 2, 3, 4)
 
 
+@pytest.mark.usefixtures(
+    "valid_user", "admin_get_user", "user_details_response", "group_result"
+)
 def test_update(valid_user, admin_get_user, user_details_response, group_result):
     make_request_results = [
         admin_get_user,
@@ -211,6 +228,9 @@ def test_update(valid_user, admin_get_user, user_details_response, group_result)
         mocked_send.assert_has_calls(expected_calls)
 
 
+@pytest.mark.usefixtures(
+    "valid_user", "admin_get_user", "user_details_response", "group_result"
+)
 def test_update_will_not_change_group_if_unchanged(
     valid_user, admin_get_user, user_details_response, group_result
 ):
@@ -245,6 +265,7 @@ def test_update_will_not_change_group_if_unchanged(
         mocked_send.assert_has_calls(expected_calls)
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_set_mfa_preferences(valid_user):
     with patch("user.make_request") as mocked_send:
         valid_user.set_mfa_preferences()
@@ -258,6 +279,7 @@ def test_set_mfa_preferences(valid_user):
         )
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_set_user_settings(valid_user):
     with patch("user.make_request") as mocked_send:
         valid_user.set_user_settings()
@@ -271,6 +293,7 @@ def test_set_user_settings(valid_user):
         )
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_add_to_group(valid_user):
     # Returns false if invalid group included
     assert not valid_user.add_to_group("not_a_group")
@@ -305,11 +328,13 @@ def test_add_to_group(valid_user):
             )
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_user_paths_are_valid_returns_false_if_not_admin_and_path_is_blank(valid_user):
     assert not valid_user.user_paths_are_valid("1", "", "standard-download")
     assert not valid_user.user_paths_are_valid("1", "", "standard-upload")
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_user_paths_are_valid_non_la_users_can_only_get_non_la_paths(
     monkeypatch, valid_user
 ):
@@ -322,6 +347,7 @@ def test_user_paths_are_valid_non_la_users_can_only_get_non_la_paths(
     )
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_user_paths_are_valid_la_users_can_only_get_la_paths(monkeypatch, valid_user):
     monkeypatch.setenv("BUCKET_MAIN_PREFIX", "ambridge")
     assert valid_user.user_paths_are_valid(
@@ -333,6 +359,7 @@ def test_user_paths_are_valid_la_users_can_only_get_la_paths(monkeypatch, valid_
     )
 
 
+@pytest.mark.usefixtures("valid_user", "user_with_invalid_email")
 def test_create_returns_false_if_checks_fail(
     monkeypatch, valid_user, user_with_invalid_email
 ):
@@ -347,6 +374,7 @@ def test_create_returns_false_if_checks_fail(
     )
 
 
+@pytest.mark.usefixtures("valid_user", "create_user_arguments")
 def test_create(monkeypatch, valid_user, create_user_arguments):
     with patch("cognito.make_request") as mocked_cognito_send:
         mocked_cognito_send.return_value = True
@@ -355,9 +383,11 @@ def test_create(monkeypatch, valid_user, create_user_arguments):
         )
 
 
+@pytest.mark.usefixtures("valid_user", "create_user_arguments")
 def test_create_when_create_returns_false(
     monkeypatch, valid_user, create_user_arguments
 ):
+
     with patch("cognito.make_request") as mocked_cognito_send:
         mocked_cognito_send.return_value = False
         with patch("user.make_request") as mocked_send:
@@ -391,6 +421,7 @@ def test_create_when_create_returns_false(
             mocked_send.assert_has_calls(expected_calls)
 
 
+@pytest.mark.usefixtures("valid_user", "user_details_response")
 def test_reinvite(monkeypatch, valid_user, user_details_response):
     with patch.object(User, "get_details", return_value=user_details_response):
         with patch.object(User, "delete", return_value=True):
@@ -398,11 +429,13 @@ def test_reinvite(monkeypatch, valid_user, user_details_response):
                 assert valid_user.reinvite()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_reinvite_returns_false_if_user_does_not_exist(monkeypatch, valid_user):
     with patch.object(User, "get_details", return_value={}):
         assert not valid_user.reinvite()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_reinvite_returns_false_if_user_exists_but_cannot_be_deleted(
     monkeypatch, valid_user
 ):
@@ -411,6 +444,7 @@ def test_reinvite_returns_false_if_user_exists_but_cannot_be_deleted(
             assert not valid_user.reinvite()
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_reinvite_returns_false_if_user_exists_can_be_deleted_but_cannot_be_created(
     monkeypatch, valid_user
 ):
@@ -420,6 +454,9 @@ def test_reinvite_returns_false_if_user_exists_can_be_deleted_but_cannot_be_crea
                 assert not valid_user.reinvite()
 
 
+@pytest.mark.usefixtures(
+    "list_users_arguments", "list_users_response", "group_result", "list_users_result"
+)
 def test_list(
     monkeypatch,
     list_users_arguments,
@@ -435,6 +472,9 @@ def test_list(
             mocked_send.assert_called_with("list_users", "", list_users_arguments, True)
 
 
+@pytest.mark.usefixtures(
+    "list_users_arguments", "list_users_response", "group_result", "list_users_result"
+)
 def test_list_includes_arguments(
     monkeypatch,
     list_users_arguments,
@@ -459,6 +499,7 @@ def test_list_includes_arguments(
             mocked_send.assert_called_with("list_users", "", list_users_arguments, True)
 
 
+@pytest.mark.usefixtures("valid_user", "group_result")
 def test_group_returns_default_group_if_none_returned(
     monkeypatch, valid_user, group_result
 ):
@@ -471,6 +512,7 @@ def test_group_returns_default_group_if_none_returned(
         )
 
 
+@pytest.mark.usefixtures("valid_user")
 def test_group_returns_correct_group(monkeypatch, valid_user):
     with patch("user.make_request") as mocked_send:
         expected_results = [

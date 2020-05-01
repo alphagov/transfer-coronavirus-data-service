@@ -18,6 +18,20 @@ def has_admin_role():
     return is_admin_role
 
 
+def user_has_a_valid_role(valid_roles):
+    has_a_valid_role = False
+    group = session.get("group", None)
+    LOG.debug(group)
+    LOG.debug(session.get("user", None))
+    if group:
+        has_a_valid_role = group["value"] in valid_roles
+        if not has_a_valid_role:
+            LOG.debug({"group": group, "valid": valid_roles})
+    else:
+        LOG.debug("No group in session")
+    return has_a_valid_role
+
+
 def current_group_name():
     default_group_name = "group-not-available"
     group_name = default_group_name

@@ -20,6 +20,7 @@
   </form>
 </fieldset>
 
+{% if can_create_users %}
 <fieldset class="govuk-fieldset">
   <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
     <h2 class="govuk-fieldset__heading">
@@ -30,5 +31,6 @@
     <button name="task" value="new" class="govuk-button" data-module="govuk-button" type="submit">New user</button>
   </form>
 </fieldset>
+{% endif %}
 
 {% endblock %}

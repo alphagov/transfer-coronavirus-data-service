@@ -13,12 +13,7 @@ from helpers import body_has_element_with_attributes, flatten_html
 from main import app
 
 
-@pytest.mark.usefixtures("admin_user")
-@pytest.mark.usefixtures("user_confirm_form")
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
-@pytest.mark.usefixtures("user_details_response")
-@pytest.mark.usefixtures("test_admin_session")
+@pytest.mark.usefixtures("admin_user", "user_confirm_form")
 def test_parse_edit_form_fields(admin_user, user_confirm_form):
 
     # Check that correct changes are made for valid form data
@@ -81,6 +76,7 @@ def test_requested_path_matches_user_type():
     assert not requested_path_matches_user_type(False, "")
 
 
+@pytest.mark.usefixtures("admin_user")
 def test_remove_invalid_user_paths(admin_user):
     granted_paths = admin_user["custom:paths"].split(";")
     granted_paths.sort()
@@ -104,6 +100,7 @@ def test_remove_invalid_user_paths(admin_user):
     assert user["custom:paths"] == ""
 
 
+@pytest.mark.usefixtures("admin_user")
 def test_perform_cognito_task(admin_user):
     with patch("admin.User.create") as mocked_user_get_details:
         mocked_user_get_details.return_value = True
@@ -115,6 +112,7 @@ def test_perform_cognito_task(admin_user):
 # so they seem to fit better in here.
 
 
+@pytest.mark.usefixtures("test_client", "test_admin_session")
 def test_route_admin(test_client, test_admin_session):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
@@ -125,6 +123,9 @@ def test_route_admin(test_client, test_admin_session):
     assert '<h1 class="govuk-heading-l">User administration</h1>' in body
 
 
+@pytest.mark.usefixtures(
+    "test_client", "test_admin_session", "admin_user", "user_details_response"
+)
 def test_route_admin_user(
     test_client, test_admin_session, admin_user, user_details_response
 ):
@@ -143,6 +144,9 @@ def test_route_admin_user(
         assert 'id="user_email">' + admin_user["email"] + "<" in flat
 
 
+@pytest.mark.usefixtures(
+    "test_client", "test_admin_session", "admin_user", "user_details_response"
+)
 def test_route_admin_user_edit(
     test_client, test_admin_session, admin_user, user_details_response
 ):
