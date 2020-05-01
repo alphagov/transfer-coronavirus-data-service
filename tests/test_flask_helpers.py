@@ -1,19 +1,27 @@
 import os
 
 import pytest
+from flask import session
 
-from flask_helpers import has_upload_rights, is_admin_interface, is_development
+from flask_helpers import (
+    has_upload_rights,
+    is_admin_interface,
+    is_development,
+    user_has_a_valid_role,
+)
 from main import app
 
 
-@pytest.mark.usefixtures("test_client")
-@pytest.mark.usefixtures("test_session")
-def test_route_index_logged_in(test_client, test_session):
-    with test_client.session_transaction() as client_session:
-        client_session.update(test_session)
+@pytest.mark.usefixtures("test_session", "test_upload_session")
+def test_route_index_logged_in(test_session, test_upload_session):
+
     with app.test_request_context("/"):
-        is_upload = has_upload_rights()
-        assert not is_upload
+        session.update(test_session)
+        assert not has_upload_rights()
+
+    with app.test_request_context("/"):
+        session.update(test_upload_session)
+        assert has_upload_rights()
 
 
 def test_is_admin_interface():
@@ -32,3 +40,13 @@ def test_is_development():
     assert not is_development()
     del os.environ["FLASK_ENV"]
     assert not is_development()
+
+
+@pytest.mark.usefixtures("test_session")
+def test_user_has_a_valid_role(test_session):
+    with app.test_request_context("/"):
+        session.update(test_session)
+        assert not user_has_a_valid_role(["admin-full"])
+        assert user_has_a_valid_role(["standard-download"])
+        assert not user_has_a_valid_role(["admin-power", "admin-full"])
+        assert user_has_a_valid_role(["standard-upload", "standard-download"])

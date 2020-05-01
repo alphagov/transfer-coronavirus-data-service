@@ -198,7 +198,7 @@ class User:
                 # then don't allow local_authority paths to be set
                 if is_la == "0":
                     if path.startswith(la_path):
-                        LOG.info("%s: won't set non-LA user to: %s" "user-admin", path)
+                        LOG.info("%s: won't set non-LA user to: %s", "user-admin", path)
                         return False
                 # if new attr for is_la is 1 (IS local authority)
                 # then only allow local_authority paths to be set
