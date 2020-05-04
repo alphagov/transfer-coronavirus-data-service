@@ -375,15 +375,6 @@ def test_create_returns_false_if_checks_fail(
     )
 
 
-# @pytest.mark.usefixtures("valid_user", "create_user_arguments")
-# def test_create(monkeypatch, valid_user, create_user_arguments):
-#     with patch("cognito.make_request") as mocked_cognito_send:
-#         mocked_cognito_send.return_value = True
-#         assert valid_user.create(
-#             "justin", "0201234567890", "web-app-prod-data", "0", "standard-download"
-#         )
-
-
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
 def test_create(admin_user, create_user_arguments):
     group_name = admin_user["group"]["value"]
@@ -401,42 +392,6 @@ def test_create(admin_user, create_user_arguments):
         stubber.deactivate()
 
 
-# @pytest.mark.usefixtures("valid_user", "create_user_arguments")
-# def test_create_when_create_returns_false(
-#     monkeypatch, valid_user, create_user_arguments
-# ):
-#
-#     with patch("cognito.make_request") as mocked_cognito_send:
-#         mocked_cognito_send.return_value = False
-#         with patch("user.make_request") as mocked_send:
-#             assert valid_user.create(
-#                 "justin", "0201234567890", "web-app-prod-data", "0", "standard-download"
-#             )
-#             mocked_cognito_send.assert_called_with(
-#                 "admin_create_user", valid_user.email_address, create_user_arguments
-#             )
-#             expected_calls = [
-#                 call(
-#                     "admin_set_user_mfa_preference",
-#                     valid_user.email_address,
-#                     {"SMSMfaSettings": {"Enabled": True, "PreferredMfa": True}},
-#                 ),
-#                 call(
-#                     "admin_set_user_settings",
-#                     valid_user.email_address,
-#                     {
-#                         "MFAOptions": [
-#                             {"DeliveryMedium": "SMS", "AttributeName": "phone_number"}
-#                         ]
-#                     },
-#                 ),
-#                 call(
-#                     "admin_add_user_to_group",
-#                     valid_user.email_address,
-#                     {"GroupName": "standard-download"},
-#                 ),
-#             ]
-#             mocked_send.assert_has_calls(expected_calls)
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
 def test_creating_invalid_phone_number(admin_user, create_user_arguments):
     group_name = admin_user["group"]["value"]
