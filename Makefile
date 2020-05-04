@@ -92,7 +92,7 @@ e2e: rebuild
 	docker-compose run chrome-driver bash -c "python3 run.py admin testing & cd behave && behave"
 
 concourse_e2e_paas:
-	cd behave && behave --tags='@user'
+	export LOG_LEVEL=DEBUG && cd behave && behave --tags='@user'
 
 concourse_e2e_lambda:
 	cd behave && behave
