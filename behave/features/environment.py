@@ -1,8 +1,7 @@
-import os
-import sys
 import logging
-import requests
+import os
 
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
