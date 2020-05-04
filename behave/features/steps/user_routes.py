@@ -118,6 +118,7 @@ def user_home_step(context):
 def user_path_step(context, path):
     url = os.environ["E2E_STAGING_ROOT_URL"]
     context.browser.get(f"{url}{path}")
+    print(context.browser.page_source)
 
 
 @then("you get redirected to user home")
