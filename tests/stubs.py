@@ -1,4 +1,5 @@
 # """ Create mock boto3 clients for testing """
+from datetime import datetime
 
 import boto3
 from botocore.stub import Stubber
@@ -94,6 +95,87 @@ def mock_cognito_auth_flow(token):
         "admin_list_groups_for_user",
         mock_admin_list_groups_for_user,
         {"UserPoolId": "eu-west-2_poolid", "Username": "test-secrets", "Limit": 10},
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_create_user(admin_user, create_user_arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    user_pool_id = "eu-west-2_poolid"
+    group_name = admin_user["group"]["value"]
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_create_user = {
+        "User": {
+            "Username": "justin.casey@communities.gov.uk",
+            "Attributes": create_user_arguments["UserAttributes"],
+            "UserCreateDate": datetime.utcnow(),
+            "UserLastModifiedDate": datetime.utcnow(),
+            "Enabled": True,
+            "UserStatus": "FORCE_CHANGE_PASSWORD",
+            "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+        },
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    stubber.add_response(
+        "admin_create_user", mock_admin_create_user, create_user_arguments
+    )
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_set_user_mfa_preference = {"ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    params_admin_set_user_mfa_preference = {
+        "SMSMfaSettings": {"Enabled": True, "PreferredMfa": True},
+        "Username": admin_user["email"],
+        "UserPoolId": user_pool_id,
+    }
+
+    stubber.add_response(
+        "admin_set_user_mfa_preference",
+        mock_admin_set_user_mfa_preference,
+        params_admin_set_user_mfa_preference,
+    )
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_set_user_settings = {"ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    params_admin_set_user_settings = {
+        "UserPoolId": user_pool_id,
+        "Username": admin_user["email"],
+        "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+    }
+
+    stubber.add_response(
+        "admin_set_user_settings",
+        mock_admin_set_user_settings,
+        params_admin_set_user_settings,
+    )
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_add_user_to_group = {"ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    params_admin_add_user_to_group = {
+        "Username": admin_user["email"],
+        "UserPoolId": user_pool_id,
+        "GroupName": group_name,
+    }
+    stubber.add_response(
+        "admin_add_user_to_group",
+        mock_admin_add_user_to_group,
+        params_admin_add_user_to_group,
     )
 
     stubber.activate()
