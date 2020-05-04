@@ -152,11 +152,6 @@ def content_contains_username_step(context, selector):
     assert part in elem
 
 
-@then('wait "{seconds}" seconds')
-def wait_step(context, seconds):
-    time.sleep(int(seconds))
-
-
 @then("we have a session cookie")
 def session_cookie_step(context):
     cookie = context.browser.get_cookie("session")
