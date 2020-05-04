@@ -1,3 +1,6 @@
+import os
+import sys
+import logging
 import requests
 
 from selenium import webdriver
@@ -16,6 +19,8 @@ def before_scenario(context, _scenario):
 
     context.browser = webdriver.Chrome("/opt/chromedriver", chrome_options=options)
     context.browser.set_window_size(1080, 800)
+    context.config.setup_logging(os.environ.get("LOG_LEVEL", "ERROR"))
+    context.logger = logging.getLogger("behave")
 
 
 def after_scenario(context, _scenario):

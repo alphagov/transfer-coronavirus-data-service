@@ -112,13 +112,14 @@ def login_submit_button_click_step(context):
 def user_home_step(context):
     url = os.environ["E2E_STAGING_ROOT_URL"]
     context.browser.get(url)
+    context.logger.debug(context.browser.page_source)
 
 
 @when('you navigate to "{path}"')
 def user_path_step(context, path):
     url = os.environ["E2E_STAGING_ROOT_URL"]
     context.browser.get(f"{url}{path}")
-    print(context.browser.page_source)
+    context.logger.debug(context.browser.page_source)
 
 
 @then("you get redirected to user home")
