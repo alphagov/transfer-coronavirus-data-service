@@ -35,10 +35,29 @@ def test_list_pools():
 
 
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
+def test_create_user(admin_user, create_user_arguments):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_create_user(
+        user_pool_id, admin_user, create_user_arguments
+    )
+
+    with stubber:
+        created = cognito.create_user(
+            admin_user["name"],
+            admin_user["email"],
+            admin_user["phone_number"],
+            admin_user["custom:is_la"],
+            admin_user["custom:paths"],
+        )
+        assert created
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user", "create_user_arguments")
 def test_update_user(admin_user, create_user_arguments):
     user_pool_id = "eu-west-2_poolid"
     attributes = create_user_arguments["UserAttributes"]
-    stubber = stubs.mock_cognito_update_user_attributes(
+    stubber = stubs.mock_cognito_admin_update_user_attributes(
         user_pool_id, admin_user, attributes
     )
 

@@ -113,7 +113,7 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
 
     mock_admin_create_user = {
         "User": {
-            "Username": "justin.casey@communities.gov.uk",
+            "Username": admin_user["email"],
             "Attributes": create_user_arguments["UserAttributes"],
             "UserCreateDate": datetime.utcnow(),
             "UserLastModifiedDate": datetime.utcnow(),
@@ -195,7 +195,47 @@ def mock_cognito_list_pools(user_pool_id):
     return stubber
 
 
-def mock_cognito_update_user_attributes(user_pool_id, user, attributes):
+def mock_cognito_admin_create_user(user_pool_id, user, arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_create_user = {
+        "User": {
+            "Username": user["email"],
+            "Attributes": arguments["UserAttributes"],
+            "UserCreateDate": datetime.utcnow(),
+            "UserLastModifiedDate": datetime.utcnow(),
+            "Enabled": True,
+            "UserStatus": "FORCE_CHANGE_PASSWORD",
+            "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+        },
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_create_user = {
+        "UserPoolId": user_pool_id,
+        "Username": user["email"],
+        **arguments,
+    }
+
+    stubber.add_response(
+        "admin_create_user", mock_admin_create_user, params_admin_create_user,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_update_user_attributes(user_pool_id, user, attributes):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")
 
