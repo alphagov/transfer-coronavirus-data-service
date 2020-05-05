@@ -8,7 +8,7 @@ from selenium.webdriver.support.select import Select
 @then("you can go to the admin page")
 def can_go_to_admin_page(context):
     url = os.environ["E2E_STAGING_ROOT_URL"]
-    url += "/admin"
+    url += "admin"
     context.browser.get(url)
     assert context.browser.current_url == url
     context.execute_steps(
@@ -28,7 +28,7 @@ def can_go_to_admin_page(context):
 @then("you cannot go to the admin page and are redirected")
 def cannot_go_to_admin_page_and_are_redirected(context):
     base_url = os.environ["E2E_STAGING_ROOT_URL"]
-    admin_url = f"{base_url}/admin"
+    admin_url = f"{base_url}admin"
     context.browser.get(admin_url)
     assert context.browser.current_url == base_url + "403"
     context.execute_steps(
