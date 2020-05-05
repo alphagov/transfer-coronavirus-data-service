@@ -34,6 +34,8 @@ def valid_paths(input_path=None):
         {"path": "dwp", "disp": "DWP"},
         {"path": "dwp-upload-only", "disp": "DWP Upload Only"},
         {"path": "wholesaler/brakes", "disp": "Brakes"},
+        {"path": "wholesaler/testing", "disp": "Wholesaler Testing"},
+        {"path": "wholesaler/v2", "disp": "Wholesaler Version 2"},
         {"path": "supermarket", "disp": "Supermarket"},
     ]
     res.append(
