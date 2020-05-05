@@ -6,12 +6,15 @@ import re
 import boto3
 from botocore.exceptions import ClientError, ParamValidationError
 
-from cognito_groups import get_group_by_name
+from cognito_groups import get_group_by_name, get_group_map
 from logger import LOG
 
 
+CLIENT_EXCEPTIONS = (ClientError, ParamValidationError)
+
+
 def load_app_settings():
-    client = aws_client()
+    client = get_boto3_client()
     pool_id = env_pool_id()
 
     client_id = ""
@@ -44,7 +47,7 @@ def load_app_settings():
     }
 
 
-def aws_client():
+def get_boto3_client():
     return boto3.client("cognito-idp", region_name="eu-west-2")
 
 
@@ -71,13 +74,17 @@ def env_pool_id():
 
 
 def list_pools():
-    client = aws_client()
-    res = []
-    response = client.list_user_pools(MaxResults=10)
+    client = get_boto3_client()
+    pool_list = []
+    try:
+        response = client.list_user_pools(MaxResults=10)
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
     if "UserPools" in response:
         for pool in response["UserPools"]:
-            res.append({"id": pool["Id"], "name": pool["Name"]})
-    return res
+            pool_list.append({"id": pool["Id"], "name": pool["Name"]})
+    return pool_list
 
 
 # TODO remove below once admin app running online
@@ -125,41 +132,162 @@ def delegate_auth_to_aws(session):
 
 
 def create_user(name, email_address, phone_number, is_la, custom_paths):
-    create_arguments = {
-        "UserAttributes": [
-            {"Name": "name", "Value": name},
-            {"Name": "email", "Value": email_address},
-            {"Name": "email_verified", "Value": "true"},
-            {"Name": "phone_number", "Value": phone_number},
-            {"Name": "phone_number_verified", "Value": "false"},
-            {"Name": "custom:is_la", "Value": is_la},
-            {"Name": "custom:paths", "Value": custom_paths},
-        ],
-        "ForceAliasCreation": False,
-        "DesiredDeliveryMediums": ["EMAIL"],
-    }
-    return make_request("admin_create_user", email_address, create_arguments)
-
-
-def make_request(
-    method_name, email_address, additional_arguments={}, return_response=False
-):
-    client = aws_client()
-    additional_arguments["UserPoolId"] = env_pool_id()
-    if email_address:
-        additional_arguments["Username"] = email_address
+    client = get_boto3_client()
     try:
-        response = getattr(client, method_name)(**additional_arguments)
-    except (ClientError, ParamValidationError) as e:
-        LOG.error("ERROR:  %s - %s", email_address, e)
-        return {} if return_response else False
+        response = client.admin_create_user(
+            UserPoolId=env_pool_id(),
+            Username=email_address,
+            UserAttributes=[
+                {"Name": "name", "Value": name},
+                {"Name": "email", "Value": email_address},
+                {"Name": "email_verified", "Value": "true"},
+                {"Name": "phone_number", "Value": phone_number},
+                {"Name": "phone_number_verified", "Value": "false"},
+                {"Name": "custom:is_la", "Value": is_la},
+                {"Name": "custom:paths", "Value": custom_paths},
+            ],
+            ForceAliasCreation=False,
+            DesiredDeliveryMediums=["EMAIL"],
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return "User" in response
 
-    return response if return_response else parse_response(response)
+
+def update_user(email, attributes):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_update_user_attributes(
+            UserPoolId=env_pool_id(), Username=email, UserAttributes=attributes
+        )
+    except (ClientError, ParamValidationError) as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
 
 
-def parse_response(response):
+def delete_user(email):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_delete_user(
+            UserPoolId=env_pool_id(), Username=email
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def disable_user(email):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_disable_user(
+            UserPoolId=env_pool_id(), Username=email
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def enable_user(email):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_enable_user(
+            UserPoolId=env_pool_id(), Username=email
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def set_user_settings(email):
+    client = get_boto3_client()
+    try:
+        response = client.admin_set_user_settings(
+            UserPoolId=env_pool_id(),
+            Username=email,
+            MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def set_mfa_preferences(email):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_set_user_mfa_preference(
+            UserPoolId=env_pool_id(),
+            Username=email,
+            SMSMfaSettings={"Enabled": True, "PreferredMfa": True},
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def add_to_group(email, group_name):
+    if group_name is None:
+        group_name = "standard-download"
+    if group_name not in get_group_map().keys():
+        return False
+
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_add_user_to_group(
+            UserPoolId=env_pool_id(), Username=email, GroupName=group_name
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def remove_from_group(email, group_name):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_remove_user_from_group(
+            UserPoolId=env_pool_id(), Username=email, GroupName=group_name
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return check_response_status_code(response)
+
+
+def get_user(email):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_get_user(
+            UserPoolId=env_pool_id(), Username=email
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return response
+
+
+def list_groups_for_user(email):
+    cognito_client = get_boto3_client()
+    try:
+        response = cognito_client.admin_list_groups_for_user(
+            UserPoolId=env_pool_id(), Username=email
+        )
+    except CLIENT_EXCEPTIONS as error:
+        LOG.error(error)
+        response = {}
+    return response
+
+
+def check_response_status_code(response):
+    is_200 = False
     if "ResponseMetadata" in response:
         if "HTTPStatusCode" in response["ResponseMetadata"]:
-            if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-                return True
-    return False
+            is_200 = response["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+    return is_200

@@ -1,8 +1,8 @@
 import os
 import re
 
-from cognito import create_user, make_request
-from cognito_groups import get_group_by_name, get_group_map
+import cognito
+from cognito_groups import get_group_by_name
 from logger import LOG
 
 
@@ -14,6 +14,7 @@ class User:
             email_address.strip().lower().encode("latin1").decode("utf-8")
         )
         self.details = {}
+        self.cognito_client = cognito.get_boto3_client()
 
     def name(self):
         return self.get_details().get("name", "")
@@ -74,41 +75,25 @@ class User:
             return False
         if not self.user_paths_are_valid(is_la, custom_paths, group_name):
             return False
-        user_created = create_user(
+
+        created = cognito.create_user(
             name, self.email_address, phone_number, is_la, custom_paths
         )
 
-        if user_created:
+        if created:
             set_mfa = self.set_mfa_preferences()
             set_settings = self.set_user_settings()
             added_to_group = self.add_to_group(group_name)
         return set_mfa and set_settings and added_to_group
 
     def set_mfa_preferences(self):
-        additional_arguments = {
-            "SMSMfaSettings": {"Enabled": True, "PreferredMfa": True},
-        }
-        return make_request(
-            "admin_set_user_mfa_preference", self.email_address, additional_arguments
-        )
+        return cognito.set_mfa_preferences(self.email_address)
 
     def set_user_settings(self):
-        additional_arguments = {
-            "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
-        }
-        return make_request(
-            "admin_set_user_settings", self.email_address, additional_arguments
-        )
+        return cognito.set_user_settings(self.email_address)
 
     def add_to_group(self, group_name=None):
-        if group_name is None:
-            group_name = "standard-download"
-        if group_name not in get_group_map().keys():
-            return False
-
-        return make_request(
-            "admin_add_user_to_group", self.email_address, {"GroupName": group_name}
-        )
+        return cognito.add_to_group(self.email_address, group_name)
 
     def set_group(self, new_group_name):
         if new_group_name is None:
@@ -116,14 +101,11 @@ class User:
         if not isinstance(new_group_name, str):
             raise ValueError("ERR: %s: new_group_name is not str")
 
-        group_name = self.details["group"]["value"]
-        if group_name != new_group_name:
-            make_request(
-                "admin_remove_user_from_group",
-                self.email_address,
-                {"GroupName": group_name},
-            )
-            self.add_to_group(new_group_name)
+        current_group_name = self.details["group"]["value"]
+        if current_group_name != new_group_name:
+            removed = cognito.remove_from_group(self.email_address, current_group_name)
+            if removed:
+                self.add_to_group(new_group_name)
 
     def sanitise_phone(self, phone_number):
         if phone_number != "":
@@ -150,20 +132,16 @@ class User:
             and group is None
         ):
             return False
-        attrs = []
+        user_attributes = []
         try:
-            attrs += self.__attribute("custom:is_la", is_la)
-            attrs += self.__attribute("name", self.sanitise_name(name))
-            attrs += self.__custom_path_attribute(is_la, custom_paths, group)
-            attrs += self.__phone_number_attribute(phone_number)
+            user_attributes += self.__attribute("custom:is_la", is_la)
+            user_attributes += self.__attribute("name", self.sanitise_name(name))
+            user_attributes += self.__custom_path_attribute(is_la, custom_paths, group)
+            user_attributes += self.__phone_number_attribute(phone_number)
             self.set_group(group)
         except ValueError:
             return False
-        user_attributes = {}
-        user_attributes["UserAttributes"] = attrs
-        return make_request(
-            "admin_update_user_attributes", self.email_address, user_attributes,
-        )
+        return cognito.update_user(self.email_address, user_attributes)
 
     def __attribute(self, field_name, value):
         if value is None:
@@ -227,7 +205,7 @@ class User:
                 "ERR: %s: the email %s is not valid", "user-admin", self.email_address
             )
             return False
-        return make_request("admin_delete_user", self.email_address)
+        return cognito.delete_user(self.email_address)
 
     def disable(self):
         if not self.email_address_is_valid():
@@ -235,7 +213,7 @@ class User:
                 "ERR: %s: the email %s is not valid", "user-admin", self.email_address
             )
             return False
-        return make_request("admin_disable_user", self.email_address)
+        return cognito.disable_user(self.email_address)
 
     def enable(self):
         if not self.email_address_is_valid():
@@ -243,7 +221,7 @@ class User:
                 "ERR: %s: the email %s is not valid", "user-admin", self.email_address
             )
             return False
-        return make_request("admin_enable_user", self.email_address)
+        return cognito.enable_user(self.email_address)
 
     def reinvite(self):
         if self.get_details() != {}:
@@ -261,7 +239,7 @@ class User:
 
     def get_details(self):
         if self.details == {}:
-            aws_details = make_request("admin_get_user", self.email_address, {}, True)
+            aws_details = cognito.get_user(self.email_address)
             self.details = User.normalise(aws_details)
         return self.details
 
@@ -310,7 +288,8 @@ class User:
             arguments["Filter"] = 'email ^= "{}"'.format(email_starts_filter)
         if token != "":
             arguments["PaginationToken"] = token
-        response = make_request("list_users", "", arguments, True)
+        cognito_client = cognito.get_boto3_client()
+        response = cognito_client.list_users(**arguments)
         token = ""
         users = []
         if "Users" in response:
@@ -349,7 +328,7 @@ class User:
 
     @staticmethod
     def group(username):
-        response = make_request("admin_list_groups_for_user", username, {}, True)
+        response = cognito.list_groups_for_user(username)
 
         groups = []
         if "Groups" in response:

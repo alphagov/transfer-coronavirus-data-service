@@ -178,6 +178,56 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
     return stubber
 
 
+def mock_cognito_list_pools(user_pool_id):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_update_user_attributes(user_pool_id, user, attributes):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_update_user_attributes = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_update_user_attributes = {
+        "UserPoolId": user_pool_id,
+        "Username": user["email"],
+        "UserAttributes": attributes,
+    }
+
+    stubber.add_response(
+        "admin_update_user_attributes",
+        mock_admin_update_user_attributes,
+        params_admin_update_user_attributes,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
 def mock_s3_get_object(bucket_name, granted_prefixes, key, success_response):
     _keep_it_real()
     client = boto3.real_client("s3")
