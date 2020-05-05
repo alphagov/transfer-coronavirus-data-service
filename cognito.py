@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+The Cognito IDP API makes a distinction between operations a
+user can do on their own account and operations an administrator
+can do to any user account.
+
+API operations prefixed with admin_ are operations administrators
+perform on behalf of other users.
+"""
 
 import os
 import re
