@@ -17,7 +17,6 @@ from botocore.exceptions import ClientError, ParamValidationError
 from cognito_groups import get_group_by_name, get_group_map
 from logger import LOG
 
-
 CLIENT_EXCEPTIONS = (ClientError, ParamValidationError)
 
 
@@ -90,8 +89,11 @@ def list_pools():
         LOG.error(error)
         response = {}
     if "UserPools" in response:
-        for pool in response["UserPools"]:
-            pool_list.append({"id": pool["Id"], "name": pool["Name"]})
+        # convert keys to lower case
+        pool_list = [
+            {key.lower(): value for key, value in pool.items()}
+            for pool in response["UserPools"]
+        ]
     return pool_list
 
 
