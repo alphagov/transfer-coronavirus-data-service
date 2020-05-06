@@ -268,6 +268,195 @@ def mock_cognito_admin_update_user_attributes(user_pool_id, user, attributes):
     return stubber
 
 
+def mock_cognito_admin_delete_user(user_pool_id, email):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_delete_user = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_delete_user = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+    }
+
+    stubber.add_response(
+        "admin_delete_user", mock_admin_delete_user, params_admin_delete_user,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_disable_user(user_pool_id, email):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_disable_user = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_disable_user = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+    }
+
+    stubber.add_response(
+        "admin_disable_user", mock_admin_disable_user, params_admin_disable_user,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_enable_user(user_pool_id, email):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_enable_user = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_enable_user = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+    }
+
+    stubber.add_response(
+        "admin_enable_user", mock_admin_enable_user, params_admin_enable_user,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_set_user_settings(user_pool_id, email):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_set_user_settings = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_set_user_settings = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+        "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+    }
+
+    stubber.add_response(
+        "admin_set_user_settings",
+        mock_admin_set_user_settings,
+        params_admin_set_user_settings,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_set_user_mfa_preference(user_pool_id, email):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_set_user_mfa_preference = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_set_user_mfa_preference = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+        "SMSMfaSettings": {"Enabled": True, "PreferredMfa": True},
+    }
+
+    stubber.add_response(
+        "admin_set_user_mfa_preference",
+        mock_admin_set_user_mfa_preference,
+        params_admin_set_user_mfa_preference,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_add_user_to_group(user_pool_id, email, group_name):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_add_user_to_group = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_add_user_to_group = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+        "GroupName": group_name,
+    }
+
+    stubber.add_response(
+        "admin_add_user_to_group",
+        mock_admin_add_user_to_group,
+        params_admin_add_user_to_group,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
 def mock_s3_get_object(bucket_name, granted_prefixes, key, success_response):
     _keep_it_real()
     client = boto3.real_client("s3")

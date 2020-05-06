@@ -65,3 +65,76 @@ def test_update_user(admin_user, create_user_arguments):
         updated = cognito.update_user(admin_user["email"], attributes)
         assert updated
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_delete_user(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_delete_user(user_pool_id, admin_user["email"])
+
+    with stubber:
+        deleted = cognito.delete_user(admin_user["email"])
+        assert deleted
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_disable_user(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_disable_user(user_pool_id, admin_user["email"])
+
+    with stubber:
+        disabled = cognito.disable_user(admin_user["email"])
+        assert disabled
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_enable_user(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_enable_user(user_pool_id, admin_user["email"])
+
+    with stubber:
+        enabled = cognito.enable_user(admin_user["email"])
+        assert enabled
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_set_user_settings(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_set_user_settings(
+        user_pool_id, admin_user["email"]
+    )
+
+    with stubber:
+        updated = cognito.set_user_settings(admin_user["email"])
+        assert updated
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_set_mfa_preferences(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_set_user_mfa_preference(
+        user_pool_id, admin_user["email"]
+    )
+
+    with stubber:
+        updated = cognito.set_mfa_preferences(admin_user["email"])
+        assert updated
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_add_to_group(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    group_name = admin_user["group"]["value"]
+    stubber = stubs.mock_cognito_admin_add_user_to_group(
+        user_pool_id, admin_user["email"], group_name
+    )
+
+    with stubber:
+        updated = cognito.add_to_group(admin_user["email"], group_name)
+        assert updated
+        stubber.deactivate()
