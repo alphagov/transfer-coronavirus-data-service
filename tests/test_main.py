@@ -15,6 +15,7 @@ from main import (
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
+    setup_talisman,
     upload_form_validate,
     user_custom_paths,
 )
@@ -207,9 +208,6 @@ def test_auth_flow_with_no_mfa_user(
     mocker = args["mocker"]
     mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
     response = test_client.get(f"/?code={token}")
-
-    app.logger.debug("=====")
-    app.logger.debug(response.headers.get("Location"))
 
     body = response.data.decode()
     assert response.status_code == 302
@@ -445,3 +443,15 @@ def test_is_mfa_configured(test_mfa_user, test_no_mfa_user):
     test_wrong_preferred_device.update(test_mfa_user)
     test_wrong_preferred_device["PreferredMfaSetting"] = "Email_MFA"
     assert not is_mfa_configured(test_wrong_preferred_device)
+
+
+def test_setup_talisman():
+    app.cf_space = "testing"
+    talisman = setup_talisman(app)
+    assert not talisman.force_https
+    app.cf_space = "staging"
+    talisman = setup_talisman(app)
+    assert talisman.force_https
+    app.cf_space = "production"
+    talisman = setup_talisman(app)
+    assert talisman.force_https

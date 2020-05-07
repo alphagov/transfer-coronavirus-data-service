@@ -33,24 +33,20 @@ app.logger = LOG
 
 def setup_talisman(app):
     csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
-    if app.cf_space == "testing":
-        print("loading Talisman for testing - no HTTPS")
-        return Talisman(
-            app,
-            force_https=False,
-            strict_transport_security=False,
-            session_cookie_secure=False,
-            content_security_policy=csp,
-        )
-    else:
-        print("loading Talisman with HTTPS")
-        return Talisman(
-            app,
-            force_https=True,
-            strict_transport_security=True,
-            session_cookie_secure=True,
-            content_security_policy=csp,
-        )
+    is_https = app.cf_space != "testing"
+    log_message = (
+        "loading Talisman with HTTPS"
+        if is_https
+        else "loading Talisman for testing - no HTTPS"
+    )
+    app.logger.info(log_message)
+    return Talisman(
+        app,
+        force_https=is_https,
+        strict_transport_security=is_https,
+        session_cookie_secure=is_https,
+        content_security_policy=csp,
+    )
 
 
 def load_environment(app):
@@ -237,9 +233,6 @@ def index():
             app.logger.error({"error": "OAuth failed", "response": response})
             return redirect("/403")
 
-        app.logger.debug("****")
-        app.logger.debug(session["group"])
-        app.logger.debug(has_admin_role())
         return redirect("/admin" if has_admin_role() else "/")
 
     if "details" in session:
