@@ -1,6 +1,5 @@
 import json
 import os
-from unittest.mock import patch
 
 import flask
 import pytest
@@ -153,9 +152,9 @@ def test_route_js(test_client):
     assert "!function(a,b)" in body
 
 
-@pytest.mark.usefixtures("test_client", "test_session")
+@pytest.mark.usefixtures("test_client", "test_session", "test_mfa_user")
 @requests_mock.Mocker(kw="mocker")
-def test_auth_flow(test_client, test_session, **args):
+def test_auth_flow(test_client, test_session, test_mfa_user, **args):
     """ Test mocked oauth exchange """
 
     token = "abc123"
@@ -165,23 +164,57 @@ def test_auth_flow(test_client, test_session, **args):
     app.client_id = "123456"
     app.client_secret = "987654"
     app.redirect_host = "test.domain.com"
-    stubber = stubs.mock_cognito_auth_flow(token)
+    stubber = stubs.mock_cognito_auth_flow(token, test_mfa_user)
 
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
 
-    with patch("main.User.group") as mocked_user_get_details:
-        mocked_user_get_details.return_value = {"value": "admin-full"}
+    """Test using request mocker and boto stub."""
+
+    oauth_response = json.dumps({"id_token": token, "access_token": token})
+    mocker = args["mocker"]
+    mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
+    response = test_client.get(f"/?code={token}")
+    body = response.data.decode()
+    assert response.status_code == 302
+    assert "<h1>Redirecting...</h1>" in body
+    stubber.deactivate()
+
+
+@pytest.mark.usefixtures("test_client", "test_session", "test_no_mfa_user")
+@requests_mock.Mocker(kw="mocker")
+def test_auth_flow_with_no_mfa_user(
+    test_client, test_session, test_no_mfa_user, **args
+):
+    """ Test mocked oauth exchange """
+
+    token = "abc123"
+    domain = "test.cognito.domain.com"
+    token_endpoint_url = f"https://{domain}/oauth2/token"
+    app.cognito_domain = domain
+    app.client_id = "123456"
+    app.client_secret = "987654"
+    app.redirect_host = "test.domain.com"
+    stubber = stubs.mock_cognito_auth_flow(token, test_no_mfa_user)
+
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+
         """Test using request mocker and boto stub."""
 
-        oauth_response = json.dumps({"id_token": token, "access_token": token})
-        mocker = args["mocker"]
-        mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
-        response = test_client.get(f"/?code={token}")
-        body = response.data.decode()
-        assert response.status_code == 302
-        assert "<h1>Redirecting...</h1>" in body
-        stubber.deactivate()
+    oauth_response = json.dumps({"id_token": token, "access_token": token})
+    mocker = args["mocker"]
+    mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
+    response = test_client.get(f"/?code={token}")
+
+    app.logger.debug("=====")
+    app.logger.debug(response.headers.get("Location"))
+
+    body = response.data.decode()
+    assert response.status_code == 302
+    assert "<h1>Redirecting...</h1>" in body
+    assert response.headers.get("Location").endswith("403")
+    stubber.deactivate()
 
 
 # Test access management functions

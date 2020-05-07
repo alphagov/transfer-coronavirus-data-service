@@ -301,3 +301,28 @@ def list_users_result(user_details_response):
         "users": [user_details_response],
         "token": "",
     }
+
+
+@pytest.fixture()
+def test_no_mfa_user():
+    return {
+        "Username": "test-secrets",
+        "UserAttributes": [
+            {"Name": "custom:paths", "Value": "local_authority/barnet"},
+            {"Name": "custom:is_la", "Value": "1"},
+        ],
+    }
+
+
+@pytest.fixture()
+def test_mfa_user():
+    return {
+        "Username": "test-secrets",
+        "UserAttributes": [
+            {"Name": "custom:paths", "Value": "local_authority/barnet"},
+            {"Name": "custom:is_la", "Value": "1"},
+        ],
+        "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+        "PreferredMfaSetting": "SMS_MFA",
+        "UserMFASettingList": ["SMS_MFA"],
+    }

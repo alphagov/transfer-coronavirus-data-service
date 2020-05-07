@@ -106,19 +106,35 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
     id_token = oauth_response_body["id_token"]
 
     client = boto3.client("cognito-idp")
-    response = client.get_user(AccessToken=oauth_response_body["access_token"])
+    cognito_user = client.get_user(AccessToken=oauth_response_body["access_token"])
 
-    session["attributes"] = response["UserAttributes"]
-    session["user"] = response["Username"]
-    session["email"] = return_attribute(session, "email")
-    session["details"] = id_token
-    session["group"] = User.group(response["Username"])
-
-    app.logger.info(
-        "Successful login - user: %s email: %s", session["user"], session["email"]
-    )
+    # only get these attributes if the MFA is present
+    if is_mfa_configured(cognito_user):
+        session["attributes"] = cognito_user["UserAttributes"]
+        session["user"] = cognito_user["Username"]
+        session["email"] = return_attribute(session, "email")
+        session["details"] = id_token
+        session["group"] = User.group(cognito_user["Username"])
+        app.logger.info(
+            "Successful login - user: %s email: %s", session["user"], session["email"]
+        )
+    # else oauth_response status code to 403
+    else:
+        oauth_response.status_code = 403
 
     return oauth_response
+
+
+def is_mfa_configured(cognito_user):
+    has_phone_mfa = True in [
+        device["DeliveryMedium"] == "SMS" and device["AttributeName"] == "phone_number"
+        for device in cognito_user["MFAOptions"]
+    ]
+    has_preferred_mfa_setting = cognito_user["PreferredMfaSetting"] == "SMS_MFA"
+    has_mfa_setting_list = "SMS_MFA" in cognito_user["UserMFASettingList"]
+
+    mfa_configured = [has_phone_mfa, has_preferred_mfa_setting, has_mfa_setting_list]
+    return all(mfa_configured)
 
 
 @app.route("/js/<path:path>")
@@ -218,6 +234,9 @@ def index():
         response = exchange_code_for_tokens(oauth_code)
         if response.status_code != 200:
             app.logger.error({"error": "OAuth failed", "response": response})
+        app.logger.debug("****")
+        app.logger.debug(session["group"])
+        app.logger.debug(has_admin_role())
         return redirect("/admin" if has_admin_role() else "/")
 
     if "details" in session:

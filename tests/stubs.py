@@ -59,19 +59,13 @@ def mock_s3_list_objects(bucket_name, prefixes):
     return stubber
 
 
-def mock_cognito_auth_flow(token):
+def mock_cognito_auth_flow(token, test_user):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")
 
     stubber = Stubber(client)
 
-    mock_get_user = {
-        "Username": "test-secrets",
-        "UserAttributes": [
-            {"Name": "custom:paths", "Value": "local_authority/barnet"},
-            {"Name": "custom:is_la", "Value": "1"},
-        ],
-    }
+    mock_get_user = test_user
 
     stubber.add_response("get_user", mock_get_user, {"AccessToken": token})
 
@@ -94,7 +88,7 @@ def mock_cognito_auth_flow(token):
     stubber.add_response(
         "admin_list_groups_for_user",
         mock_admin_list_groups_for_user,
-        {"UserPoolId": "eu-west-2_poolid", "Username": "test-secrets", "Limit": 10},
+        {"UserPoolId": "eu-west-2_poolid", "Username": "test-secrets"},
     )
 
     stubber.activate()
