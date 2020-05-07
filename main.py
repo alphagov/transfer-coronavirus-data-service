@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import os
 import re
 from datetime import datetime
@@ -409,11 +410,25 @@ def create_presigned_post(object_name, expiration=3600):
         response = s3_client.generate_presigned_post(
             app.bucket_name, object_name, ExpiresIn=expiration
         )
+
+        csvw = {
+            "@context": "http://www.w3.org/ns/csvw",
+            "url": object_name,
+            "dc:creator": session["email"],
+            "dc:date": datetime.utcnow().isoformat(),
+            "dc:publisher": "Government Digital Service",
+        }
+
+        s3_client.put_object(
+            Body=json.dumps(csvw),
+            Bucket=app.bucket_name,
+            Key="{}-metadata.json".format(object_name),
+        )
     except ClientError as e:
         app.logger.error(e)
         return None
 
-    print(response)
+    # print(response)
     # The response contains the presigned URL and required fields
     return response
 
