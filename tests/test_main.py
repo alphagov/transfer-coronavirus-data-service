@@ -4,13 +4,14 @@ import os
 import flask
 import pytest
 import requests_mock
-import stubs
 
+import stubs
 from main import (
     app,
     create_presigned_url,
     generate_upload_file_path,
     get_files,
+    is_mfa_configured,
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
@@ -200,7 +201,7 @@ def test_auth_flow_with_no_mfa_user(
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
 
-        """Test using request mocker and boto stub."""
+    """Test using request mocker and boto stub."""
 
     oauth_response = json.dumps({"id_token": token, "access_token": token})
     mocker = args["mocker"]
@@ -422,3 +423,25 @@ def test_key_has_granted_prefix():
     key = "web-app-prod-data/other/gds/file.csv"
     prefixes = ["web-app-prod-data/other/non-gds", "web-app-prod-data/other/nhs"]
     assert not key_has_granted_prefix(key, prefixes)
+
+
+@pytest.mark.usefixtures("test_mfa_user", "test_no_mfa_user")
+def test_is_mfa_configured(test_mfa_user, test_no_mfa_user):
+    # Check returns True for valid user
+    assert is_mfa_configured(test_mfa_user)
+    # Check returns False for invalid user
+    assert not is_mfa_configured(test_no_mfa_user)
+    # Check returns False if phone_number attribute is wrong
+    test_wrong_sms_attribute = {}
+    test_wrong_sms_attribute.update(test_mfa_user)
+    test_wrong_sms_attribute["MFAOptions"][0]["AttributeName"] = "phone"
+    assert not is_mfa_configured(test_wrong_sms_attribute)
+    # Check returns False if "PreferredMfaSetting" is not set
+    test_missing_preferred_device = {}
+    test_missing_preferred_device.update(test_mfa_user)
+    del test_missing_preferred_device["PreferredMfaSetting"]
+    assert not is_mfa_configured(test_missing_preferred_device)
+    test_wrong_preferred_device = {}
+    test_wrong_preferred_device.update(test_mfa_user)
+    test_wrong_preferred_device["PreferredMfaSetting"] = "Email_MFA"
+    assert not is_mfa_configured(test_wrong_preferred_device)

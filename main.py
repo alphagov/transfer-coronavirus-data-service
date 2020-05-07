@@ -128,10 +128,11 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
 def is_mfa_configured(cognito_user):
     has_phone_mfa = True in [
         device["DeliveryMedium"] == "SMS" and device["AttributeName"] == "phone_number"
-        for device in cognito_user["MFAOptions"]
+        for device in cognito_user.get("MFAOptions", [])
     ]
-    has_preferred_mfa_setting = cognito_user["PreferredMfaSetting"] == "SMS_MFA"
-    has_mfa_setting_list = "SMS_MFA" in cognito_user["UserMFASettingList"]
+
+    has_preferred_mfa_setting = cognito_user.get("PreferredMfaSetting", "") == "SMS_MFA"
+    has_mfa_setting_list = "SMS_MFA" in cognito_user.get("UserMFASettingList", [])
 
     mfa_configured = [has_phone_mfa, has_preferred_mfa_setting, has_mfa_setting_list]
     return all(mfa_configured)
@@ -234,6 +235,8 @@ def index():
         response = exchange_code_for_tokens(oauth_code)
         if response.status_code != 200:
             app.logger.error({"error": "OAuth failed", "response": response})
+            return redirect("/403")
+
         app.logger.debug("****")
         app.logger.debug(session["group"])
         app.logger.debug(has_admin_role())
