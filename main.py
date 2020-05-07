@@ -415,6 +415,8 @@ def create_presigned_post(object_name, expiration=3600):
             "@context": "http://www.w3.org/ns/csvw",
             "url": object_name,
             "dc:creator": session["email"],
+            "dc:date": datetime.utcnow().isoformat(),
+            "dc:publisher": "Government Digital Service",
         }
 
         s3_client.put_object(
