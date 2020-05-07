@@ -2,7 +2,7 @@
 # import os
 
 from flask import Flask, escape, redirect, request, session, url_for
-from requests.utils import quote
+from requests.utils import quote, unquote
 
 import s3paths
 from cognito_groups import get_group_by_name, return_users_group, user_groups
@@ -35,6 +35,8 @@ def admin_user(app):
 
     if len(request.args) != 0:
         email = request.args.get("email", "")
+        # Remove url encoding for special characters
+        email = unquote(email)
         done = request.args.get("done", "None")
 
     if len(request.form) != 0:
