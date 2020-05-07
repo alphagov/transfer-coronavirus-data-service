@@ -74,7 +74,7 @@ def set_app_settings(app):
         app.client_secret = cognito_credentials["client_secret"]
 
 
-def exchange_code_for_tokens(code, code_verifier=None) -> dict:
+def exchange_code_for_session_user(code, code_verifier=None) -> dict:
     """Exchange the authorization code for user tokens.
 
     Documentation:
@@ -104,8 +104,9 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
     client = boto3.client("cognito-idp")
     cognito_user = client.get_user(AccessToken=oauth_response_body["access_token"])
 
+    is_not_production = app.cf_space != "production"
     # only get these attributes if the MFA is present
-    if is_mfa_configured(cognito_user):
+    if is_not_production or is_mfa_configured(cognito_user):
         session["attributes"] = cognito_user["UserAttributes"]
         session["user"] = cognito_user["Username"]
         session["email"] = return_attribute(session, "email")
@@ -228,7 +229,7 @@ def index():
 
     if "code" in args:
         oauth_code = args["code"]
-        response = exchange_code_for_tokens(oauth_code)
+        response = exchange_code_for_session_user(oauth_code)
         if response.status_code != 200:
             app.logger.error({"error": "OAuth failed", "response": response})
             return redirect("/403")

@@ -194,6 +194,7 @@ def test_auth_flow_with_no_mfa_user(
     domain = "test.cognito.domain.com"
     token_endpoint_url = f"https://{domain}/oauth2/token"
     app.cognito_domain = domain
+    app.cf_space = "production"
     app.client_id = "123456"
     app.client_secret = "987654"
     app.redirect_host = "test.domain.com"
