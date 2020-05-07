@@ -457,6 +457,107 @@ def mock_cognito_admin_add_user_to_group(user_pool_id, email, group_name):
     return stubber
 
 
+def mock_cognito_admin_remove_user_from_group(user_pool_id, email, group_name):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_remove_user_from_group = {
+        "ResponseMetadata": {"HTTPStatusCode": 200},
+    }
+
+    params_admin_remove_user_from_group = {
+        "UserPoolId": user_pool_id,
+        "Username": email,
+        "GroupName": group_name,
+    }
+
+    stubber.add_response(
+        "admin_remove_user_from_group",
+        mock_admin_remove_user_from_group,
+        params_admin_remove_user_from_group,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_get_user(user_pool_id, email, admin_get_user):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_get_user = admin_get_user
+
+    params_admin_get_user = {"UserPoolId": user_pool_id, "Username": email}
+
+    stubber.add_response(
+        "admin_get_user", mock_admin_get_user, params_admin_get_user,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_admin_list_groups_for_user(user_pool_id, admin_user):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+    now = datetime.utcnow()
+
+    stubber = Stubber(client)
+
+    mock_list_user_pools = {
+        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+    }
+    stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+    mock_admin_list_groups_for_user = {
+        "Groups": [
+            {
+                "GroupName": admin_user["group"]["value"],
+                "UserPoolId": user_pool_id,
+                "Description": admin_user["group"]["display"],
+                "RoleArn": None,
+                "Precedence": 10,
+                "LastModifiedDate": now,
+                "CreationDate": now,
+            },
+        ]
+    }
+
+    params_admin_list_groups_for_user = {
+        "UserPoolId": user_pool_id,
+        "Username": admin_user["email"],
+    }
+
+    stubber.add_response(
+        "admin_get_user",
+        mock_admin_list_groups_for_user,
+        params_admin_list_groups_for_user,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
 def mock_s3_get_object(bucket_name, granted_prefixes, key, success_response):
     _keep_it_real()
     client = boto3.real_client("s3")

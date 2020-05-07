@@ -138,3 +138,35 @@ def test_add_to_group(admin_user):
         updated = cognito.add_to_group(admin_user["email"], group_name)
         assert updated
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_remove_from_group(admin_user):
+    user_pool_id = "eu-west-2_poolid"
+    group_name = admin_user["group"]["value"]
+    stubber = stubs.mock_cognito_admin_remove_user_from_group(
+        user_pool_id, admin_user["email"], group_name
+    )
+
+    with stubber:
+        updated = cognito.remove_from_group(admin_user["email"], group_name)
+        assert updated
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user", "admin_get_user")
+def test_get_user(admin_user, admin_get_user):
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_get_user(
+        user_pool_id, admin_user["email"], admin_get_user
+    )
+
+    with stubber:
+        user = cognito.get_user(admin_user["email"])
+        assert user["Username"] == admin_user["email"]
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user")
+def test_list_groups_for_user(admin_user):
+    pass
