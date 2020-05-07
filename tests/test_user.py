@@ -1,8 +1,8 @@
 from unittest.mock import call, patch
 
 import pytest
-import stubs
 
+import stubs
 from user import User
 
 

@@ -1,7 +1,6 @@
 import os
 
 import serverless_wsgi
-
 from main import app, load_environment, setup_talisman
 
 
