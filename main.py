@@ -417,7 +417,7 @@ def create_presigned_post(object_name, expiration=3600):
             "dc:creator": session["email"],
         }
 
-        csvw_response = s3_client.put_object(
+        s3_client.put_object(
             Body=json.dumps(csvw),
             Bucket=app.bucket_name,
             Key="{}-metadata.json".format(object_name),
