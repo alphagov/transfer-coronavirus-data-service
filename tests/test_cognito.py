@@ -169,4 +169,13 @@ def test_get_user(admin_user, admin_get_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_list_groups_for_user(admin_user):
-    pass
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_admin_list_groups_for_user(user_pool_id, admin_user)
+
+    with stubber:
+        groups = cognito.list_groups_for_user(admin_user["email"])
+        assert "Groups" in groups
+        assert len(groups["Groups"]) > 0
+        first_group = groups["Groups"][0]
+        assert first_group["GroupName"] == admin_user["group"]["value"]
+        stubber.deactivate()

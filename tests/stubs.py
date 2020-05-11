@@ -533,7 +533,6 @@ def mock_cognito_admin_list_groups_for_user(user_pool_id, admin_user):
                 "GroupName": admin_user["group"]["value"],
                 "UserPoolId": user_pool_id,
                 "Description": admin_user["group"]["display"],
-                "RoleArn": None,
                 "Precedence": 10,
                 "LastModifiedDate": now,
                 "CreationDate": now,
@@ -547,7 +546,7 @@ def mock_cognito_admin_list_groups_for_user(user_pool_id, admin_user):
     }
 
     stubber.add_response(
-        "admin_get_user",
+        "admin_list_groups_for_user",
         mock_admin_list_groups_for_user,
         params_admin_list_groups_for_user,
     )
