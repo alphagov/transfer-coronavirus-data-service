@@ -117,6 +117,10 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
         )
     # else oauth_response status code to 403
     else:
+        session["error_message"] = (
+            "Please contact us: "
+            "We need to enable SMS authentication for your account."
+        )
         oauth_response.status_code = 403
 
     return oauth_response
