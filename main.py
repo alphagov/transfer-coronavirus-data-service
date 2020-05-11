@@ -34,24 +34,20 @@ app.logger = LOG
 
 def setup_talisman(app):
     csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
-    if app.cf_space == "testing":
-        print("loading Talisman for testing - no HTTPS")
-        return Talisman(
-            app,
-            force_https=False,
-            strict_transport_security=False,
-            session_cookie_secure=False,
-            content_security_policy=csp,
-        )
-    else:
-        print("loading Talisman with HTTPS")
-        return Talisman(
-            app,
-            force_https=True,
-            strict_transport_security=True,
-            session_cookie_secure=True,
-            content_security_policy=csp,
-        )
+    is_https = app.cf_space != "testing"
+    log_message = (
+        "loading Talisman with HTTPS"
+        if is_https
+        else "loading Talisman for testing - no HTTPS"
+    )
+    app.logger.info(log_message)
+    return Talisman(
+        app,
+        force_https=is_https,
+        strict_transport_security=is_https,
+        session_cookie_secure=is_https,
+        content_security_policy=csp,
+    )
 
 
 def load_environment(app):
@@ -79,7 +75,7 @@ def set_app_settings(app):
         app.client_secret = cognito_credentials["client_secret"]
 
 
-def exchange_code_for_tokens(code, code_verifier=None) -> dict:
+def exchange_code_for_session_user(code, code_verifier=None) -> dict:
     """Exchange the authorization code for user tokens.
 
     Documentation:
@@ -107,19 +103,47 @@ def exchange_code_for_tokens(code, code_verifier=None) -> dict:
     id_token = oauth_response_body["id_token"]
 
     client = boto3.client("cognito-idp")
-    response = client.get_user(AccessToken=oauth_response_body["access_token"])
+    cognito_user = client.get_user(AccessToken=oauth_response_body["access_token"])
 
-    session["attributes"] = response["UserAttributes"]
-    session["user"] = response["Username"]
-    session["email"] = return_attribute(session, "email")
-    session["details"] = id_token
-    session["group"] = User.group(response["Username"])
-
-    app.logger.info(
-        "Successful login - user: %s email: %s", session["user"], session["email"]
-    )
+    is_not_production = app.cf_space != "production"
+    # only get these attributes if the MFA is present
+    if is_not_production or is_mfa_configured(cognito_user):
+        session["attributes"] = cognito_user["UserAttributes"]
+        session["user"] = cognito_user["Username"]
+        session["email"] = return_attribute(session, "email")
+        session["details"] = id_token
+        session["group"] = User.group(cognito_user["Username"])
+        app.logger.info(
+            "Successful login - user: %s email: %s", session["user"], session["email"]
+        )
+    # else oauth_response status code to 403
+    else:
+        session["error_message"] = (
+            "Please contact us: "
+            "We need to enable SMS authentication for your account."
+        )
+        oauth_response.status_code = 403
 
     return oauth_response
+
+
+def is_mfa_configured(cognito_user):
+    # does the MFAOptions list contain an entry where both
+    # the DeliveryMedium is SMS
+    # and the AttributeName is phone_number
+    has_phone_mfa = any(
+        [
+            device["DeliveryMedium"] == "SMS"
+            and device["AttributeName"] == "phone_number"
+            for device in cognito_user.get("MFAOptions", [])
+        ]
+    )
+
+    has_preferred_mfa_setting = cognito_user.get("PreferredMfaSetting", "") == "SMS_MFA"
+    has_mfa_setting_list = "SMS_MFA" in cognito_user.get("UserMFASettingList", [])
+
+    mfa_configured = [has_phone_mfa, has_preferred_mfa_setting, has_mfa_setting_list]
+    return all(mfa_configured)
 
 
 @app.route("/js/<path:path>")
@@ -216,9 +240,11 @@ def index():
 
     if "code" in args:
         oauth_code = args["code"]
-        response = exchange_code_for_tokens(oauth_code)
+        response = exchange_code_for_session_user(oauth_code)
         if response.status_code != 200:
             app.logger.error({"error": "OAuth failed", "response": response})
+            return redirect("/403")
+
         return redirect("/admin" if has_admin_role() else "/")
 
     if "details" in session:

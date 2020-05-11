@@ -360,4 +360,6 @@ class User:
         # Currently you can attach a list of users in cognito
         # but we're currently only interested in the first group
         group_name = None if len(groups) == 0 else groups[0]
+
+        LOG.debug("User group returns: %s", group_name)
         return get_group_by_name(group_name)

@@ -1,20 +1,21 @@
 import json
 import os
-from unittest.mock import patch
 
 import flask
 import pytest
 import requests_mock
-import stubs
 
+import stubs
 from main import (
     app,
     create_presigned_url,
     generate_upload_file_path,
     get_files,
+    is_mfa_configured,
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
+    setup_talisman,
     upload_form_validate,
     user_custom_paths,
 )
@@ -153,9 +154,9 @@ def test_route_js(test_client):
     assert "!function(a,b)" in body
 
 
-@pytest.mark.usefixtures("test_client", "test_session")
+@pytest.mark.usefixtures("test_client", "test_session", "test_mfa_user")
 @requests_mock.Mocker(kw="mocker")
-def test_auth_flow(test_client, test_session, **args):
+def test_auth_flow(test_client, test_session, test_mfa_user, **args):
     """ Test mocked oauth exchange """
 
     token = "abc123"
@@ -165,23 +166,55 @@ def test_auth_flow(test_client, test_session, **args):
     app.client_id = "123456"
     app.client_secret = "987654"
     app.redirect_host = "test.domain.com"
-    stubber = stubs.mock_cognito_auth_flow(token)
+    stubber = stubs.mock_cognito_auth_flow(token, test_mfa_user)
 
     with test_client.session_transaction() as client_session:
         client_session.update(test_session)
 
-    with patch("main.User.group") as mocked_user_get_details:
-        mocked_user_get_details.return_value = {"value": "admin-full"}
-        """Test using request mocker and boto stub."""
+    """Test using request mocker and boto stub."""
 
-        oauth_response = json.dumps({"id_token": token, "access_token": token})
-        mocker = args["mocker"]
-        mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
-        response = test_client.get(f"/?code={token}")
-        body = response.data.decode()
-        assert response.status_code == 302
-        assert "<h1>Redirecting...</h1>" in body
-        stubber.deactivate()
+    oauth_response = json.dumps({"id_token": token, "access_token": token})
+    mocker = args["mocker"]
+    mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
+    response = test_client.get(f"/?code={token}")
+    body = response.data.decode()
+    assert response.status_code == 302
+    assert "<h1>Redirecting...</h1>" in body
+    stubber.deactivate()
+
+
+@pytest.mark.usefixtures("test_client", "test_session", "test_no_mfa_user")
+@requests_mock.Mocker(kw="mocker")
+def test_auth_flow_with_no_mfa_user(
+    test_client, test_session, test_no_mfa_user, **args
+):
+    """ Test mocked oauth exchange """
+
+    token = "abc123"
+    domain = "test.cognito.domain.com"
+    token_endpoint_url = f"https://{domain}/oauth2/token"
+    app.cognito_domain = domain
+    app.cf_space = "production"
+    app.client_id = "123456"
+    app.client_secret = "987654"
+    app.redirect_host = "test.domain.com"
+    stubber = stubs.mock_cognito_auth_flow(token, test_no_mfa_user)
+
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+
+    """Test using request mocker and boto stub."""
+
+    oauth_response = json.dumps({"id_token": token, "access_token": token})
+    mocker = args["mocker"]
+    mocker.request(method="POST", url=token_endpoint_url, text=oauth_response)
+    response = test_client.get(f"/?code={token}")
+
+    body = response.data.decode()
+    assert response.status_code == 302
+    assert "<h1>Redirecting...</h1>" in body
+    assert response.headers.get("Location").endswith("403")
+    stubber.deactivate()
 
 
 # Test access management functions
@@ -389,3 +422,37 @@ def test_key_has_granted_prefix():
     key = "web-app-prod-data/other/gds/file.csv"
     prefixes = ["web-app-prod-data/other/non-gds", "web-app-prod-data/other/nhs"]
     assert not key_has_granted_prefix(key, prefixes)
+
+
+@pytest.mark.usefixtures("test_mfa_user", "test_no_mfa_user")
+def test_is_mfa_configured(test_mfa_user, test_no_mfa_user):
+    # Check returns True for valid user
+    assert is_mfa_configured(test_mfa_user)
+    # Check returns False for invalid user
+    assert not is_mfa_configured(test_no_mfa_user)
+    # Check returns False if phone_number attribute is wrong
+    test_wrong_sms_attribute = {}
+    test_wrong_sms_attribute.update(test_mfa_user)
+    test_wrong_sms_attribute["MFAOptions"][0]["AttributeName"] = "phone"
+    assert not is_mfa_configured(test_wrong_sms_attribute)
+    # Check returns False if "PreferredMfaSetting" is not set
+    test_missing_preferred_device = {}
+    test_missing_preferred_device.update(test_mfa_user)
+    del test_missing_preferred_device["PreferredMfaSetting"]
+    assert not is_mfa_configured(test_missing_preferred_device)
+    test_wrong_preferred_device = {}
+    test_wrong_preferred_device.update(test_mfa_user)
+    test_wrong_preferred_device["PreferredMfaSetting"] = "Email_MFA"
+    assert not is_mfa_configured(test_wrong_preferred_device)
+
+
+def test_setup_talisman():
+    app.cf_space = "testing"
+    talisman = setup_talisman(app)
+    assert not talisman.force_https
+    app.cf_space = "staging"
+    talisman = setup_talisman(app)
+    assert talisman.force_https
+    app.cf_space = "production"
+    talisman = setup_talisman(app)
+    assert talisman.force_https
