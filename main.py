@@ -123,10 +123,16 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
 
 
 def is_mfa_configured(cognito_user):
-    has_phone_mfa = True in [
-        device["DeliveryMedium"] == "SMS" and device["AttributeName"] == "phone_number"
-        for device in cognito_user.get("MFAOptions", [])
-    ]
+    # does the MFAOptions list contain an entry where both
+    # the DeliveryMedium is SMS
+    # and the AttributeName is phone_number
+    has_phone_mfa = any(
+        [
+            device["DeliveryMedium"] == "SMS"
+            and device["AttributeName"] == "phone_number"
+            for device in cognito_user.get("MFAOptions", [])
+        ]
+    )
 
     has_preferred_mfa_setting = cognito_user.get("PreferredMfaSetting", "") == "SMS_MFA"
     has_mfa_setting_list = "SMS_MFA" in cognito_user.get("UserMFASettingList", [])
