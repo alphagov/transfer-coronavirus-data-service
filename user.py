@@ -183,11 +183,11 @@ class User:
                 group_name if group_name is not None else self.details["group"]["value"]
             )
             if not self.user_paths_are_valid(is_la, custom_paths, group_name):
-                raise ValueError(f"custom paths: is not expected value")
+                raise ValueError("custom paths: is not expected value")
 
             return [{"Name": "custom:paths", "Value": custom_paths}]
         else:
-            raise ValueError(f"custom paths: is not expected value")
+            raise ValueError("custom paths: is not expected value")
 
     def user_paths_are_valid(self, is_la, paths_semicolon_separated, group_name):
         if "admin" not in group_name and paths_semicolon_separated == "":
