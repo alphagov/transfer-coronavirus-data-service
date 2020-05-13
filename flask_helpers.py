@@ -42,7 +42,7 @@ def current_group_name():
 
 
 def is_development():
-    return os.getenv("FLASK_ENV", "production") == "development"
+    return os.getenv("CF_SPACE", "production") != "production"
 
 
 def admin_interface(flask_route):
