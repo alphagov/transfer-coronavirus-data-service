@@ -1,14 +1,11 @@
 import requests
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
 def before_scenario(context, _scenario):
     context.api_session = requests.Session()
-    # options = webdriver.FirefoxOptions()
-    # options.headless = os.environ["E2E_HEADLESS"] == "true"
-    # context.browser = webdriver.Firefox(options=options)
-    # context.browser.set_window_size(1080,800)
 
     options = Options()
     options.binary = "bin/headless-chromium"
