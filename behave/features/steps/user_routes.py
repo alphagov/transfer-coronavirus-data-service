@@ -2,6 +2,8 @@ import os
 import re
 import time
 
+import requests
+
 from behave import given, then, when
 
 
@@ -177,3 +179,16 @@ def login_with_credentials(context):
     Then the content of element with selector"""
         + """ "#main-content .covid-transfer-username" contains username"""
     )
+
+
+@then('you download link from "{selector}"')
+def download_files(context, selector):
+    elem = context.browser.find_element_by_css_selector(selector)
+    link_target = elem.get_attribute("href")
+    cookies = context.browser.get_cookies()
+    cookie_dict = {item["name"]: item["value"] for item in cookies}
+
+    download_response = requests.get(link_target, cookies=cookie_dict)
+
+    assert "test,the,csv" in download_response.text
+    assert download_response.status_code == 200
