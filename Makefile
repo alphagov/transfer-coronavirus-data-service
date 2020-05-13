@@ -95,6 +95,6 @@ concourse_e2e_paas:
 	cd behave && behave --tags='@user'
 
 concourse_e2e_lambda:
-	cd behave && behave
+	export LOG_LEVEL=DEBUG && cd behave && behave
 
 concourse_e2e: concourse_e2e_paas

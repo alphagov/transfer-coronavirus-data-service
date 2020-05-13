@@ -1,6 +1,5 @@
 import os
 import re
-import time
 
 import requests
 
@@ -113,12 +112,18 @@ def login_submit_button_click_step(context):
 def user_home_step(context):
     url = os.environ["E2E_STAGING_ROOT_URL"]
     context.browser.get(url)
+    context.logger.debug("***** LOG PAGE SOURCE *****")
+    context.logger.debug(context.browser.page_source)
+    context.logger.debug("***** END PAGE SOURCE *****")
 
 
 @when('you navigate to "{path}"')
 def user_path_step(context, path):
     url = os.environ["E2E_STAGING_ROOT_URL"]
     context.browser.get(f"{url}{path}")
+    context.logger.debug("***** LOG PAGE SOURCE *****")
+    context.logger.debug(context.browser.page_source)
+    context.logger.debug("***** END PAGE SOURCE *****")
 
 
 @then("you get redirected to user home")
@@ -150,11 +155,6 @@ def content_contains_username_step(context, selector):
     elem = context.browser.find_element_by_css_selector(selector).text
     part = context.browser.header_overrides["e2e_username"]
     assert part in elem
-
-
-@then('wait "{seconds}" seconds')
-def wait_step(context, seconds):
-    time.sleep(int(seconds))
 
 
 @then("we have a session cookie")

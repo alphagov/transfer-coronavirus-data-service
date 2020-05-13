@@ -1,7 +1,8 @@
 import time
 
-from behave import then, when
 from selenium.common.exceptions import NoSuchElementException
+
+from behave import then, when
 
 
 @when('visit url "{url}"')
@@ -66,3 +67,8 @@ def set_field_value_step(context, selector, value):
 @then('title becomes "{title}"')
 def check_browser_title_step(context, title):
     assert context.browser.title == title
+
+
+@then('wait "{seconds}" seconds')
+def wait_step(context, seconds):
+    time.sleep(int(seconds))
