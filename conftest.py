@@ -326,3 +326,8 @@ def test_mfa_user():
         "PreferredMfaSetting": "SMS_MFA",
         "UserMFASettingList": ["SMS_MFA"],
     }
+
+
+@pytest.fixture()
+def test_get_objects():
+    return {"Body": "test,the,csv", "ResponseMetadata": {"HTTPStatusCode": 200}}

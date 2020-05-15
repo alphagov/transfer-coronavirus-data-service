@@ -4,8 +4,8 @@ import os
 import flask
 import pytest
 import requests_mock
-
 import stubs
+
 from main import (
     app,
     create_presigned_url,
@@ -18,6 +18,7 @@ from main import (
     setup_talisman,
     upload_form_validate,
     user_custom_paths,
+    validate_access_to_s3_path
 )
 
 
@@ -357,7 +358,6 @@ def test_create_presigned_url(test_session):
     stubber = stubs.mock_s3_list_objects(bucket, paths)
 
     with stubber:
-
         key = "test_key"
         url = create_presigned_url(bucket, key, expiration=600)
         assert ".co/test_bucket/test_key" in url
@@ -456,3 +456,20 @@ def test_setup_talisman():
     app.cf_space = "production"
     talisman = setup_talisman(app)
     assert talisman.force_https
+
+
+@pytest.mark.usefixtures("test_get_objects")
+def test_validate_access_to_s3_path(test_get_objects):
+    bucket_name = "bucket"
+    granted_key = "granted/filename"
+    denied_key = "denied/filename"
+
+    stubber = stubs.mock_s3_get_objects(bucket_name, granted_key, test_get_objects)
+    with stubber:
+        assert validate_access_to_s3_path(bucket_name, granted_key)
+        stubber.deactivate()
+
+    stubber = stubs.mock_s3_get_objects(bucket_name, denied_key, test_get_objects)
+    with stubber:
+        assert not validate_access_to_s3_path(bucket_name, denied_key)
+        stubber.deactivate()

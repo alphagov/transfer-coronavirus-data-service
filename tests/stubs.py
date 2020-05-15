@@ -176,3 +176,24 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
     # override boto.client to return the mock client
     boto3.client = lambda service, region_name=None: client
     return stubber
+
+
+def mock_s3_get_objects(bucket_name, key, success_response):
+    _keep_it_real()
+    client = boto3.real_client("s3")
+
+    stubber = Stubber(client)
+
+    if key.startswith("granted"):
+        stubber.add_response(
+            "get_object", success_response, {"Bucket": bucket_name, "Key": key},
+        )
+    else:
+        stubber.add_client_error(
+            "get_object", expected_params={"Bucket": bucket_name, "Key": key}
+        )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service: client
+    return stubber

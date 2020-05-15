@@ -652,6 +652,22 @@ def load_user_lookup(session):
     return user_paths
 
 
+def validate_access_to_s3_path(bucket_name, path):
+    """
+    Validate the Lambda has permission to perform GetObject
+    If the Lambda does not have permission
+    the presigned URL will fail
+    """
+    s3_client = boto3.client("s3")
+    try:
+        s3_client.get_object(Bucket=bucket_name, Key=path)
+        access_granted = True
+    except ClientError as err:
+        access_granted = False
+        app.logger.error(vars(err))
+    return access_granted
+
+
 @app.template_filter("s3_remove_root_path")
 def s3_remove_root_path(key):
     """
