@@ -56,6 +56,28 @@ def button_is_not_there(context, text):
     assert not element_found
 
 
+@then('an element with selector "{selector}" does exist')
+def an_element_with_selector_is_there(context, selector):
+    try:
+        context.browser.find_element_by_css_selector(selector)
+        element_found = True
+    except NoSuchElementException:
+        element_found = False
+
+    assert element_found
+
+
+@then('an element with selector "{selector}" does not exist')
+def an_element_with_selector_is_not_there(context, selector):
+    try:
+        context.browser.find_element_by_css_selector(selector)
+        element_found = True
+    except NoSuchElementException:
+        element_found = False
+
+    assert not element_found
+
+
 @when('field with name "{selector}" is given "{value}"')
 def set_field_value_step(context, selector, value):
     elem = context.browser.find_element_by_name(selector)
