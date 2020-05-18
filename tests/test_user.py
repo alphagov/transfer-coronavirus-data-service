@@ -83,7 +83,10 @@ def test_sanitise_name(valid_user):
 
 @pytest.mark.usefixtures("valid_user")
 def test_update_returns_false_if_user_not_found(valid_user):
-    with patch.object(valid_user, "get_details", return_value={}):
+    user_pool_id = "eu-west-2_poolid"
+    email = valid_user.email_address
+    stubber = stubs.mock_user_not_found(user_pool_id, email)
+    with stubber:
         assert not valid_user.update(
             "new name", "+441234567890", "web-app-prod-data", "0", "standard-upload"
         )
@@ -91,7 +94,16 @@ def test_update_returns_false_if_user_not_found(valid_user):
 
 @pytest.mark.usefixtures("valid_user", "admin_get_user")
 def test_update_returns_false_if_new_details_are_all_none(valid_user, admin_get_user):
-    with patch.object(valid_user, "get_details", return_value=admin_get_user):
+    user_pool_id = "eu-west-2_poolid"
+    email = valid_user.email_address
+    attributes = {
+        "name": None,
+        "phone_number": None,
+        "custom:paths": None,
+        "custom:is_la": None,
+    }
+    stubber = stubs.mock_user_update(user_pool_id, email, admin_get_user, attributes)
+    with stubber:
         assert not valid_user.update(None, None, None, None, None)
 
 
