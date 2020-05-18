@@ -329,5 +329,5 @@ def test_mfa_user():
 
 
 @pytest.fixture()
-def test_get_objects():
+def test_get_object():
     return {"Body": "test,the,csv", "ResponseMetadata": {"HTTPStatusCode": 200}}

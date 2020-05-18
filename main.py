@@ -301,7 +301,13 @@ def download(path):
     Redirect to download
     """
     prefixes = load_user_lookup(session)
-    if key_has_granted_prefix(path, prefixes):
+
+    user_can_see_object_path = key_has_granted_prefix(path, prefixes)
+    lambda_can_get_object = validate_access_to_s3_path(app.bucket_name, path)
+
+    app.logger.debug("User granted access to path: %s", str(user_can_see_object_path))
+    app.logger.debug("Lambda can get object: %s", str(lambda_can_get_object))
+    if user_can_see_object_path and lambda_can_get_object:
         redirect_url = create_presigned_url(app.bucket_name, path, 60)
         if redirect_url is not None:
             app.logger.info(
@@ -319,7 +325,7 @@ def download(path):
         else:
             return redirect("/404")
     else:
-        return redirect("/404")
+        return redirect("/403")
 
 
 @app.route("/upload", methods=["POST", "GET"])

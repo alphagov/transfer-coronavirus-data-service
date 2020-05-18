@@ -49,8 +49,8 @@ def mock_s3_list_objects(bucket_name, prefixes):
         )
 
     # replace the get_presigned_url so it runs without AWS creds
-    client.generate_presigned_url = (
-        lambda op, Params, ExpiresIn, HttpMethod: f".co/{Params['Bucket']}/{Params['Key']}"
+    client.generate_presigned_url = lambda op, Params, ExpiresIn, HttpMethod: fake_url(
+        Params["Bucket"], Params["Key"]
     )
 
     stubber.activate()
@@ -178,13 +178,13 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
     return stubber
 
 
-def mock_s3_get_objects(bucket_name, key, success_response):
+def mock_s3_get_object(bucket_name, granted_prefixes, key, success_response):
     _keep_it_real()
     client = boto3.real_client("s3")
 
     stubber = Stubber(client)
 
-    if key.startswith("granted"):
+    if any([key.startswith(prefix) for prefix in granted_prefixes]):
         stubber.add_response(
             "get_object", success_response, {"Bucket": bucket_name, "Key": key},
         )
@@ -193,7 +193,26 @@ def mock_s3_get_objects(bucket_name, key, success_response):
             "get_object", expected_params={"Bucket": bucket_name, "Key": key}
         )
 
+    # replace the get_presigned_url so it runs without AWS creds
+    client.generate_presigned_url = lambda op, Params, ExpiresIn, HttpMethod: fake_url(
+        Params["Bucket"], Params["Key"]
+    )
+
     stubber.activate()
     # override boto.client to return the mock client
-    boto3.client = lambda service: client
+    boto3.client = lambda service, region_name=None, config=None: client
     return stubber
+
+
+def fake_url(bucket, key):
+    url = (
+        f"https://{bucket}.s3.amazonaws.com/{key}"
+        "?X-Amz-Algorithm=AWS4-HMAC-SHA256"
+        "&X-Amz-Credential=fake_key%2F20200518%2Feu-west-2%2Fs3%2Faws4_request"
+        "&X-Amz-Date=20200518T101632Z"
+        "&X-Amz-Expires=60"
+        "&X-Amz-SignedHeaders=host"
+        "&X-Amz-Security-Token=fake_token"
+        "&X-Amz-Signature=fake_signature"
+    )
+    return url

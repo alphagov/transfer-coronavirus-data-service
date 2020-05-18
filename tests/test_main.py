@@ -4,8 +4,8 @@ import os
 import flask
 import pytest
 import requests_mock
-import stubs
 
+import stubs
 from main import (
     app,
     create_presigned_url,
@@ -18,7 +18,7 @@ from main import (
     setup_talisman,
     upload_form_validate,
     user_custom_paths,
-    validate_access_to_s3_path
+    validate_access_to_s3_path,
 )
 
 
@@ -107,6 +107,43 @@ def test_route_files(test_client, test_session):
         assert "There are 10 files available to download:" in body
         assert "local_authority/haringey/people1.csv" in body
         assert "local_authority/haringey/people4.csv" in body
+
+
+@pytest.mark.usefixtures("test_client", "test_session", "test_get_object")
+def test_route_download(test_client, test_session, test_get_object):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_session)
+
+    bucket_name = "test_bucket"
+    bucket_granted_key = "web-app-prod-data/local_authority/haringey/test.csv"
+    bucket_denied_key = "web-app-prod-data/local_authority/hackney/test.csv"
+
+    granted_prefixes = return_attribute(test_session, "custom:path").split(";")
+
+    stubber = stubs.mock_s3_get_object(
+        bucket_name, granted_prefixes, bucket_granted_key, test_get_object
+    )
+
+    with stubber:
+        response = test_client.get(f"/download/{bucket_granted_key}")
+        body = response.data.decode()
+
+        app.logger.debug(response.location)
+        assert response.status_code == 302
+        assert "<h1>Redirecting...</h1>" in body
+        assert response.location not in ["http://localhost/403", "http://localhost/404"]
+
+    stubber = stubs.mock_s3_get_object(
+        bucket_name, granted_prefixes, bucket_denied_key, test_get_object
+    )
+
+    with stubber:
+        response = test_client.get(f"/download/{bucket_denied_key}")
+        body = response.data.decode()
+
+        assert response.status_code == 302
+        assert "<h1>Redirecting...</h1>" in body
+        assert response.location == "http://localhost/403"
 
 
 @pytest.mark.usefixtures("test_client", "test_session")
@@ -360,7 +397,7 @@ def test_create_presigned_url(test_session):
     with stubber:
         key = "test_key"
         url = create_presigned_url(bucket, key, expiration=600)
-        assert ".co/test_bucket/test_key" in url
+        assert "https://test_bucket.s3.amazonaws.com/test_key" in url
         stubber.deactivate()
 
 
@@ -458,18 +495,22 @@ def test_setup_talisman():
     assert talisman.force_https
 
 
-@pytest.mark.usefixtures("test_get_objects")
-def test_validate_access_to_s3_path(test_get_objects):
+@pytest.mark.usefixtures("test_get_object")
+def test_validate_access_to_s3_path(test_get_object):
     bucket_name = "bucket"
     granted_key = "granted/filename"
     denied_key = "denied/filename"
 
-    stubber = stubs.mock_s3_get_objects(bucket_name, granted_key, test_get_objects)
+    stubber = stubs.mock_s3_get_object(
+        bucket_name, ["granted"], granted_key, test_get_object
+    )
     with stubber:
         assert validate_access_to_s3_path(bucket_name, granted_key)
         stubber.deactivate()
 
-    stubber = stubs.mock_s3_get_objects(bucket_name, denied_key, test_get_objects)
+    stubber = stubs.mock_s3_get_object(
+        bucket_name, ["granted"], denied_key, test_get_object
+    )
     with stubber:
         assert not validate_access_to_s3_path(bucket_name, denied_key)
         stubber.deactivate()

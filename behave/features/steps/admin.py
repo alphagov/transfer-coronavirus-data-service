@@ -1,8 +1,9 @@
 import os
 
+from selenium.webdriver.support.select import Select
+
 import user_routes
 from behave import then, when
-from selenium.webdriver.support.select import Select
 
 
 @then("you can go to the admin page")
