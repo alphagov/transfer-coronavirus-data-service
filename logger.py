@@ -38,6 +38,13 @@ class JsonFormatter(logging.Formatter):
 
 def build_logger(log_name, log_level="ERROR"):
     """ Create shared logger and custom JSON handler """
+
+    # Default log_level value is only set for None
+    # If log level env var is set but empty string
+    # you still need to set the default value
+    if log_level == "":
+        log_level = "ERROR"
+
     logger = logging.getLogger(log_name)
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JsonFormatter)
@@ -48,4 +55,5 @@ def build_logger(log_name, log_level="ERROR"):
 
 
 LOG_LEVEL = str(os.getenv("LOG_LEVEL", "ERROR"))
+
 LOG = build_logger("vulnerable_people_data_service", log_level=LOG_LEVEL)
