@@ -301,7 +301,13 @@ def download(path):
     Redirect to download
     """
     prefixes = load_user_lookup(session)
-    if key_has_granted_prefix(path, prefixes):
+
+    user_can_see_object_path = key_has_granted_prefix(path, prefixes)
+    lambda_can_get_object = validate_access_to_s3_path(app.bucket_name, path)
+
+    app.logger.debug("User granted access to path: %s", str(user_can_see_object_path))
+    app.logger.debug("Lambda can get object: %s", str(lambda_can_get_object))
+    if user_can_see_object_path and lambda_can_get_object:
         redirect_url = create_presigned_url(app.bucket_name, path, 60)
         if redirect_url is not None:
             app.logger.info(
@@ -319,7 +325,7 @@ def download(path):
         else:
             return redirect("/404")
     else:
-        return redirect("/404")
+        return redirect("/403")
 
 
 @app.route("/upload", methods=["POST", "GET"])
@@ -650,6 +656,22 @@ def user_custom_paths(session, is_upload=False):
 def load_user_lookup(session):
     user_paths = user_custom_paths(session, is_upload=False)
     return user_paths
+
+
+def validate_access_to_s3_path(bucket_name, path):
+    """
+    Validate the Lambda has permission to perform GetObject
+    If the Lambda does not have permission
+    the presigned URL will fail
+    """
+    s3_client = boto3.client("s3")
+    try:
+        s3_client.get_object(Bucket=bucket_name, Key=path)
+        access_granted = True
+    except ClientError as err:
+        access_granted = False
+        app.logger.error(vars(err))
+    return access_granted
 
 
 @app.template_filter("s3_remove_root_path")
