@@ -168,26 +168,46 @@ class User:
             raise ValueError("custom paths: is not expected value")
 
     def user_paths_are_valid(self, is_la, paths_semicolon_separated, group_name):
+
+        all_user_paths_are_valid = True
+
+        # All non-admin users should have a non-empty path in custom:paths
         if "admin" not in group_name and paths_semicolon_separated == "":
-            return False
+            LOG.info(
+                {
+                    "user": self.email_address,
+                    "group": group_name,
+                    "message": "Path is missing for non-admin user",
+                }
+            )
+            all_user_paths_are_valid = False
 
         app_authorised_paths = [os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")]
+
+        user_authorised_paths = paths_semicolon_separated.split(";")
+
+        # Local Authority users: is_la = 1
+        # can only be granted access to [main_prefix]/local_authority/* paths
+        # Non Local Authority users: is_la = 0
+        # can only be granted access to [main_prefix]/other/* paths
         for authorised_path in app_authorised_paths:
-            for path in paths_semicolon_separated.split(";"):
+            for path in user_authorised_paths:
                 la_path = "{}/local_authority/".format(authorised_path)
-                # if new attr for is_la is 0 (not a local authority)
-                # then don't allow local_authority paths to be set
-                if is_la == "0":
-                    if path.startswith(la_path):
-                        LOG.info("%s: won't set non-LA user to: %s", "user-admin", path)
-                        return False
-                # if new attr for is_la is 1 (IS local authority)
-                # then only allow local_authority paths to be set
-                if is_la == "1":
-                    if not path.startswith(la_path):
-                        LOG.info("%s: won't set LA user to: %s", "user-admin", path)
-                        return False
-        return True
+                user_is_local_authority = is_la == "1"
+                path_is_local_authority = path.startswith(la_path)
+                if user_is_local_authority != path_is_local_authority:
+                    LOG.info(
+                        {
+                            "user": self.email_address,
+                            "group": group_name,
+                            "path": path,
+                            "is_la": is_la,
+                            "message": "Path is invalid for user type",
+                        }
+                    )
+                    all_user_paths_are_valid = False
+
+        return all_user_paths_are_valid
 
     def __phone_number_attribute(self, phone_number):
         sanitised_phone = self.sanitise_phone(phone_number)
@@ -224,9 +244,13 @@ class User:
         return cognito.enable_user(self.email_address)
 
     def reinvite(self):
-        if self.get_details() != {}:
+        details = self.get_details()
+        if details != {}:
+            LOG.debug(details)
             deleted = self.delete()
+            LOG.debug({"action": "delete", "status": deleted})
             if deleted:
+
                 created = self.create(
                     self.name(),
                     self.phone_number(),
@@ -234,6 +258,7 @@ class User:
                     self.__is_la_str(),
                     self.group_name(),
                 )
+                LOG.debug({"action": "create", "status": created})
                 return created
         return False
 

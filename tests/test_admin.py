@@ -150,9 +150,7 @@ def test_route_admin_user_query(
 @pytest.mark.usefixtures(
     "test_client", "test_admin_session", "admin_user", "admin_get_user"
 )
-def test_route_admin_user(
-    test_client, test_admin_session, admin_user, admin_get_user
-):
+def test_route_admin_user(test_client, test_admin_session, admin_user, admin_get_user):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user

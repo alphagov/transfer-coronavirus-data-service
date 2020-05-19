@@ -45,7 +45,9 @@ def mock_cognito_auth_flow(token, test_user):
     # Add responses
     stub_response_cognito_get_user(stubber, token, test_user)
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_list_groups_for_user(stubber, user_pool_id, test_user["Username"])
+    stub_response_cognito_admin_list_groups_for_user(
+        stubber, user_pool_id, test_user["Username"]
+    )
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -71,7 +73,9 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
         stubber, user_pool_id, admin_user["email"]
     )
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_set_user_settings(stubber, user_pool_id, admin_user["email"])
+    stub_response_cognito_admin_set_user_settings(
+        stubber, user_pool_id, admin_user["email"]
+    )
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
     stub_response_cognito_admin_add_user_to_group(
         stubber, user_pool_id, admin_user["email"], group_name
@@ -127,7 +131,9 @@ def mock_cognito_admin_update_user_attributes(user_pool_id, user, attributes):
 
     # Add responses
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_update_user_attributes(stubber, user_pool_id, user["email"], attributes)
+    stub_response_cognito_admin_update_user_attributes(
+        stubber, user_pool_id, user["email"], attributes
+    )
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -206,9 +212,7 @@ def mock_cognito_admin_set_user_mfa_preference(user_pool_id, email):
     stubber = Stubber(client)
 
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_set_user_mfa_preference(
-        stubber, user_pool_id, email
-    )
+    stub_response_cognito_admin_set_user_mfa_preference(stubber, user_pool_id, email)
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -242,7 +246,9 @@ def mock_cognito_admin_remove_user_from_group(user_pool_id, email, group_name):
 
     # Add responses
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_remove_user_from_group(stubber, user_pool_id, email, group_name)
+    stub_response_cognito_admin_remove_user_from_group(
+        stubber, user_pool_id, email, group_name
+    )
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -274,7 +280,9 @@ def mock_cognito_admin_list_groups_for_user(user_pool_id, admin_user):
 
     # Add responses
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_list_groups_for_user(stubber, user_pool_id, admin_user["email"])
+    stub_response_cognito_admin_list_groups_for_user(
+        stubber, user_pool_id, admin_user["email"]
+    )
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -311,7 +319,7 @@ def mock_user_not_found(user_pool_id, email):
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
     stubber.add_client_error(
         "admin_get_user",
-        expected_params={"UserPoolId": user_pool_id, "Username": email}
+        expected_params={"UserPoolId": user_pool_id, "Username": email},
     )
 
     stubber.activate()
@@ -332,7 +340,9 @@ def mock_user_update(user_pool_id, email, admin_get_user, attributes):
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
     stub_response_cognito_admin_list_groups_for_user(stubber, user_pool_id, email)
     stub_response_cognito_list_user_pools(stubber, user_pool_id)
-    stub_response_cognito_admin_update_user_attributes(stubber, user_pool_id, email, attributes)
+    stub_response_cognito_admin_update_user_attributes(
+        stubber, user_pool_id, email, attributes
+    )
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -340,8 +350,55 @@ def mock_user_update(user_pool_id, email, admin_get_user, attributes):
     return stubber
 
 
-## Responses
+def mock_user_reinvite(admin_user, admin_get_user, create_user_arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    user_pool_id = "eu-west-2_poolid"
+    group_name = admin_user["group"]["value"]
+
+    stubber = Stubber(client)
+
+    # Add responses
+    # get user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_get_user(
+        stubber, user_pool_id, admin_user["email"], admin_get_user
+    )
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_list_groups_for_user(
+        stubber, user_pool_id, admin_user["email"]
+    )
+
+    # delete user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_delete_user(stubber, user_pool_id, admin_user["email"])
+
+    # create user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_set_user_mfa_preference(
+        stubber, user_pool_id, admin_user["email"]
+    )
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_set_user_settings(
+        stubber, user_pool_id, admin_user["email"]
+    )
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_add_user_to_group(
+        stubber, user_pool_id, admin_user["email"], group_name
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+# Responses
 # Client: s3
+
 
 def stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix):
     mock_list_objects_1 = {
@@ -355,10 +412,9 @@ def stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix):
     }
 
     stubber.add_response(
-        "list_objects",
-        mock_list_objects_1,
-        {"Bucket": bucket_name, "Prefix": prefix},
+        "list_objects", mock_list_objects_1, {"Bucket": bucket_name, "Prefix": prefix},
     )
+
 
 def stub_response_s3_list_objects_page_2(stubber, bucket_name, prefix):
     mock_list_objects_2 = {
@@ -437,9 +493,7 @@ def stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arg
     )
 
 
-def stub_response_cognito_admin_set_user_mfa_preference(
-    stubber, user_pool_id, email
-):
+def stub_response_cognito_admin_set_user_mfa_preference(stubber, user_pool_id, email):
     mock_admin_set_user_mfa_preference = {"ResponseMetadata": {"HTTPStatusCode": 200}}
 
     params_admin_set_user_mfa_preference = {
@@ -488,7 +542,9 @@ def stub_response_cognito_admin_add_user_to_group(
     )
 
 
-def stub_response_cognito_admin_update_user_attributes(stubber, user_pool_id, email, attributes):
+def stub_response_cognito_admin_update_user_attributes(
+    stubber, user_pool_id, email, attributes
+):
     mock_admin_update_user_attributes = {
         "ResponseMetadata": {"HTTPStatusCode": 200},
     }
@@ -551,7 +607,9 @@ def stub_response_cognito_admin_enable_user(stubber, user_pool_id, email):
     )
 
 
-def stub_response_cognito_admin_remove_user_from_group(stubber, user_pool_id, email, group_name):
+def stub_response_cognito_admin_remove_user_from_group(
+    stubber, user_pool_id, email, group_name
+):
     mock_admin_remove_user_from_group = {
         "ResponseMetadata": {"HTTPStatusCode": 200},
     }

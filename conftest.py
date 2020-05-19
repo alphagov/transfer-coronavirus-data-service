@@ -196,18 +196,26 @@ def admin_get_user():
     now = datetime.utcnow()
     return {
         "Username": "justin.casey@communities.gov.uk",
-        "UserStatus": "a_status",
+        "UserStatus": "CONFIRMED",
         "UserCreateDate": now,
         "UserLastModifiedDate": now,
         "Enabled": True,
         "UserAttributes": [
             {"Name": "sub", "Value": "a_uuid"},
             {"Name": "email_verified", "Value": "true"},
-            {"Name": "custom:paths", "Value": "some_custom_paths"},
-            {"Name": "name", "Value": "JustinCasey"},
+            {
+                "Name": "custom:paths",
+                "Value": ";".join(
+                    [
+                        "web-app-prod-data/local_authority/barking",
+                        "web-app-prod-data/local_authority/haringey",
+                    ]
+                ),
+            },
+            {"Name": "name", "Value": "Justin Casey"},
             {"Name": "phone_number_verified", "Value": "false"},
-            {"Name": "custom:is_la", "Value": "0"},
-            {"Name": "phone_number", "Value": "a_phone"},
+            {"Name": "custom:is_la", "Value": "1"},
+            {"Name": "phone_number", "Value": "+447123456789"},
             {"Name": "email", "Value": "justin.casey@communities.gov.uk"},
         ],
     }

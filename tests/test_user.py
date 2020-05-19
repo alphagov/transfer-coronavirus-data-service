@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 import pytest
@@ -6,7 +7,7 @@ import stubs
 from user import User
 
 
-def test_email_sanitised_on_init():
+def test_user_init_email_sanitised():
     test1 = "anormalemail@example.gov.uk"
     assert User(test1).email_address == test1
 
@@ -17,7 +18,7 @@ def test_email_sanitised_on_init():
 @pytest.mark.usefixtures(
     "valid_user", "user_with_invalid_email", "user_with_invalid_domain"
 )
-def test_email_address_is_valid(
+def test_user_email_address_is_valid(
     valid_user, user_with_invalid_email, user_with_invalid_domain
 ):
     assert valid_user.email_address_is_valid()
@@ -90,6 +91,7 @@ def test_update_returns_false_if_user_not_found(valid_user):
         assert not valid_user.update(
             "new name", "+441234567890", "web-app-prod-data", "0", "standard-upload"
         )
+        stubber.deactivate()
 
 
 @pytest.mark.usefixtures("valid_user", "admin_get_user")
@@ -105,64 +107,102 @@ def test_update_returns_false_if_new_details_are_all_none(valid_user, admin_get_
     stubber = stubs.mock_user_update(user_pool_id, email, admin_get_user, attributes)
     with stubber:
         assert not valid_user.update(None, None, None, None, None)
+        stubber.deactivate()
 
 
 @pytest.mark.usefixtures("valid_user", "admin_get_user")
 def test_update_returns_false_if_new_details_are_not_strings(
     valid_user, admin_get_user
 ):
-    with patch.object(valid_user, "get_details", return_value=admin_get_user):
+    user_pool_id = "eu-west-2_poolid"
+    email = valid_user.email_address
+    attributes = {
+        "name": 1,
+        "phone_number": 2,
+        "custom:paths": 3,
+        "custom:is_la": 4,
+    }
+    stubber = stubs.mock_user_update(user_pool_id, email, admin_get_user, attributes)
+    with stubber:
         assert not valid_user.update(0, 1, 2, 3, 4)
+        stubber.deactivate()
 
 
 @pytest.mark.usefixtures("valid_user")
 def test_user_paths_are_valid_returns_false_if_not_admin_and_path_is_blank(valid_user):
     assert not valid_user.user_paths_are_valid("1", "", "standard-download")
     assert not valid_user.user_paths_are_valid("1", "", "standard-upload")
+    assert not valid_user.user_paths_are_valid("0", "", "standard-download")
+    assert not valid_user.user_paths_are_valid("0", "", "standard-upload")
 
 
 @pytest.mark.usefixtures("valid_user")
-def test_user_paths_are_valid_non_la_users_can_only_get_non_la_paths(
-    monkeypatch, valid_user
-):
+def test_user_paths_are_valid_non_la_users_can_only_get_non_la_paths(valid_user):
+    main_prefix = os.environ.get("BUCKET_MAIN_PREFIX")
     assert valid_user.user_paths_are_valid(
-        "0", "web-app-prod-data", "standard-download"
+        "0", f"{main_prefix}/other/gds", "standard-download"
     )
-    monkeypatch.setenv("BUCKET_MAIN_PREFIX", "ambridge")
+    assert valid_user.user_paths_are_valid(
+        "0", f"{main_prefix}/other/gds;{main_prefix}/other/nhs", "standard-download"
+    )
+
     assert not valid_user.user_paths_are_valid(
-        "0", "web-app-prod-data;ambridge/local_authority/", "standard-download"
+        "0", f"{main_prefix}/local_authority/barking", "standard-download"
+    )
+    assert not valid_user.user_paths_are_valid(
+        "0",
+        f"{main_prefix}/local_authority/barking;{main_prefix}/other/gds",
+        "standard-download",
     )
 
 
 @pytest.mark.usefixtures("valid_user")
-def test_user_paths_are_valid_la_users_can_only_get_la_paths(monkeypatch, valid_user):
-    monkeypatch.setenv("BUCKET_MAIN_PREFIX", "ambridge")
+def test_user_paths_are_valid_la_users_can_only_get_la_paths(valid_user):
+    main_prefix = os.environ.get("BUCKET_MAIN_PREFIX")
     assert valid_user.user_paths_are_valid(
-        "1", "ambridge/local_authority/", "standard-download"
+        "1", f"{main_prefix}/local_authority/barking", "standard-download"
+    )
+
+    assert valid_user.user_paths_are_valid(
+        "1",
+        f"{main_prefix}/local_authority/barking;{main_prefix}/local_authority/barnet",
+        "standard-download",
     )
 
     assert not valid_user.user_paths_are_valid(
-        "1", "web-app-prod-data;ambridge/local_authority/", "standard-download"
+        "1", f"{main_prefix}/other/gds", "standard-download"
+    )
+    assert not valid_user.user_paths_are_valid(
+        "1",
+        f"{main_prefix}/other/gds;{main_prefix}/local_authority/barking",
+        "standard-download",
     )
 
 
 @pytest.mark.usefixtures("valid_user", "user_with_invalid_email")
-def test_create_returns_false_if_checks_fail(
-    monkeypatch, valid_user, user_with_invalid_email
-):
+def test_create_returns_false_if_checks_fail(valid_user, user_with_invalid_email):
+    main_prefix = os.environ.get("BUCKET_MAIN_PREFIX")
     assert not user_with_invalid_email.create(
-        "justin", "0201234567890", "web-app-prod-data", "0", "standard-download"
+        "justin", "0201234567890", f"{main_prefix}/other/gds", "0", "standard-download"
     )
     assert not valid_user.create(
-        "justin", "not_a_phone_number", "web-app-prod-data", "0", "standard-download"
+        "justin",
+        "not_a_phone_number",
+        f"{main_prefix}/other/gds",
+        "0",
+        "standard-download",
     )
     assert not valid_user.create(
-        "justin", "not_a_phone_number", "web-app-prod-data", "1", "standard-download"
+        "justin",
+        "not_a_phone_number",
+        f"{main_prefix}/other/gds",
+        "1",
+        "standard-download",
     )
 
 
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
-def test_create(admin_user, create_user_arguments):
+def test_user_create_user(admin_user, create_user_arguments):
     group_name = admin_user["group"]["value"]
     stubber = stubs.mock_cognito_create_user(admin_user, create_user_arguments)
 
@@ -195,12 +235,25 @@ def test_creating_invalid_phone_number(admin_user, create_user_arguments):
         stubber.deactivate()
 
 
-@pytest.mark.usefixtures("valid_user", "user_details_response")
-def test_reinvite(monkeypatch, valid_user, user_details_response):
-    with patch.object(User, "get_details", return_value=user_details_response):
-        with patch.object(User, "delete", return_value=True):
-            with patch.object(User, "create", return_value=True):
-                assert valid_user.reinvite()
+@pytest.mark.usefixtures(
+    "valid_user", "admin_user", "admin_get_user", "create_user_arguments"
+)
+def test_user_reinvite(valid_user, admin_user, admin_get_user, create_user_arguments):
+    # TODO - Currently failing on mismatched stub response
+    # Expecting admin_delete_user and getting admin_get_user
+    user_pool_id = "eu-west-2_poolid"
+
+    stubber = stubs.mock_user_reinvite(
+        admin_user, admin_get_user, create_user_arguments
+    )
+    with stubber:
+        assert valid_user.reinvite()
+        stubber.deactivate()
+
+    stubber = stubs.mock_user_not_found(user_pool_id, admin_user["email"])
+    with stubber:
+        assert not valid_user.reinvite()
+        stubber.deactivate()
 
 
 @pytest.mark.usefixtures("valid_user")
