@@ -2,6 +2,8 @@
 This isn't used yet but there has to be a conftest file for
 the test module includes to resolve successfully
 """
+from datetime import datetime
+
 import pytest
 
 from main import app, load_environment
@@ -191,20 +193,29 @@ def user_with_invalid_domain():
 
 @pytest.fixture()
 def admin_get_user():
+    now = datetime.utcnow()
     return {
         "Username": "justin.casey@communities.gov.uk",
-        "UserStatus": "a_status",
-        "UserCreateDate": "a_date",
-        "UserLastModifiedDate": "another_date",
-        "Enabled": "true",
+        "UserStatus": "CONFIRMED",
+        "UserCreateDate": now,
+        "UserLastModifiedDate": now,
+        "Enabled": True,
         "UserAttributes": [
             {"Name": "sub", "Value": "a_uuid"},
             {"Name": "email_verified", "Value": "true"},
-            {"Name": "custom:paths", "Value": "some_custom_paths"},
-            {"Name": "name", "Value": "JustinCasey"},
+            {
+                "Name": "custom:paths",
+                "Value": ";".join(
+                    [
+                        "web-app-prod-data/local_authority/barking",
+                        "web-app-prod-data/local_authority/haringey",
+                    ]
+                ),
+            },
+            {"Name": "name", "Value": "Justin Casey"},
             {"Name": "phone_number_verified", "Value": "false"},
-            {"Name": "custom:is_la", "Value": "0"},
-            {"Name": "phone_number", "Value": "a_phone"},
+            {"Name": "custom:is_la", "Value": "1"},
+            {"Name": "phone_number", "Value": "+447123456789"},
             {"Name": "email", "Value": "justin.casey@communities.gov.uk"},
         ],
     }
@@ -212,12 +223,13 @@ def admin_get_user():
 
 @pytest.fixture()
 def user_details_response(group_result):
+    now = datetime.utcnow()
     return {
         "username": "justin.casey@communities.gov.uk",
         "status": "a_status",
-        "createdate": "a_date",
-        "lastmodifieddate": "another_date",
-        "enabled": "true",
+        "createdate": now,
+        "lastmodifieddate": now,
+        "enabled": True,
         "sub": "a_uuid",
         "email_verified": "true",
         "custom:paths": "some_custom_paths",

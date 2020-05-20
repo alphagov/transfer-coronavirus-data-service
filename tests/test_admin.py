@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from werkzeug.datastructures import ImmutableMultiDict
 
+import stubs
 from admin import (
     parse_edit_form_fields,
     perform_cognito_task,
@@ -124,18 +125,39 @@ def test_route_admin(test_client, test_admin_session):
 
 
 @pytest.mark.usefixtures(
-    "test_client", "test_admin_session", "admin_user", "user_details_response"
+    "test_client", "test_admin_session", "admin_user", "admin_get_user"
 )
-def test_route_admin_user(
-    test_client, test_admin_session, admin_user, user_details_response
+def test_route_admin_user_query(
+    test_client, test_admin_session, admin_user, admin_get_user
 ):
+    with test_client.session_transaction() as client_session:
+        client_session.update(test_admin_session)
+
+    email = admin_user["email"]
+    stubber = stubs.mock_user_get_details(email, admin_get_user)
+    with stubber:
+        quoted_email = email.replace("@", "%40")
+        response = test_client.get(f"/admin/user?email={quoted_email}")
+        body = response.data.decode()
+        flat = flatten_html(body)
+        assert response.status_code == 200
+        assert '<h1 class="govuk-heading-l">Manage user</h1>' in body
+        assert 'id="user_email">' + admin_user["email"] + "<" in flat
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures(
+    "test_client", "test_admin_session", "admin_user", "admin_get_user"
+)
+def test_route_admin_user(test_client, test_admin_session, admin_user, admin_get_user):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
 
-    with patch("admin.User.get_details") as mocked_user_get_details:
-        mocked_user_get_details.return_value = user_details_response
+    email = admin_user["email"]
+    stubber = stubs.mock_user_get_details(email, admin_get_user)
+    with stubber:
         response = test_client.post("/admin/user", data={"task": "view"})
         body = response.data.decode()
         flat = flatten_html(body)
@@ -145,18 +167,19 @@ def test_route_admin_user(
 
 
 @pytest.mark.usefixtures(
-    "test_client", "test_admin_session", "admin_user", "user_details_response"
+    "test_client", "test_admin_session", "admin_user", "admin_get_user"
 )
 def test_route_admin_user_edit(
-    test_client, test_admin_session, admin_user, user_details_response
+    test_client, test_admin_session, admin_user, admin_get_user
 ):
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
 
-    with patch("admin.User.get_details") as mocked_user_get_details:
-        mocked_user_get_details.return_value = user_details_response
+    email = admin_user["email"]
+    stubber = stubs.mock_user_get_details(email, admin_get_user)
+    with stubber:
         response = test_client.post("/admin/user/edit", data={"task": "edit"})
         body = response.data.decode()
         # flat = flatten_html(body)
