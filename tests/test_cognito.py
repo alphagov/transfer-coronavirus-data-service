@@ -5,23 +5,23 @@ import stubs
 
 
 def test_env_pool_id_development():
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_list_pools(user_pool_id)
+    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
+    stubber = stubs.mock_cognito_list_pools()
     with stubber:
         assert cognito.env_pool_id() == user_pool_id
 
 
 def test_env_pool_id_production(monkeypatch):
-    user_pool_id = "eu-west-2_poolid"
+    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
     monkeypatch.setenv("CF_SPACE", "production")
-    stubber = stubs.mock_cognito_list_pools(user_pool_id, env="prod")
+    stubber = stubs.mock_cognito_list_pools(env="prod")
     with stubber:
         assert cognito.env_pool_id() == user_pool_id
 
 
 def test_list_pools():
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_list_pools(user_pool_id)
+    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
+    stubber = stubs.mock_cognito_list_pools()
 
     with stubber:
         pools = cognito.list_pools()
@@ -31,10 +31,7 @@ def test_list_pools():
 
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
 def test_create_user(admin_user, create_user_arguments):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_create_user(
-        user_pool_id, admin_user, create_user_arguments
-    )
+    stubber = stubs.mock_cognito_admin_create_user(admin_user, create_user_arguments)
 
     with stubber:
         created = cognito.create_user(
@@ -50,11 +47,8 @@ def test_create_user(admin_user, create_user_arguments):
 
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
 def test_update_user(admin_user, create_user_arguments):
-    user_pool_id = "eu-west-2_poolid"
     attributes = create_user_arguments["UserAttributes"]
-    stubber = stubs.mock_cognito_admin_update_user_attributes(
-        user_pool_id, admin_user, attributes
-    )
+    stubber = stubs.mock_cognito_admin_update_user_attributes(admin_user, attributes)
 
     with stubber:
         updated = cognito.update_user(admin_user["email"], attributes)
@@ -64,8 +58,7 @@ def test_update_user(admin_user, create_user_arguments):
 
 @pytest.mark.usefixtures("admin_user")
 def test_delete_user(admin_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_delete_user(user_pool_id, admin_user["email"])
+    stubber = stubs.mock_cognito_admin_delete_user(admin_user["email"])
 
     with stubber:
         deleted = cognito.delete_user(admin_user["email"])
@@ -75,8 +68,7 @@ def test_delete_user(admin_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_disable_user(admin_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_disable_user(user_pool_id, admin_user["email"])
+    stubber = stubs.mock_cognito_admin_disable_user(admin_user["email"])
 
     with stubber:
         disabled = cognito.disable_user(admin_user["email"])
@@ -86,8 +78,7 @@ def test_disable_user(admin_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_enable_user(admin_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_enable_user(user_pool_id, admin_user["email"])
+    stubber = stubs.mock_cognito_admin_enable_user(admin_user["email"])
 
     with stubber:
         enabled = cognito.enable_user(admin_user["email"])
@@ -97,10 +88,7 @@ def test_enable_user(admin_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_set_user_settings(admin_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_set_user_settings(
-        user_pool_id, admin_user["email"]
-    )
+    stubber = stubs.mock_cognito_admin_set_user_settings(admin_user["email"])
 
     with stubber:
         updated = cognito.set_user_settings(admin_user["email"])
@@ -110,10 +98,7 @@ def test_set_user_settings(admin_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_set_mfa_preferences(admin_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_set_user_mfa_preference(
-        user_pool_id, admin_user["email"]
-    )
+    stubber = stubs.mock_cognito_admin_set_user_mfa_preference(admin_user["email"])
 
     with stubber:
         updated = cognito.set_mfa_preferences(admin_user["email"])
@@ -123,10 +108,9 @@ def test_set_mfa_preferences(admin_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_add_to_group(admin_user):
-    user_pool_id = "eu-west-2_poolid"
     group_name = admin_user["group"]["value"]
     stubber = stubs.mock_cognito_admin_add_user_to_group(
-        user_pool_id, admin_user["email"], group_name
+        admin_user["email"], group_name
     )
 
     with stubber:
@@ -137,10 +121,9 @@ def test_add_to_group(admin_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_remove_from_group(admin_user):
-    user_pool_id = "eu-west-2_poolid"
     group_name = admin_user["group"]["value"]
     stubber = stubs.mock_cognito_admin_remove_user_from_group(
-        user_pool_id, admin_user["email"], group_name
+        admin_user["email"], group_name
     )
 
     with stubber:
@@ -151,10 +134,7 @@ def test_remove_from_group(admin_user):
 
 @pytest.mark.usefixtures("admin_user", "admin_get_user")
 def test_get_user(admin_user, admin_get_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_get_user(
-        user_pool_id, admin_user["email"], admin_get_user
-    )
+    stubber = stubs.mock_cognito_admin_get_user(admin_user["email"], admin_get_user)
 
     with stubber:
         user = cognito.get_user(admin_user["email"])
@@ -164,8 +144,7 @@ def test_get_user(admin_user, admin_get_user):
 
 @pytest.mark.usefixtures("admin_user")
 def test_list_groups_for_user(admin_user):
-    user_pool_id = "eu-west-2_poolid"
-    stubber = stubs.mock_cognito_admin_list_groups_for_user(user_pool_id, admin_user)
+    stubber = stubs.mock_cognito_admin_list_groups_for_user(admin_user)
 
     with stubber:
         groups = cognito.list_groups_for_user(admin_user["email"])

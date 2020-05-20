@@ -133,9 +133,8 @@ def test_route_admin_user_query(
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
 
-    user_pool_id = "eu-west-2_poolid"
     email = admin_user["email"]
-    stubber = stubs.mock_user_get_details(user_pool_id, email, admin_get_user)
+    stubber = stubs.mock_user_get_details(email, admin_get_user)
     with stubber:
         quoted_email = email.replace("@", "%40")
         response = test_client.get(f"/admin/user?email={quoted_email}")
@@ -156,9 +155,8 @@ def test_route_admin_user(test_client, test_admin_session, admin_user, admin_get
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
 
-    user_pool_id = "eu-west-2_poolid"
     email = admin_user["email"]
-    stubber = stubs.mock_user_get_details(user_pool_id, email, admin_get_user)
+    stubber = stubs.mock_user_get_details(email, admin_get_user)
     with stubber:
         response = test_client.post("/admin/user", data={"task": "view"})
         body = response.data.decode()
@@ -179,9 +177,8 @@ def test_route_admin_user_edit(
         client_session["admin_user_object"] = admin_user
         client_session["admin_user_email"] = admin_user["email"]
 
-    user_pool_id = "eu-west-2_poolid"
     email = admin_user["email"]
-    stubber = stubs.mock_user_get_details(user_pool_id, email, admin_get_user)
+    stubber = stubs.mock_user_get_details(email, admin_get_user)
     with stubber:
         response = test_client.post("/admin/user/edit", data={"task": "edit"})
         body = response.data.decode()

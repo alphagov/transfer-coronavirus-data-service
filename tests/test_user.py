@@ -83,9 +83,8 @@ def test_sanitise_name(valid_user):
 
 @pytest.mark.usefixtures("valid_user")
 def test_update_returns_false_if_user_not_found(valid_user):
-    user_pool_id = "eu-west-2_poolid"
     email = valid_user.email_address
-    stubber = stubs.mock_user_not_found(user_pool_id, email)
+    stubber = stubs.mock_user_not_found(email)
     with stubber:
         assert not valid_user.update(
             "new name", "+441234567890", "web-app-prod-data", "0", "standard-upload"
@@ -95,7 +94,6 @@ def test_update_returns_false_if_user_not_found(valid_user):
 
 @pytest.mark.usefixtures("valid_user", "admin_get_user")
 def test_update_returns_false_if_new_details_are_all_none(valid_user, admin_get_user):
-    user_pool_id = "eu-west-2_poolid"
     email = valid_user.email_address
     attributes = {
         "name": None,
@@ -103,7 +101,7 @@ def test_update_returns_false_if_new_details_are_all_none(valid_user, admin_get_
         "custom:paths": None,
         "custom:is_la": None,
     }
-    stubber = stubs.mock_user_update(user_pool_id, email, admin_get_user, attributes)
+    stubber = stubs.mock_user_update(email, admin_get_user, attributes)
     with stubber:
         assert not valid_user.update(None, None, None, None, None)
         stubber.deactivate()
@@ -113,7 +111,6 @@ def test_update_returns_false_if_new_details_are_all_none(valid_user, admin_get_
 def test_update_returns_false_if_new_details_are_not_strings(
     valid_user, admin_get_user
 ):
-    user_pool_id = "eu-west-2_poolid"
     email = valid_user.email_address
     attributes = {
         "name": 1,
@@ -121,7 +118,7 @@ def test_update_returns_false_if_new_details_are_not_strings(
         "custom:paths": 3,
         "custom:is_la": 4,
     }
-    stubber = stubs.mock_user_update(user_pool_id, email, admin_get_user, attributes)
+    stubber = stubs.mock_user_update(email, admin_get_user, attributes)
     with stubber:
         assert not valid_user.update(0, 1, 2, 3, 4)
         stubber.deactivate()
@@ -250,9 +247,7 @@ def test_user_reinvite_valid_user_success(
 
 @pytest.mark.usefixtures("valid_user", "admin_user")
 def test_user_reinvite_user_not_found_fail(valid_user, admin_user):
-    user_pool_id = "eu-west-2_poolid"
-
-    stubber = stubs.mock_user_not_found(user_pool_id, admin_user["email"])
+    stubber = stubs.mock_user_not_found(admin_user["email"])
     with stubber:
         assert not valid_user.reinvite()
         stubber.deactivate()
