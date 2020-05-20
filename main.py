@@ -166,6 +166,11 @@ def send_assets(path):
     return send_from_directory("assets", path)
 
 
+@app.route("/resources/<path:path>")
+def download_resources(path):
+    return send_from_directory("assets/resources", path, as_attachment=True)
+
+
 @app.route("/favicon.ico")
 def favicon():
     return send_file("assets/images/favicon.ico")
@@ -369,6 +374,7 @@ def upload():
         "upload.html",
         user=session["user"],
         email=session["email"],
+        is_la=return_attribute(session, "custom:is_la"),
         presigned_object=presigned_object,
         preupload=preupload,
         filepathtoupload=file_path_to_upload,
@@ -475,7 +481,7 @@ def files():
     # TODO sorting
 
     return render_template_custom(
-        app, "files.html", user=session["user"], email=session["email"], files=files
+        app, "files.html", user=session["user"], email=session["email"], files=files, is_la=return_attribute(session, "custom:is_la")
     )
 
 
@@ -629,6 +635,7 @@ def get_files(bucket_name: str, user_session: dict):
 def return_attribute(session: dict, get_attribute: str) -> str:
     if "attributes" in session:
         for attribute in session["attributes"]:
+            app.logger.debug(attribute["Name"])
             if "Name" in attribute:
                 if attribute["Name"] == get_attribute:
                     return attribute["Value"]
