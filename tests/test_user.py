@@ -238,17 +238,20 @@ def test_creating_invalid_phone_number(admin_user, create_user_arguments):
 @pytest.mark.usefixtures(
     "valid_user", "admin_user", "admin_get_user", "create_user_arguments"
 )
-def test_user_reinvite(valid_user, admin_user, admin_get_user, create_user_arguments):
-    # TODO - Currently failing on mismatched stub response
-    # Expecting admin_delete_user and getting admin_get_user
-    user_pool_id = "eu-west-2_poolid"
-
+def test_user_reinvite_success(
+    valid_user, admin_user, admin_get_user, create_user_arguments
+):
     stubber = stubs.mock_user_reinvite(
         admin_user, admin_get_user, create_user_arguments
     )
     with stubber:
         assert valid_user.reinvite()
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("valid_user", "admin_user")
+def test_user_reinvite_user_not_found(valid_user, admin_user):
+    user_pool_id = "eu-west-2_poolid"
 
     stubber = stubs.mock_user_not_found(user_pool_id, admin_user["email"])
     with stubber:
