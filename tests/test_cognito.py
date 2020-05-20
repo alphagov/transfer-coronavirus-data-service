@@ -1,27 +1,24 @@
-from unittest.mock import patch
+import os
 
 import pytest
-import stubs
 
 import cognito
+import stubs
 
 
-def test_env_pool_id(monkeypatch):
-    with patch("cognito.list_pools") as mock_list_pools:
-        monkeypatch.setenv("CF_SPACE", "staging")
-        mock_list_pools.return_value = [
-            {"name": "corona-cognito-pool-staging", "id": "staging-pool-id"},
-            {"name": "corona-cognito-pool-prod", "id": "production-pool-id"},
-        ]
-        assert cognito.env_pool_id() == "staging-pool-id"
+def test_env_pool_id_development():
+    user_pool_id = "eu-west-2_poolid"
+    stubber = stubs.mock_cognito_list_pools(user_pool_id)
+    with stubber:
+        assert cognito.env_pool_id() == user_pool_id
 
-    with patch("cognito.list_pools") as mock_list_pools:
-        monkeypatch.setenv("CF_SPACE", "production")
-        mock_list_pools.return_value = [
-            {"name": "corona-cognito-pool-staging", "id": "staging-pool-id"},
-            {"name": "corona-cognito-pool-prod", "id": "production-pool-id"},
-        ]
-        assert cognito.env_pool_id() == "production-pool-id"
+
+def test_env_pool_id_production(monkeypatch):
+    user_pool_id = "eu-west-2_poolid"
+    monkeypatch.setenv("CF_SPACE", "production")
+    stubber = stubs.mock_cognito_list_pools(user_pool_id, env="prod")
+    with stubber:
+        assert cognito.env_pool_id() == user_pool_id
 
 
 def test_list_pools():

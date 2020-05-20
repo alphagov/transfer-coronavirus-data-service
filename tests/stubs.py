@@ -87,14 +87,14 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
     return stubber
 
 
-def mock_cognito_list_pools(user_pool_id):
+def mock_cognito_list_pools(user_pool_id, env="development"):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")
 
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_list_user_pools(stubber, user_pool_id, env)
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -499,9 +499,9 @@ def stub_response_s3_list_objects_page_2(stubber, bucket_name, prefix):
 
 
 # Client: cognito-idp
-def stub_response_cognito_list_user_pools(stubber, user_pool_id):
+def stub_response_cognito_list_user_pools(stubber, user_pool_id, env="development"):
     mock_list_user_pools = {
-        "UserPools": [{"Id": user_pool_id, "Name": "corona-cognito-pool-development"}]
+        "UserPools": [{"Id": user_pool_id, "Name": f"corona-cognito-pool-{env}"}]
     }
     stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
 

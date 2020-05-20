@@ -1,8 +1,8 @@
 import os
 
 import pytest
-import stubs
 
+import stubs
 from user import User
 
 
@@ -259,9 +259,7 @@ def test_user_reinvite_user_not_found_fail(valid_user, admin_user):
 
 
 @pytest.mark.usefixtures("valid_user", "admin_user", "admin_get_user")
-def test_reinvite_delete_user_fails(
-    valid_user, admin_user, admin_get_user
-):
+def test_reinvite_delete_user_fails(valid_user, admin_user, admin_get_user):
     stubber = stubs.mock_delete_user_failure(admin_user, admin_get_user)
     with stubber:
         assert not valid_user.reinvite()
