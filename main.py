@@ -166,6 +166,11 @@ def send_assets(path):
     return send_from_directory("assets", path)
 
 
+@app.route("/resources/<path:path>")
+def download_resources(path):
+    return send_from_directory("assets/resources", path, as_attachment=True)
+
+
 @app.route("/favicon.ico")
 def favicon():
     return send_file("assets/images/favicon.ico")
