@@ -1,9 +1,9 @@
 from unittest.mock import patch
 
 import pytest
+import stubs
 
 import cognito
-import stubs
 
 
 def test_env_pool_id(monkeypatch):

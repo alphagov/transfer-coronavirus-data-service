@@ -1,9 +1,8 @@
 import os
-from unittest.mock import patch
 
 import pytest
-
 import stubs
+
 from user import User
 
 
@@ -259,26 +258,25 @@ def test_user_reinvite_user_not_found_fail(valid_user, admin_user):
         stubber.deactivate()
 
 
-@pytest.mark.usefixtures("valid_user")
-def test_reinvite_returns_false_if_user_does_not_exist(monkeypatch, valid_user):
-    with patch.object(User, "get_details", return_value={}):
+@pytest.mark.usefixtures("valid_user", "admin_user", "admin_get_user")
+def test_reinvite_delete_user_fails(
+    valid_user, admin_user, admin_get_user
+):
+    stubber = stubs.mock_delete_user_failure(admin_user, admin_get_user)
+    with stubber:
         assert not valid_user.reinvite()
+        stubber.deactivate()
 
 
-@pytest.mark.usefixtures("valid_user")
-def test_reinvite_returns_false_if_user_exists_but_cannot_be_deleted(
-    monkeypatch, valid_user
+@pytest.mark.usefixtures(
+    "valid_user", "admin_user", "admin_get_user", "create_user_arguments"
+)
+def test_reinvite_create_user_fails(
+    valid_user, admin_user, admin_get_user, create_user_arguments
 ):
-    with patch.object(User, "get_details", return_value={}):
-        with patch.object(User, "delete", return_value=False):
-            assert not valid_user.reinvite()
-
-
-@pytest.mark.usefixtures("valid_user")
-def test_reinvite_returns_false_if_user_exists_can_be_deleted_but_cannot_be_created(
-    monkeypatch, valid_user
-):
-    with patch.object(User, "get_details", return_value={}):
-        with patch.object(User, "delete", return_value=True):
-            with patch.object(User, "create", return_value=False):
-                assert not valid_user.reinvite()
+    stubber = stubs.mock_create_user_failure(
+        admin_user, admin_get_user, create_user_arguments
+    )
+    with stubber:
+        assert not valid_user.reinvite()
+        stubber.deactivate()

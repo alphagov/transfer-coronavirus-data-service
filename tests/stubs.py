@@ -396,6 +396,73 @@ def mock_user_reinvite(admin_user, admin_get_user, create_user_arguments):
     return stubber
 
 
+def mock_delete_user_failure(admin_user, admin_get_user):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    user_pool_id = "eu-west-2_poolid"
+
+    stubber = Stubber(client)
+
+    # Add responses
+    # get user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_get_user(
+        stubber, user_pool_id, admin_user["email"], admin_get_user
+    )
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_list_groups_for_user(
+        stubber, user_pool_id, admin_user["email"]
+    )
+
+    # delete user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stubber.add_client_error(
+        "admin_delete_user",
+        expected_params={"UserPoolId": user_pool_id, "Username": admin_user["email"]},
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_create_user_failure(admin_user, admin_get_user, create_user_arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    user_pool_id = "eu-west-2_poolid"
+
+    stubber = Stubber(client)
+
+    # Add responses
+    # get user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_get_user(
+        stubber, user_pool_id, admin_user["email"], admin_get_user
+    )
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_list_groups_for_user(
+        stubber, user_pool_id, admin_user["email"]
+    )
+
+    # delete user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stub_response_cognito_admin_delete_user(stubber, user_pool_id, admin_user["email"])
+
+    # create user
+    stub_response_cognito_list_user_pools(stubber, user_pool_id)
+    stubber.add_client_error(
+        "admin_create_user", expected_params=create_user_arguments,
+    )
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
 # Responses
 # Client: s3
 
