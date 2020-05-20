@@ -238,7 +238,7 @@ def test_creating_invalid_phone_number(admin_user, create_user_arguments):
 @pytest.mark.usefixtures(
     "valid_user", "admin_user", "admin_get_user", "create_user_arguments"
 )
-def test_user_reinvite_success(
+def test_user_reinvite_valid_user_success(
     valid_user, admin_user, admin_get_user, create_user_arguments
 ):
     stubber = stubs.mock_user_reinvite(
@@ -250,7 +250,7 @@ def test_user_reinvite_success(
 
 
 @pytest.mark.usefixtures("valid_user", "admin_user")
-def test_user_reinvite_user_not_found(valid_user, admin_user):
+def test_user_reinvite_user_not_found_fail(valid_user, admin_user):
     user_pool_id = "eu-west-2_poolid"
 
     stubber = stubs.mock_user_not_found(user_pool_id, admin_user["email"])
