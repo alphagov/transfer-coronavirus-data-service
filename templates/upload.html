@@ -1,6 +1,14 @@
 {% extends 'primary.html' %}
 {% block content %}
 
+  <p>
+    <b>Note:</b> uploading files works best in the Chrome, Microsoft Edge or Firefox browser.
+    <br/>Uploading also uses JavaScript to let you know whether an upload was successful or not.
+    <br/>If you do not get an instant acknowledgement after clicking the "Start upload" button, please wait to receive an confirmation email before moving off the page.
+  </p>
+
+  <p>&nbsp;</p>
+
   {% if preupload %}
 
   <h3 class="govuk-heading-m">File settings</h3>
@@ -76,7 +84,7 @@
 
       <p>&nbsp;</p>
 
-      <button id="upload_submit" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
+      <button id="upload_submit" data-prevent-double-click="true" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button" type="submit">Start upload</button>
     </form>
 
     <a href="/upload" class="govuk-button govuk-button--secondary" data-module="govuk-button">Cancel</a>
