@@ -2,7 +2,6 @@
 
 load_s3upload_js();
 
-
 function load_s3upload_js() {
   console.log("Loaded s3upload.js");
 
@@ -41,13 +40,13 @@ function get_file_settings() {
 function file_name_change() {
   var fs = get_file_settings()
   if (fs !== false) {
-    let flv = fs.file_location.value;
-    let cds = current_datetime_string();
-    let fnv = fs.file_name.value;
+    var flv = fs.file_location.value;
+    var cds = current_datetime_string();
+    var fnv = fs.file_name.value;
     if (fnv.trim() == "") {
       fnv = "{file name}"
     }
-    let fev = fs.file_ext.value;
+    var fev = fs.file_ext.value;
 
     var new_file_name_display = flv + "/" + cds + "_" + fnv.trim() + "." + fev;
 
@@ -57,13 +56,13 @@ function file_name_change() {
 }
 
 function current_datetime_string() {
-  const now = new Date();
-  let y = now.getFullYear();
-  let m = pad((now.getMonth() + 1), 2);
-  let d = pad(now.getDate(), 2);
-  let h = pad(now.getHours(), 2);
-  let min = pad(now.getMinutes(), 2);
-  let sec = pad(now.getSeconds(), 2);
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = pad((now.getMonth() + 1), 2);
+  var d = pad(now.getDate(), 2);
+  var h = pad(now.getHours(), 2);
+  var min = pad(now.getMinutes(), 2);
+  var sec = pad(now.getSeconds(), 2);
   return y + m + d + "_" + h + min + sec;
 }
 
@@ -104,12 +103,22 @@ function upload_failed(result) {
   document.getElementById("uploading_spinner").classList.add("hidden");
 }
 
-async function start_upload() {
-  await ajax_file_upload();
+//async function start_upload() {
+//  await ajax_file_upload();
+//}
+
+function start_upload() {
+    ajax_file_upload();
+}
+
+function get_http_object() {
+    var req;
+    if(window.ActiveXObject) { req = new ActiveXObject('Microsoft.XMLHTTP'); }
+    else if(window.XMLHttpRequest) { req = new XMLHttpRequest(); }
+    return req
 }
 
 function ajax_file_upload() {
-  return new Promise(function() {
     var form_files = document.getElementById("file").files;
     var form_file_to_upload;
 
@@ -117,8 +126,8 @@ function ajax_file_upload() {
       form_file_to_upload = form_files[0];
     }
 
-    let req = new XMLHttpRequest();
-    let formData = new FormData();
+    var req = get_http_object()
+    var formData = new FormData();
 
     var hidden_params = document.getElementsByClassName('upload_form_post_param');
     for (var i = 0; i < hidden_params.length; i++) {
@@ -130,25 +139,20 @@ function ajax_file_upload() {
     formData.append("file", form_file_to_upload);
 
     var action_url = document.getElementById("upload_form").action;
-    req.open("POST", action_url);
-
-    req.onload = function () {
-        if (this.status >= 200 && this.status < 300) {
-            upload_complete(req.response);
-        } else {
-            upload_failed({
-                status: this.status,
-                statusText: req.statusText
-            });
+    req.open("POST", action_url, true);
+    req.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            var result = this.responseText;
+            if (req.status >= 200 && this.status < 300) {
+                upload_complete(result);
+            } else {
+                upload_failed({
+                    status: this.status,
+                    statusText: this.statusText
+                });
+            }
         }
-    };
-    req.onerror = function () {
-        upload_failed({
-            status: this.status,
-            statusText: req.statusText
-        });
-    };
+    }
 
     req.send(formData);
-  });
 }
