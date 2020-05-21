@@ -4,8 +4,14 @@ window.GOVUKFrontend.initAll();
 load_is_la_radio_js();
 load_account_switch_js();
 
+function main_console_log(message) {
+    if (typeof console == "undefined") {
+        console.log(message)
+    }
+}
+
 function load_is_la_radio_js() {
-  console.log("load_is_la_radio_js");
+  main_console_log("load_is_la_radio_js");
   var x = document.getElementsByName("is-la-radio");
   var i;
   for (i = 0; i < x.length; i++) {
@@ -17,7 +23,7 @@ function load_is_la_radio_js() {
 }
 
 function load_account_switch_js() {
-  console.log("load_account_switch_js");
+  main_console_log("load_account_switch_js");
   var x = document.getElementById("account-select");
   if (x != null) {
     x.addEventListener('change', function() { account_switch(this.value); });
