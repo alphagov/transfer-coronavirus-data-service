@@ -19,7 +19,7 @@ def setup_local_environment(
     os.environ["ADMIN_AWS_AUTH"] = "true" if is_admin else "false"
 
     if environment:
-        os.environ["CF_SPACE"] = environment
+        os.environ["APP_ENVIRONMENT"] = environment
         if environment == "testing":
             os.environ["BUCKET_NAME"] = "backend-consumer-service-test"
 
