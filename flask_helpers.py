@@ -42,7 +42,7 @@ def current_group_name():
 
 
 def is_development():
-    return os.getenv("CF_SPACE", "production") != "production"
+    return os.getenv("APP_ENVIRONMENT", "production") != "production"
 
 
 def admin_interface(flask_route):
@@ -157,7 +157,7 @@ def render_template_custom(app, template, hide_logout=False, **args):
 
     page_title = os.getenv("PAGE_TITLE", "GOV.UK")
     if is_development():
-        page_title = "{} - {}".format(app.cf_space.upper(), page_title)
+        page_title = "{} - {}".format(app.app_environment.upper(), page_title)
     args["title"] = page_title
 
     return render_template(template, **args)

@@ -34,15 +34,13 @@ def test_is_admin_interface():
 
 
 def test_is_development():
-    os.environ["CF_SPACE"] = "development"
+    os.environ["APP_ENVIRONMENT"] = "staging"
     assert is_development()
-    os.environ["CF_SPACE"] = "staging"
+    os.environ["APP_ENVIRONMENT"] = "testing"
     assert is_development()
-    os.environ["CF_SPACE"] = "testing"
-    assert is_development()
-    os.environ["CF_SPACE"] = "production"
+    os.environ["APP_ENVIRONMENT"] = "production"
     assert not is_development()
-    del os.environ["CF_SPACE"]
+    del os.environ["APP_ENVIRONMENT"]
     assert not is_development()
 
 
