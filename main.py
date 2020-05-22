@@ -28,13 +28,13 @@ from logger import LOG
 from user import User
 
 app = Flask(__name__)
-app.cf_space = os.getenv("CF_SPACE", "testing")
+app.app_environment = os.getenv("APP_ENVIRONMENT", "testing")
 app.logger = LOG
 
 
 def setup_talisman(app):
     csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
-    is_https = app.cf_space != "testing"
+    is_https = app.app_environment != "testing"
     log_message = (
         "loading Talisman with HTTPS"
         if is_https
@@ -105,7 +105,7 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
     client = boto3.client("cognito-idp")
     cognito_user = client.get_user(AccessToken=oauth_response_body["access_token"])
 
-    is_not_production = app.cf_space != "production"
+    is_not_production = app.app_environment != "production"
     # only get these attributes if the MFA is present
     if is_not_production or is_mfa_configured(cognito_user):
         session["attributes"] = cognito_user["UserAttributes"]
@@ -481,7 +481,12 @@ def files():
     # TODO sorting
 
     return render_template_custom(
-        app, "files.html", user=session["user"], email=session["email"], files=files, is_la=return_attribute(session, "custom:is_la")
+        app,
+        "files.html",
+        user=session["user"],
+        email=session["email"],
+        files=files,
+        is_la=return_attribute(session, "custom:is_la"),
     )
 
 

@@ -19,5 +19,6 @@ services:
       - E2E_STAGING_PASSWORD=$E2E_STAGING_PASSWORD
       - LOG_LEVEL=$LOG_LEVEL
       - PYTHONIOENCODING=UTF-8
+      - APP_ENVIRONMENT=testing
     ports:
       - "8000:8000"

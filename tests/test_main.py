@@ -4,8 +4,8 @@ import os
 import flask
 import pytest
 import requests_mock
-
 import stubs
+
 from main import (
     app,
     create_presigned_url,
@@ -232,7 +232,7 @@ def test_auth_flow_with_no_mfa_user(
     domain = "test.cognito.domain.com"
     token_endpoint_url = f"https://{domain}/oauth2/token"
     app.cognito_domain = domain
-    app.cf_space = "production"
+    app.app_environment = "production"
     app.client_id = "123456"
     app.client_secret = "987654"
     app.redirect_host = "test.domain.com"
@@ -484,13 +484,13 @@ def test_is_mfa_configured(test_mfa_user, test_no_mfa_user):
 
 
 def test_setup_talisman():
-    app.cf_space = "testing"
+    app.app_environment = "testing"
     talisman = setup_talisman(app)
     assert not talisman.force_https
-    app.cf_space = "staging"
+    app.app_environment = "staging"
     talisman = setup_talisman(app)
     assert talisman.force_https
-    app.cf_space = "production"
+    app.app_environment = "production"
     talisman = setup_talisman(app)
     assert talisman.force_https
 
