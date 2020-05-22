@@ -168,12 +168,12 @@ def user_confirm_form():
 
 @pytest.fixture
 def mock_env_staging(monkeypatch):
-    monkeypatch.setenv("CF_SPACE", "staging")
+    monkeypatch.setenv("APP_ENVIRONMENT", "staging")
 
 
 @pytest.fixture
 def mock_env_production(monkeypatch):
-    monkeypatch.setenv("CF_SPACE", "production")
+    monkeypatch.setenv("APP_ENVIRONMENT", "production")
 
 
 @pytest.fixture
