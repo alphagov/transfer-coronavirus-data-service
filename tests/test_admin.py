@@ -1,9 +1,9 @@
 from unittest.mock import patch
 
 import pytest
+import stubs
 from werkzeug.datastructures import ImmutableMultiDict
 
-import stubs
 from admin import (
     parse_edit_form_fields,
     perform_cognito_task,

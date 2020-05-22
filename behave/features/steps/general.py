@@ -1,8 +1,7 @@
 import time
 
-from selenium.common.exceptions import NoSuchElementException
-
 from behave import then, when
+from selenium.common.exceptions import NoSuchElementException
 
 
 @when('visit url "{url}"')
