@@ -62,7 +62,7 @@ def env_pool_id():
     pool_id = None
     pool_name = None
 
-    environment = os.getenv("CF_SPACE", "testing")
+    environment = os.getenv("APP_ENVIRONMENT", "testing")
 
     if environment == "production":
         pool_name = "corona-cognito-pool-prod"
@@ -104,7 +104,10 @@ def is_aws_authenticated():
     you can't redirect through cognito to login
     """
     is_aws_auth = os.getenv("ADMIN_AWS_AUTH", "false") == "true"
-    is_testing = os.getenv("CF_SPACE", "testing") not in ["staging", "production"]
+    is_testing = os.getenv("APP_ENVIRONMENT", "testing") not in [
+        "staging",
+        "production",
+    ]
     return is_aws_auth and not is_testing
 
 

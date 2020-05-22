@@ -1,7 +1,7 @@
 import pytest
+import stubs
 
 import cognito
-import stubs
 
 
 def test_env_pool_id_development():
@@ -13,7 +13,7 @@ def test_env_pool_id_development():
 
 def test_env_pool_id_production(monkeypatch):
     user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
-    monkeypatch.setenv("CF_SPACE", "production")
+    monkeypatch.setenv("APP_ENVIRONMENT", "production")
     stubber = stubs.mock_cognito_list_pools(env="prod")
     with stubber:
         assert cognito.env_pool_id() == user_pool_id
