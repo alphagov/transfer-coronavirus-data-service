@@ -578,22 +578,77 @@ def get_files(bucket_name: str, user_session: dict):
         page_iterator = paginator.paginate(**operation_parameters)
         for page in page_iterator:
             if "Contents" in page:
-                for item in page["Contents"]:
-                    if not item["Key"].endswith("/"):
-                        file_keys.append({"key": item["Key"], "size": item["Size"]})
+                for file_item in page["Contents"]:
+                    if not file_item["Key"].endswith("/"):
+                        # file_keys.append({"key": item["Key"], "size": item["Size"]})
+                        # translate item keys to lower case
+                        categorise_file(file_item, prefix)
+                        date_file(file_item)
+
+                        file_keys.append({key.lower(): value for key, value in file_item.items()})
 
     resp = []
+
+    # sort in reverse date order
+    file_keys = sorted(file_keys, key = lambda file: file["sorttime"], reverse=True)
+
     for file_key in file_keys:
         app.logger.info(
             "User {}: file_key: {}".format(user_session["user"], file_key["key"])
         )
 
         url_string = f"/download/{file_key['key']}"
-        resp.append(
-            {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
-        )
+        # resp.append(
+        #     {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
+        # )
+        file_key["url"] = url_string
+        resp.append(file_key)
     app.logger.info(resp)
+
     return resp
+
+
+def categorise_file(file_item, prefix):
+    """
+    Take paths after the file prefix
+    and words of the file name and
+    join into a single category
+    """
+    key = file_item["Key"]
+    file_path = key.replace(prefix, "")
+    path_steps = list(filter(lambda folder: folder != "", file_path.split("/")))
+    full_file_name = path_steps.pop()
+    # remove file extension
+    file_name = " ".join(full_file_name.split(".")[:-1])
+
+    file_name_words = file_name.split("-")
+    file_category_words = filter(lambda word: not re.match("^[0-9]+$", word), file_name_words)
+
+    path_steps.append(" ".join(file_category_words))
+
+    categories = [
+        re.sub(r"[-_]", " ", word).title()
+        for word in path_steps
+    ]
+
+    joined_category = " > ".join(categories)
+    app.logger.debug({"categories": categories, "joined": joined_category})
+    file_item["Category"] = joined_category
+    file_item["Categories"] = categories
+    return file_item
+
+
+def date_file(file_item):
+    """
+    Add Show_Date and Sort_Date as strings
+    calculated from LastModified
+    """
+    file_item["ShowDate"] = file_item["LastModified"].strftime("%d/%m/%Y")
+    file_item["ShowTime"] = file_item["LastModified"].strftime("%H:%M")
+    file_item["SortDate"] = file_item["LastModified"].strftime("%Y%m%d")
+    file_item["SortTime"] = file_item["LastModified"].strftime("%Y%m%dH%M")
+    app.logger.debug({"date": file_item["SortDate"], "time": file_item["SortTime"]})
+    return file_item
 
 
 def return_attribute(session: dict, get_attribute: str) -> str:
