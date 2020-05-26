@@ -9,4 +9,4 @@ Feature: COVID19 Data Transfer - User files
         Then wait "5" seconds
         Then the content of element with selector ".covid-transfer-page-title" contains "COVID-19 Data Transfer"
         Then the content of element with selector "#main-content .covid-transfer-username" contains username
-        Then the content of element with selector "#main-content .covid-transfer-download-section a.covid-tranfer-file-link" equals "other/gds/not-real-data-other-gds.csv"
+        Then the content of element with selector "#main-content .covid-transfer-download-section a.covid-tranfer-file-link:first-of-type" equals "other/gds/not-real-data-other-gds.csv"
