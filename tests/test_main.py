@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 import flask
 import pytest
@@ -8,12 +9,17 @@ import requests_mock
 import stubs
 from main import (
     app,
+    categorise_file,
+    collect_files_by_date,
     create_presigned_url,
+    date_file,
     generate_upload_file_path,
+    get_file_name_category,
     get_files,
     is_mfa_configured,
     key_has_granted_prefix,
     load_user_lookup,
+    re_case_word,
     return_attribute,
     upload_form_validate,
     user_custom_paths,
@@ -501,3 +507,59 @@ def test_validate_access_to_s3_path(test_get_object):
     with stubber:
         assert not validate_access_to_s3_path(bucket_name, denied_key)
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("test_session")
+def test_collect_files_by_date(test_session):
+    bucket_name = "test_bucket"
+    paths = load_user_lookup(test_session)
+    now = datetime.utcnow()
+    date_string = now.strftime("%d/%m/%Y")
+
+    stubber = stubs.mock_s3_list_objects(bucket_name, paths)
+    with stubber:
+        os.environ["AWS_ACCESS_KEY_ID"] = "fake"
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "fake"
+        matched_files = get_files(bucket_name, test_session)
+        collected = collect_files_by_date(matched_files)
+        assert date_string in collected["by_date"]
+        assert collected["count"] == 10
+
+
+@pytest.mark.usefixtures("test_list_object_file")
+def test_categorise_file(test_list_object_file):
+    prefix = "web-app-prod-data/local_authority/barnet"
+    file0 = test_list_object_file
+    categorise_file(file0, prefix)
+    assert file0["Category"] == "People1"
+
+
+def test_get_file_name_category():
+    bare_file_name = "20200526-120000.csv"
+    assert get_file_name_category(bare_file_name) == ""
+    prefixed_file_name = "nhs-20200526-120000.csv"
+    assert get_file_name_category(prefixed_file_name) == "nhs"
+    suffixed_file_name = "20200526-120000-nhs.csv"
+    assert get_file_name_category(suffixed_file_name) == "nhs"
+    underscored_file_name = "nhs_20200526_120000.csv"
+    assert get_file_name_category(underscored_file_name) == "nhs"
+
+
+@pytest.mark.usefixtures("test_list_object_file")
+def test_date_file(test_list_object_file):
+    now = datetime.utcnow()
+    date_string = now.strftime("%d/%m/%Y")
+    date_sorter = now.strftime("%Y%m%d%H%M")
+
+    file0 = test_list_object_file
+    date_file(file0)
+    assert file0["SortTime"] == date_sorter
+    assert file0["ShowDate"] == date_string
+
+
+def test_re_case_word():
+    assert re_case_word("nhs") == "NHS"
+    assert re_case_word("gds") == "GDS"
+    assert re_case_word("dwp") == "DWP"
+    assert re_case_word("mhclg") == "MHCLG"
+    assert re_case_word("other") == "Other"
