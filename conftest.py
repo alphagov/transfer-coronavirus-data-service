@@ -347,6 +347,13 @@ def test_get_object():
 
 
 @pytest.fixture()
+def test_list_object_file():
+    now = datetime.utcnow()
+    prefix = "web-app-prod-data/local_authority/barnet"
+    mock_list_object = {"Key": f"{prefix}/people1.csv", "Size": 100, "LastModified": now}
+    return mock_list_object
+
+@pytest.fixture()
 def test_ssm_parameters():
     return {
         "/cognito/client_id": "abc123",

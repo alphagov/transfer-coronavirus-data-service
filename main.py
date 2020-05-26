@@ -3,8 +3,8 @@
 import json
 import os
 import re
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
 
 import boto3
 import requests
@@ -445,7 +445,7 @@ def files():
         "files.html",
         user=session["user"],
         email=session["email"],
-        files=collect_by_date(files),
+        files=collect_files_by_date(files),
         is_la=return_attribute(session, "custom:is_la"),
     )
 
@@ -582,17 +582,19 @@ def get_files(bucket_name: str, user_session: dict):
             if "Contents" in page:
                 for file_item in page["Contents"]:
                     if not file_item["Key"].endswith("/"):
-                        # file_keys.append({"key": item["Key"], "size": item["Size"]})
-                        # translate item keys to lower case
+                        # add category derived from file path and name
                         categorise_file(file_item, prefix)
+                        # add date strings for rendering and sorting
                         date_file(file_item)
-
-                        file_keys.append({key.lower(): value for key, value in file_item.items()})
+                        # change key case to lower
+                        file_keys.append(
+                            {key.lower(): value for key, value in file_item.items()}
+                        )
 
     resp = []
 
     # sort in reverse date order
-    file_keys = sorted(file_keys, key = lambda file: file["sorttime"], reverse=True)
+    file_keys = sorted(file_keys, key=lambda file: file["sorttime"], reverse=True)
 
     for file_key in file_keys:
         app.logger.info(
@@ -600,9 +602,6 @@ def get_files(bucket_name: str, user_session: dict):
         )
 
         url_string = f"/download/{file_key['key']}"
-        # resp.append(
-        #     {"url": url_string, "key": file_key["key"], "size": file_key["size"]}
-        # )
         file_key["url"] = url_string
         resp.append(file_key)
     app.logger.info(resp)
@@ -625,13 +624,10 @@ def categorise_file(file_item, prefix):
     if file_category != "":
         path_steps.append(file_category)
 
-    categories = [
-        re_case_word(re.sub(r"[-_]", " ", word))
-        for word in path_steps
-    ]
+    categories = [re_case_word(re.sub(r"[-_]", " ", word)) for word in path_steps]
 
     joined_category = " > ".join(categories)
-    if re.search("^\s*$", joined_category):
+    if joined_category == "":
         joined_category = "Daily Incoming Data"
 
     app.logger.debug({"categories": categories, "joined": joined_category})
@@ -649,9 +645,11 @@ def get_file_name_category(file_name):
     # remove file extension
     file_name = " ".join(file_name.split(".")[:-1])
 
-    file_name_words = file_name.split("-")
+    file_name_words = re.split("[-_]", file_name)
     # remove numeric strings
-    file_category_words = filter(lambda word: not re.match("^[0-9]+$", word), file_name_words)
+    file_category_words = filter(
+        lambda word: not re.match("^[0-9]+$", word), file_name_words
+    )
 
     file_category = " ".join(file_category_words)
     return file_category
@@ -659,7 +657,7 @@ def get_file_name_category(file_name):
 
 def re_case_word(word):
     """
-    Title case word unless known initialism
+    Title case word unless known initialism which should be upper
     """
     initialisms = ["DWP", "NHS", "MHCLG", "GDS"]
 
@@ -678,21 +676,18 @@ def date_file(file_item):
     file_item["ShowDate"] = file_item["LastModified"].strftime("%d/%m/%Y")
     file_item["ShowTime"] = file_item["LastModified"].strftime("%H:%M")
     file_item["SortDate"] = file_item["LastModified"].strftime("%Y%m%d")
-    file_item["SortTime"] = file_item["LastModified"].strftime("%Y%m%dH%M")
+    file_item["SortTime"] = file_item["LastModified"].strftime("%Y%m%d%H%M")
     app.logger.debug({"date": file_item["SortDate"], "time": file_item["SortTime"]})
     return file_item
 
 
-def collect_by_date(file_items):
+def collect_files_by_date(file_items):
     files_by_date = defaultdict(list)
     file_count = len(file_items)
     for file_item in file_items:
         file_date = file_item["showdate"]
         files_by_date[file_date].append(file_item)
-    return {
-        "by_date": files_by_date,
-        "count": file_count
-    }
+    return {"by_date": files_by_date, "count": file_count}
 
 
 def return_attribute(session: dict, get_attribute: str) -> str:

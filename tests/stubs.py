@@ -480,11 +480,16 @@ def stub_response_ssm_get_parameters_by_path(stubber, path, parameters):
 
 # Client: s3
 def stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix):
+    now = datetime.utcnow()
     mock_list_objects_1 = {
         "Contents": [
-            {"Key": f"{prefix}/people1.csv", "Size": 100},
-            {"Key": f"{prefix}/people2.csv", "Size": 200},
-            {"Key": f"{prefix}/nested/nested_people1.csv", "Size": 300},
+            {"Key": f"{prefix}/people1.csv", "Size": 100, "LastModified": now},
+            {"Key": f"{prefix}/people2.csv", "Size": 200, "LastModified": now},
+            {
+                "Key": f"{prefix}/nested/nested_people1.csv",
+                "Size": 300,
+                "LastModified": now,
+            },
         ],
         "IsTruncated": True,
         "NextMarker": "page-2",
@@ -496,10 +501,11 @@ def stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix):
 
 
 def stub_response_s3_list_objects_page_2(stubber, bucket_name, prefix):
+    now = datetime.utcnow()
     mock_list_objects_2 = {
         "Contents": [
-            {"Key": f"{prefix}/people3.csv", "Size": 100},
-            {"Key": f"{prefix}/people4.csv", "Size": 200},
+            {"Key": f"{prefix}/people3.csv", "Size": 100, "LastModified": now},
+            {"Key": f"{prefix}/people4.csv", "Size": 200, "LastModified": now},
         ]
     }
 
