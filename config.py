@@ -31,12 +31,12 @@ def load_environment(app):
     Load environment vars into flask app attributes
     """
     app.secret_key = os.getenv("APPSECRET", "secret")
-    app.client_id = os.getenv("CLIENT_ID", None)
-    app.cognito_domain = os.getenv("COGNITO_DOMAIN", None)
-    app.client_secret = os.getenv("CLIENT_SECRET", None)
-    app.redirect_host = os.getenv("REDIRECT_HOST")
-    app.bucket_name = os.getenv("BUCKET_NAME")
-    app.region = os.getenv("REGION")
+    app.config["client_id"] = os.getenv("CLIENT_ID", None)
+    app.config["cognito_domain"] = os.getenv("COGNITO_DOMAIN", None)
+    app.config["client_secret"] = os.getenv("CLIENT_SECRET", None)
+    app.config["redirect_host"] = os.getenv("REDIRECT_HOST")
+    app.config["bucket_name"] = os.getenv("BUCKET_NAME")
+    app.config["region"] = os.getenv("REGION")
     set_app_settings(app)
 
 
@@ -44,11 +44,15 @@ def set_app_settings(app):
     """
     Use existing env vars if loaded
     """
-    if None in [app.client_id, app.cognito_domain, app.client_secret]:
+    if None in [
+        app.config["client_id"],
+        app.config["cognito_domain"],
+        app.config["client_secret"],
+    ]:
         cognito_credentials = cognito.load_app_settings()
-        app.cognito_domain = cognito_credentials["cognito_domain"]
-        app.client_id = cognito_credentials["client_id"]
-        app.client_secret = cognito_credentials["client_secret"]
+        app.config["cognito_domain"] = cognito_credentials["cognito_domain"]
+        app.config["client_id"] = cognito_credentials["client_id"]
+        app.config["client_secret"] = cognito_credentials["client_secret"]
 
 
 def setup_local_environment(
@@ -76,7 +80,7 @@ def setup_local_environment(
     ssm_prefix = "/transfer-coronavirus-data-service"
     ssm_parameter_map = {
         "/cognito/client_id": "CLIENT_ID",
-        "/cognito/client_secret": "CLIENT_SECRET", # pragma: allowlist secret
+        "/cognito/client_secret": "CLIENT_SECRET",  # pragma: allowlist secret
         "/cognito/domain": "COGNITO_DOMAIN",
         "/s3/bucket_name": "BUCKET_NAME",
     }
