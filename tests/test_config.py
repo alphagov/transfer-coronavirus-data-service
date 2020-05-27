@@ -2,7 +2,14 @@ import os
 
 from flask import Flask
 
-from config import load_environment, setup_talisman
+import stubs
+from config import (
+    load_environment,
+    setup_talisman,
+    list_pools,
+    env_pool_id,
+    get_cognito_pool_name,
+)
 
 
 def test_setup_talisman():
@@ -32,3 +39,37 @@ def test_load_environment():
     assert app.config["redirect_host"] == os.getenv("REDIRECT_HOST")
     assert app.config["bucket_name"] == os.getenv("BUCKET_NAME")
     assert app.config["region"] == os.getenv("REGION")
+
+
+def test_env_pool_id_development():
+    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
+    stubber = stubs.mock_cognito_list_pools()
+    with stubber:
+        assert env_pool_id() == user_pool_id
+
+
+def test_env_pool_id_production(monkeypatch):
+    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
+    monkeypatch.setenv("APP_ENVIRONMENT", "production")
+    stubber = stubs.mock_cognito_list_pools(env="prod")
+    with stubber:
+        assert env_pool_id() == user_pool_id
+
+
+def test_list_pools():
+    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
+    stubber = stubs.mock_cognito_list_pools()
+
+    with stubber:
+        pools = list_pools()
+        assert pools[0]["id"] == user_pool_id
+        stubber.deactivate()
+
+
+def test_get_cognito_pool_name():
+    os.environ["APP_ENVIRONMENT"] = "production"
+    assert get_cognito_pool_name() == "corona-cognito-pool-prod"
+    os.environ["APP_ENVIRONMENT"] = "staging"
+    assert get_cognito_pool_name() == "corona-cognito-pool-staging"
+    os.environ["APP_ENVIRONMENT"] = "testing"
+    assert get_cognito_pool_name() == "corona-cognito-pool-development"
