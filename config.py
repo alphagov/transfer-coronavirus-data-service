@@ -34,15 +34,23 @@ def load_environment(app):
     Load environment vars into flask app attributes
     """
     global CONFIG
-    app.secret_key = os.getenv("APPSECRET", "secret")
-    app.config["client_id"] = os.getenv("CLIENT_ID", None)
-    app.config["cognito_domain"] = os.getenv("COGNITO_DOMAIN", None)
-    app.config["client_secret"] = os.getenv("CLIENT_SECRET", None)
-    app.config["redirect_host"] = os.getenv("REDIRECT_HOST")
-    app.config["bucket_name"] = os.getenv("BUCKET_NAME")
-    app.config["region"] = os.getenv("REGION")
-    set_app_settings(app)
     CONFIG = app.config
+    app.secret_key = os.getenv("APPSECRET", "secret")
+    set("client_id", os.getenv("CLIENT_ID", None))
+    set("cognito_domain", os.getenv("COGNITO_DOMAIN", None))
+    set("client_secret", os.getenv("CLIENT_SECRET", None))
+    set("redirect_host", os.getenv("REDIRECT_HOST"))
+    set("bucket_name", os.getenv("BUCKET_NAME"))
+    set("region", os.getenv("REGION"))
+
+    # temporary references to existing env vars
+    set("cf_space", get("app_environment"))
+    set(
+        "flask_env", "production" if get("app_environment" == "prod") else "development"
+    )
+    os.environ["FLASK_ENV"] = get("flask_env")
+
+    set_app_settings(app)
 
 
 def set_app_settings(app):
