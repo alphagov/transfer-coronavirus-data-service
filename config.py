@@ -76,7 +76,7 @@ def setup_local_environment(
     ssm_prefix = "/transfer-coronavirus-data-service"
     ssm_parameter_map = {
         "/cognito/client_id": "CLIENT_ID",
-        "/cognito/client_secret": "CLIENT_SECRET",
+        "/cognito/client_secret": "CLIENT_SECRET", # pragma: allowlist secret
         "/cognito/domain": "COGNITO_DOMAIN",
         "/s3/bucket_name": "BUCKET_NAME",
     }
