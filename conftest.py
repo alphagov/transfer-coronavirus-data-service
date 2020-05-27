@@ -6,8 +6,9 @@ from datetime import datetime
 
 import pytest
 
-from main import app, load_environment
+from main import app
 from user import User
+from config import load_environment
 
 
 def get_standard_download_group():

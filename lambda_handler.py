@@ -2,7 +2,8 @@ import os
 
 import serverless_wsgi
 
-from main import app, load_environment, setup_talisman
+from main import app
+from config import load_environment, setup_talisman
 
 
 def web_app(event, context):

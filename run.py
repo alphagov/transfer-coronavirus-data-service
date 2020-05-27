@@ -1,7 +1,18 @@
+import os
 import sys
 
-from config import setup_local_environment
-from main import run
+from config import setup_local_environment, setup_talisman, load_environment
+from main import app
+
+
+def run():
+    """
+    Run a local server
+    """
+    setup_talisman(app)
+    load_environment(app)
+    app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
+
 
 if __name__ == "__main__":
 

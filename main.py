@@ -14,7 +14,6 @@ from werkzeug.utils import secure_filename
 
 import admin
 import cognito
-from config import load_environment, setup_talisman
 from flask_helpers import (
     admin_interface,
     end_user_interface,
@@ -652,16 +651,3 @@ def s3_remove_root_path(key):
     """
     file_link_path = re.sub(r"^[^/]+\/", "", key)
     return file_link_path
-
-
-def run():
-    """
-    Run a local server
-    """
-    setup_talisman(app)
-    load_environment(app)
-    app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
-
-
-if __name__ == "__main__":
-    run()

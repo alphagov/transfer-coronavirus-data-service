@@ -7,7 +7,6 @@ from flask_talisman import Talisman
 
 from logger import LOG
 
-
 CONFIG = {}
 
 
@@ -71,7 +70,6 @@ def set_app_settings(app):
 def setup_local_environment(
     host="localhost", port=8000, is_admin=False, environment=None
 ):
-
     region = "eu-west-2"
 
     os.environ["ADMIN"] = "true" if is_admin else "false"
@@ -90,12 +88,27 @@ def setup_local_environment(
     os.environ["AWS_DEFAULT_REGION"] = region
     os.environ["REGION"] = region
 
+    are_ssm_parameters_loaded = load_ssm_parameters()
+
+    if not are_ssm_parameters_loaded:
+        green_char = "\033[92m"
+        end_charac = "\033[0m"
+        print("-" * 35)
+        print("Please run: {}eval $(gds aws XXXX -e){}".format(green_char, end_charac))
+        print("Where {}XXXX{} is the account to access".format(green_char, end_charac))
+        print("Then run make again")
+        print("-" * 35)
+        exit()
+
+
+def load_ssm_parameters() -> bool:
+    are_parameters_loaded = True
     ssm_prefix = "/transfer-coronavirus-data-service"
     ssm_parameter_map = {
-        "/cognito/client_id": "CLIENT_ID",
-        "/cognito/client_secret": "CLIENT_SECRET",  # pragma: allowlist secret
-        "/cognito/domain": "COGNITO_DOMAIN",
-        "/s3/bucket_name": "BUCKET_NAME",
+        "/cognito/client_id": "client_id",
+        "/cognito/client_secret": "client_secret",  # pragma: allowlist secret
+        "/cognito/domain": "cognito_domain",
+        "/s3/bucket_name": "bucket_name",
     }
 
     ssm_client = boto3.client("ssm")
@@ -108,20 +121,15 @@ def setup_local_environment(
         for param in ssm_parameters["Parameters"]:
             for param_name, env_var_name in ssm_parameter_map.items():
                 if param["Name"].endswith(param_name):
-                    os.environ[env_var_name] = param["Value"]
+                    set(env_var_name, param["Value"])
                     LOG.debug("Set env var: %s from ssm", env_var_name)
 
     except ClientError as error:
         LOG.error(error)
     except NoCredentialsError:
-        green_char = "\033[92m"
-        end_charac = "\033[0m"
-        print("-" * 35)
-        print("Please run: {}eval $(gds aws XXXX -e){}".format(green_char, end_charac))
-        print("Where {}XXXX{} is the account to access".format(green_char, end_charac))
-        print("Then run make again")
-        print("-" * 35)
-        exit()
+        are_parameters_loaded = False
+
+    return are_parameters_loaded
 
 
 def load_cognito_settings():
