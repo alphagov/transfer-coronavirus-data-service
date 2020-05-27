@@ -16,13 +16,13 @@ from botocore.exceptions import ClientError, ParamValidationError
 
 from cognito_groups import get_group_by_name, get_group_map
 from logger import LOG
-from config import env_pool_id
+import config
 
 CLIENT_EXCEPTIONS = (ClientError, ParamValidationError)
 
 
 def get_boto3_client():
-    return boto3.client("cognito-idp", region_name="eu-west-2")
+    return boto3.client("cognito-idp", region_name=config.get("region"))
 
 
 # TODO remove below once admin app running online
@@ -76,7 +76,7 @@ def create_user(name, email_address, phone_number, is_la, custom_paths):
     client = get_boto3_client()
     try:
         response = client.admin_create_user(
-            UserPoolId=env_pool_id(),
+            UserPoolId=config.env_pool_id(),
             Username=email_address,
             UserAttributes=[
                 {"Name": "name", "Value": name},
@@ -100,7 +100,7 @@ def update_user(email, attributes):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_update_user_attributes(
-            UserPoolId=env_pool_id(), Username=email, UserAttributes=attributes
+            UserPoolId=config.env_pool_id(), Username=email, UserAttributes=attributes
         )
     except (ClientError, ParamValidationError) as error:
         LOG.error(error)
@@ -112,7 +112,7 @@ def delete_user(email):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_delete_user(
-            UserPoolId=env_pool_id(), Username=email
+            UserPoolId=config.env_pool_id(), Username=email
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)
@@ -124,7 +124,7 @@ def disable_user(email):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_disable_user(
-            UserPoolId=env_pool_id(), Username=email
+            UserPoolId=config.env_pool_id(), Username=email
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)
@@ -136,7 +136,7 @@ def enable_user(email):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_enable_user(
-            UserPoolId=env_pool_id(), Username=email
+            UserPoolId=config.env_pool_id(), Username=email
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)
@@ -148,7 +148,7 @@ def set_user_settings(email):
     client = get_boto3_client()
     try:
         response = client.admin_set_user_settings(
-            UserPoolId=env_pool_id(),
+            UserPoolId=config.env_pool_id(),
             Username=email,
             MFAOptions=[{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
         )
@@ -162,7 +162,7 @@ def set_mfa_preferences(email):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_set_user_mfa_preference(
-            UserPoolId=env_pool_id(),
+            UserPoolId=config.env_pool_id(),
             Username=email,
             SMSMfaSettings={"Enabled": True, "PreferredMfa": True},
         )
@@ -181,7 +181,7 @@ def add_to_group(email, group_name):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_add_user_to_group(
-            UserPoolId=env_pool_id(), Username=email, GroupName=group_name
+            UserPoolId=config.env_pool_id(), Username=email, GroupName=group_name
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)
@@ -193,7 +193,7 @@ def remove_from_group(email, group_name):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_remove_user_from_group(
-            UserPoolId=env_pool_id(), Username=email, GroupName=group_name
+            UserPoolId=config.env_pool_id(), Username=email, GroupName=group_name
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)
@@ -205,7 +205,7 @@ def get_user(email):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_get_user(
-            UserPoolId=env_pool_id(), Username=email
+            UserPoolId=config.env_pool_id(), Username=email
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)
@@ -217,7 +217,7 @@ def list_groups_for_user(email):
     cognito_client = get_boto3_client()
     try:
         response = cognito_client.admin_list_groups_for_user(
-            UserPoolId=env_pool_id(), Username=email
+            UserPoolId=config.env_pool_id(), Username=email
         )
     except CLIENT_EXCEPTIONS as error:
         LOG.error(error)

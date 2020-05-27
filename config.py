@@ -8,6 +8,9 @@ from flask_talisman import Talisman
 from logger import LOG
 
 
+CONFIG = {}
+
+
 def setup_talisman(app):
     csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
     is_https = app.app_environment != "testing"
@@ -30,6 +33,7 @@ def load_environment(app):
     """
     Load environment vars into flask app attributes
     """
+    global CONFIG
     app.secret_key = os.getenv("APPSECRET", "secret")
     app.config["client_id"] = os.getenv("CLIENT_ID", None)
     app.config["cognito_domain"] = os.getenv("COGNITO_DOMAIN", None)
@@ -38,6 +42,7 @@ def load_environment(app):
     app.config["bucket_name"] = os.getenv("BUCKET_NAME")
     app.config["region"] = os.getenv("REGION")
     set_app_settings(app)
+    CONFIG = app.config
 
 
 def set_app_settings(app):
@@ -146,22 +151,25 @@ def load_cognito_settings():
 
 
 def get_cognito_pool_name():
-    environment = os.getenv("APP_ENVIRONMENT", "testing")
-    pool_name_prefix = "corona-cognito-pool-"
+    environment = get("app_environment", "testing")
+    # environment = os.environ.get("APP_ENVIRONMENT", "testing")
+    pool_name_prefix = "corona-cognito-pool"
     if environment == "production":
-        pool_name = f"{pool_name_prefix}prod"
-    elif environment == "staging":
-        pool_name = f"{pool_name_prefix}staging"
+        suffix = "prod"
     elif environment == "testing":
-        pool_name = f"{pool_name_prefix}development"
+        suffix = "development"
+    else:
+        suffix = environment
+
+    pool_name = f"{pool_name_prefix}-{suffix}"
+
+    set("cognito_pool_name", pool_name)
 
     return pool_name
 
 
 def env_pool_id():
     pool_id = None
-    pool_name = None
-
     pool_name = get_cognito_pool_name()
 
     if pool_name is not None:
@@ -188,3 +196,11 @@ def list_pools():
             for pool in response["UserPools"]
         ]
     return pool_list
+
+
+def get(setting_name, default=None):
+    return CONFIG.get(setting_name, default)
+
+
+def set(setting_name, value=None):
+    CONFIG[setting_name] = value
