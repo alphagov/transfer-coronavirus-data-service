@@ -31,14 +31,14 @@
     </div>
 
     <div>
-      <ul class="app-task-list">
+      <ul class="app-task-list govuk-list">
         {% for file_date in files.by_date %}
         {% set date_files = files.by_date[file_date] %}
         <li>
           <h3 class="app-task-list__section">
             {{ file_date }}
           </h3>
-          <ul class="app-task-list__items">
+          <ul class="app-task-list__items govuk-list">
             {% for file in date_files %}
             <li class="app-task-list__item">
 
