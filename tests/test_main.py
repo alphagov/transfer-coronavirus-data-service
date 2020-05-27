@@ -4,8 +4,8 @@ import os
 import flask
 import pytest
 import requests_mock
-import stubs
 
+import stubs
 from main import (
     app,
     create_presigned_url,
@@ -15,7 +15,6 @@ from main import (
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
-    setup_talisman,
     upload_form_validate,
     user_custom_paths,
     validate_access_to_s3_path,
@@ -481,18 +480,6 @@ def test_is_mfa_configured(test_mfa_user, test_no_mfa_user):
     test_wrong_preferred_device.update(test_mfa_user)
     test_wrong_preferred_device["PreferredMfaSetting"] = "Email_MFA"
     assert not is_mfa_configured(test_wrong_preferred_device)
-
-
-def test_setup_talisman():
-    app.app_environment = "testing"
-    talisman = setup_talisman(app)
-    assert not talisman.force_https
-    app.app_environment = "staging"
-    talisman = setup_talisman(app)
-    assert talisman.force_https
-    app.app_environment = "production"
-    talisman = setup_talisman(app)
-    assert talisman.force_https
 
 
 @pytest.mark.usefixtures("test_get_object")

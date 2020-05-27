@@ -9,12 +9,12 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from flask import Flask, redirect, request, send_file, send_from_directory, session
-from flask_talisman import Talisman
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 
 import admin
 import cognito
+from config import load_environment, setup_talisman
 from flask_helpers import (
     admin_interface,
     end_user_interface,
@@ -30,49 +30,6 @@ from user import User
 app = Flask(__name__)
 app.app_environment = os.getenv("APP_ENVIRONMENT", "testing")
 app.logger = LOG
-
-
-def setup_talisman(app):
-    csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
-    is_https = app.app_environment != "testing"
-    log_message = (
-        "loading Talisman with HTTPS"
-        if is_https
-        else "loading Talisman for testing - no HTTPS"
-    )
-    app.logger.info(log_message)
-    return Talisman(
-        app,
-        force_https=is_https,
-        strict_transport_security=is_https,
-        session_cookie_secure=is_https,
-        content_security_policy=csp,
-    )
-
-
-def load_environment(app):
-    """
-    Load environment vars into flask app attributes
-    """
-    app.secret_key = os.getenv("APPSECRET", "secret")
-    app.client_id = os.getenv("CLIENT_ID", None)
-    app.cognito_domain = os.getenv("COGNITO_DOMAIN", None)
-    app.client_secret = os.getenv("CLIENT_SECRET", None)
-    app.redirect_host = os.getenv("REDIRECT_HOST")
-    app.bucket_name = os.getenv("BUCKET_NAME")
-    app.region = os.getenv("REGION")
-    set_app_settings(app)
-
-
-def set_app_settings(app):
-    """
-    Use existing env vars if loaded
-    """
-    if None in [app.client_id, app.cognito_domain, app.client_secret]:
-        cognito_credentials = cognito.load_app_settings()
-        app.cognito_domain = cognito_credentials["cognito_domain"]
-        app.client_id = cognito_credentials["client_id"]
-        app.client_secret = cognito_credentials["client_secret"]
 
 
 def exchange_code_for_session_user(code, code_verifier=None) -> dict:

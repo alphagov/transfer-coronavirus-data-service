@@ -1,7 +1,9 @@
+import os
+
 import pytest
-import stubs
 
 import cognito
+import stubs
 
 
 def test_env_pool_id_development():
@@ -153,3 +155,12 @@ def test_list_groups_for_user(admin_user):
         first_group = groups["Groups"][0]
         assert first_group["GroupName"] == admin_user["group"]["value"]
         stubber.deactivate()
+
+
+def test_get_cognito_pool_name():
+    os.environ["APP_ENVIRONMENT"] = "production"
+    assert cognito.get_cognito_pool_name() == "corona-cognito-pool-prod"
+    os.environ["APP_ENVIRONMENT"] = "staging"
+    assert cognito.get_cognito_pool_name() == "corona-cognito-pool-staging"
+    os.environ["APP_ENVIRONMENT"] = "testing"
+    assert cognito.get_cognito_pool_name() == "corona-cognito-pool-development"

@@ -58,18 +58,24 @@ def get_boto3_client():
     return boto3.client("cognito-idp", region_name="eu-west-2")
 
 
+def get_cognito_pool_name():
+    environment = os.getenv("APP_ENVIRONMENT", "testing")
+    pool_name_prefix = "corona-cognito-pool-"
+    if environment == "production":
+        pool_name = f"{pool_name_prefix}prod"
+    elif environment == "staging":
+        pool_name = f"{pool_name_prefix}staging"
+    elif environment == "testing":
+        pool_name = f"{pool_name_prefix}development"
+
+    return pool_name
+
+
 def env_pool_id():
     pool_id = None
     pool_name = None
 
-    environment = os.getenv("APP_ENVIRONMENT", "testing")
-
-    if environment == "production":
-        pool_name = "corona-cognito-pool-prod"
-    elif environment == "staging":
-        pool_name = "corona-cognito-pool-staging"
-    elif environment == "testing":
-        pool_name = "corona-cognito-pool-development"
+    pool_name = get_cognito_pool_name()
 
     if pool_name is not None:
         for pool in list_pools():

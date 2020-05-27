@@ -1,8 +1,8 @@
 import os
 
 import pytest
-import stubs
 
+import stubs
 from user import User
 
 
