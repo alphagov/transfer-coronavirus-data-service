@@ -41,6 +41,7 @@ def load_environment(app):
 def read_env_variables(app):
     app.secret_key = os.getenv("APPSECRET", "secret")
     set("page_title", os.getenv("PAGE_TITLE", "Data Transfer"))
+    set("app_environment", os.getenv("APP_ENVIRONMENT", "testing"))
     set("admin", os.getenv("ADMIN", "false"))
     set("client_id", os.getenv("CLIENT_ID", None))
     set("cognito_domain", os.getenv("COGNITO_DOMAIN", None))
@@ -164,7 +165,6 @@ def load_cognito_settings():
 
 def get_cognito_pool_name():
     environment = get("app_environment", "testing")
-    # environment = os.environ.get("APP_ENVIRONMENT", "testing")
     pool_name_prefix = "corona-cognito-pool"
     if environment == "production":
         suffix = "prod"
@@ -174,6 +174,12 @@ def get_cognito_pool_name():
         suffix = environment
 
     pool_name = f"{pool_name_prefix}-{suffix}"
+    LOG.debug({
+        "pool_name": pool_name,
+        "pool_name_prefix": pool_name_prefix,
+        "suffix": suffix,
+        "environment": environment
+    })
 
     set("cognito_pool_name", pool_name)
 
@@ -189,6 +195,11 @@ def env_pool_id():
             if pool["name"] == pool_name:
                 pool_id = pool["id"]
                 break
+
+    LOG.debug({
+        "pool_name": pool_name,
+        "pool_id": pool_id
+    })
 
     return pool_id
 
