@@ -23,16 +23,16 @@ def test_setup_talisman():
     assert talisman.force_https
 
 
-def test_load_environment():
+def test_read_env_variables():
     app = Flask(__name__)
-    config.load_environment(app)
+    config.read_env_variables(app)
     assert app.secret_key == os.getenv("APPSECRET", "secret")
-    assert app.config["client_id"] == os.getenv("CLIENT_ID", None)
-    assert app.config["cognito_domain"] == os.getenv("COGNITO_DOMAIN", None)
-    assert app.config["client_secret"] == os.getenv("CLIENT_SECRET", None)
-    assert app.config["redirect_host"] == os.getenv("REDIRECT_HOST")
-    assert app.config["bucket_name"] == os.getenv("BUCKET_NAME")
-    assert app.config["region"] == os.getenv("REGION")
+    assert config.get("client_id") == os.getenv("CLIENT_ID", None)
+    assert config.get("cognito_domain") == os.getenv("COGNITO_DOMAIN", None)
+    assert config.get("client_secret") == os.getenv("CLIENT_SECRET", None)
+    assert config.get("redirect_host") == os.getenv("REDIRECT_HOST")
+    assert config.get("bucket_name") == os.getenv("BUCKET_NAME")
+    assert config.get("region") == os.getenv("REGION")
 
 
 def test_env_pool_id_development():

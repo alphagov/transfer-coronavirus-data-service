@@ -1,8 +1,8 @@
-import os
 import re
 
 import cognito
 from cognito_groups import get_group_by_name
+import config
 from logger import LOG
 
 
@@ -182,7 +182,7 @@ class User:
             )
             all_user_paths_are_valid = False
 
-        app_authorised_paths = [os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")]
+        app_authorised_paths = [config.get("bucket_main_prefix", "web-app-prod-data")]
 
         user_authorised_paths = paths_semicolon_separated.split(";")
 

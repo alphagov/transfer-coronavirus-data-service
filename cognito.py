@@ -32,9 +32,10 @@ def is_aws_authenticated():
     you can't redirect through cognito to login
     """
     is_aws_auth = os.getenv("ADMIN_AWS_AUTH", "false") == "true"
-    is_testing = os.getenv("APP_ENVIRONMENT", "testing") not in [
+    is_testing = config.get("app_environment", "testing") not in [
         "staging",
         "production",
+        "prod",
     ]
     return is_aws_auth and not is_testing
 

@@ -34,13 +34,22 @@ def load_environment(app):
     """
     global CONFIG
     CONFIG = app.config
+    read_env_variables(app)
+    set_app_settings(app)
+
+
+def read_env_variables(app):
     app.secret_key = os.getenv("APPSECRET", "secret")
+    set("page_title", os.getenv("PAGE_TITLE", "Data Transfer"))
+    set("admin", os.getenv("ADMIN", "false"))
     set("client_id", os.getenv("CLIENT_ID", None))
     set("cognito_domain", os.getenv("COGNITO_DOMAIN", None))
     set("client_secret", os.getenv("CLIENT_SECRET", None))
     set("redirect_host", os.getenv("REDIRECT_HOST"))
     set("bucket_name", os.getenv("BUCKET_NAME"))
-    set("region", os.getenv("REGION"))
+    set("bucket_main_prefix", os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data"))
+    set("bucket_upload_prefix", os.getenv("BUCKET_UPLOAD_PREFIX", "web-app-upload"))
+    set("region", os.getenv("REGION", "eu-west-2"))
 
     # temporary references to existing env vars
     set("cf_space", get("app_environment"))
@@ -48,8 +57,6 @@ def load_environment(app):
         "flask_env", "production" if get("app_environment" == "prod") else "development"
     )
     os.environ["FLASK_ENV"] = get("flask_env")
-
-    set_app_settings(app)
 
 
 def set_app_settings(app):
@@ -83,26 +90,13 @@ def setup_local_environment(
 
     os.environ["PAGE_TITLE"] = "LOCAL COVID-19 Data Transfer"
     os.environ["FLASK_ENV"] = "development"
-    os.environ["LOG_LEVEL"] = "DEBUG"
     os.environ["REDIRECT_HOST"] = f"http://{host}:{port}"
     os.environ["AWS_DEFAULT_REGION"] = region
     os.environ["REGION"] = region
 
-    are_ssm_parameters_loaded = load_ssm_parameters()
 
-    if not are_ssm_parameters_loaded:
-        green_char = "\033[92m"
-        end_charac = "\033[0m"
-        print("-" * 35)
-        print("Please run: {}eval $(gds aws XXXX -e){}".format(green_char, end_charac))
-        print("Where {}XXXX{} is the account to access".format(green_char, end_charac))
-        print("Then run make again")
-        print("-" * 35)
-        exit()
-
-
-def load_ssm_parameters() -> bool:
-    are_parameters_loaded = True
+def load_ssm_parameters():
+    ssm_parameters_retrieved = True
     ssm_prefix = "/transfer-coronavirus-data-service"
     ssm_parameter_map = {
         "/cognito/client_id": "client_id",
@@ -126,10 +120,12 @@ def load_ssm_parameters() -> bool:
 
     except ClientError as error:
         LOG.error(error)
-    except NoCredentialsError:
-        are_parameters_loaded = False
+        ssm_parameters_retrieved = False
+    except NoCredentialsError as error:
+        LOG.debug(error)
+        ssm_parameters_retrieved = False
 
-    return are_parameters_loaded
+    return ssm_parameters_retrieved
 
 
 def load_cognito_settings():
@@ -220,3 +216,7 @@ def get(setting_name, default=None):
 
 def set(setting_name, value=None):
     CONFIG[setting_name] = value
+
+
+def delete(setting_name):
+    del CONFIG[setting_name]

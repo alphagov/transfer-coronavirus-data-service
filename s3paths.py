@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 import csv
-import os
+
+import config
 
 
 def app_authorised_path():
-    return os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")
+    return config.get("bucket_main_prefix", "web-app-prod-data")
 
 
 # this list is from communitiesuk / MHCLG

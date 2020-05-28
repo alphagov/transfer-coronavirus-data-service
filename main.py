@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 
 import admin
 import cognito
+import config
 from flask_helpers import (
     admin_interface,
     end_user_interface,
@@ -608,8 +609,8 @@ def return_attribute(session: dict, get_attribute: str) -> str:
 def user_custom_paths(session, is_upload=False):
     # paths = []
 
-    app_download_path = os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")
-    app_upload_path = os.getenv("BUCKET_UPLOAD_PREFIX", "web-app-upload")
+    app_download_path = config.get("bucket_main_prefix", "web-app-prod-data")
+    app_upload_path = config.get("bucket_upload_prefix", "web-app-upload")
 
     user_paths_attribute = return_attribute(session, "custom:paths")
     user_paths = user_paths_attribute.split(";")
