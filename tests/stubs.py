@@ -430,10 +430,55 @@ def mock_create_user_failure(admin_user, admin_get_user, create_user_arguments):
     return stubber
 
 
+def mock_config_set_app_settings(parameters):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    stubber = Stubber(client)
+
+    # Add responses
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_list_user_pool_clients(stubber, parameters)
+    stub_response_cognito_describe_user_pool_client(stubber, parameters)
+    stub_response_cognito_describe_user_pool(stubber, parameters)
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_config_load_ssm_parameters(path, parameters):
+    _keep_it_real()
+    client = boto3.real_client("ssm")
+
+    stubber = Stubber(client)
+
+    # Add responses
+    stub_response_ssm_get_parameters_by_path(stubber, path, parameters)
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
 # Responses
+# Client: ssm
+def stub_response_ssm_get_parameters_by_path(stubber, path, parameters):
+    response_params = [
+        {"Name": f"{path}{param_name}", "Value": param_value}
+        for param_name, param_value in parameters.items()
+    ]
+    mock_get_parameters_by_path = {"Parameters": response_params}
+    parameters = {"Path": path, "Recursive": True, "WithDecryption": True}
+
+    stubber.add_response(
+        "get_parameters_by_path", mock_get_parameters_by_path, parameters
+    )
+
+
 # Client: s3
-
-
 def stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix):
     mock_list_objects_1 = {
         "Contents": [
@@ -473,6 +518,47 @@ def stub_response_cognito_list_user_pools(stubber, env="development"):
         ]
     }
     stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
+
+
+def stub_response_cognito_list_user_pool_clients(
+    stubber, parameters, env="development"
+):
+    mock_list_user_pools = {
+        "UserPoolClients": [
+            {
+                "ClientId": parameters["client_id"],
+                "UserPoolId": MOCK_COGNITO_USER_POOL_ID,
+                "ClientName": f"corona-cognito-pool-{env}-client",
+            }
+        ]
+    }
+    params = {"UserPoolId": MOCK_COGNITO_USER_POOL_ID, "MaxResults": 2}
+    stubber.add_response("list_user_pool_clients", mock_list_user_pools, params)
+
+
+def stub_response_cognito_describe_user_pool_client(stubber, parameters):
+
+    mock_describe_user_pool_client = {
+        "UserPoolClient": {
+            "ClientSecret": parameters["client_secret"],
+            "UserPoolId": MOCK_COGNITO_USER_POOL_ID,
+        }
+    }
+    params = {
+        "UserPoolId": MOCK_COGNITO_USER_POOL_ID,
+        "ClientId": parameters["client_id"],
+    }
+    stubber.add_response(
+        "describe_user_pool_client", mock_describe_user_pool_client, params
+    )
+
+
+def stub_response_cognito_describe_user_pool(stubber, parameters):
+    mock_describe_user_pool = {
+        "UserPool": {"Domain": parameters["host_name"], "EstimatedNumberOfUsers": 12}
+    }
+    params = {"UserPoolId": MOCK_COGNITO_USER_POOL_ID}
+    stubber.add_response("describe_user_pool", mock_describe_user_pool, params)
 
 
 def stub_response_cognito_get_user(stubber, token, mock_get_user):

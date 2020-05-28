@@ -344,3 +344,23 @@ def test_mfa_user():
 @pytest.fixture()
 def test_get_object():
     return {"Body": "test,the,csv", "ResponseMetadata": {"HTTPStatusCode": 200}}
+
+
+@pytest.fixture()
+def test_ssm_parameters():
+    return {
+        "/cognito/client_id": "abc123",
+        "/cognito/client_secret": "def456",  # pragma: allowlist secret
+        "/cognito/domain": "example.com",
+        "/s3/bucket_name": "my_bucket",
+    }
+
+
+@pytest.fixture()
+def test_load_cognito_settings():
+    return {
+        "client_id": "abc123",
+        "client_secret": "def456",  # pragma: allowlist secret
+        "host_name": "example",
+        "domain": "auth.eu-west-2.amazoncognito.com",
+    }

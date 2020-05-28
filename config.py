@@ -64,14 +64,14 @@ def set_app_settings(app):
     Use existing env vars if loaded
     """
     if None in [
-        app.config["client_id"],
-        app.config["cognito_domain"],
-        app.config["client_secret"],
+        get("client_id"),
+        get("cognito_domain"),
+        get("client_secret"),
     ]:
         cognito_credentials = load_cognito_settings()
-        app.config["cognito_domain"] = cognito_credentials["cognito_domain"]
-        app.config["client_id"] = cognito_credentials["client_id"]
-        app.config["client_secret"] = cognito_credentials["client_secret"]
+        set("cognito_domain", cognito_credentials["cognito_domain"])
+        set("client_id", cognito_credentials["client_id"])
+        set("client_secret", cognito_credentials["client_secret"])
 
 
 def setup_local_environment(

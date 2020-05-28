@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from flask import Flask
 
 import stubs
@@ -33,6 +34,40 @@ def test_read_env_variables():
     assert config.get("redirect_host") == os.getenv("REDIRECT_HOST")
     assert config.get("bucket_name") == os.getenv("BUCKET_NAME")
     assert config.get("region") == os.getenv("REGION")
+
+
+@pytest.mark.usefixtures("test_ssm_parameters")
+def test_load_ssm_parameters(test_ssm_parameters):
+    path = "/transfer-coronavirus-data-service"
+    stubber = stubs.mock_config_load_ssm_parameters(path, test_ssm_parameters)
+    with stubber:
+        config.load_ssm_parameters()
+        assert config.get("client_id") == test_ssm_parameters["/cognito/client_id"]
+        assert (
+            config.get("client_secret") == test_ssm_parameters["/cognito/client_secret"]
+        )
+        assert config.get("cognito_domain") == test_ssm_parameters["/cognito/domain"]
+        assert config.get("bucket_name") == test_ssm_parameters["/s3/bucket_name"]
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("test_load_cognito_settings")
+def test_set_app_settings(test_load_cognito_settings):
+    app = Flask(__name__)
+    stubber = stubs.mock_config_set_app_settings(test_load_cognito_settings)
+    with stubber:
+        config.delete("client_id")
+        config.set_app_settings(app)
+        assert config.get("client_id") == test_load_cognito_settings["client_id"]
+        assert (
+            config.get("client_secret") == test_load_cognito_settings["client_secret"]
+        )
+        cognito_domain = (
+            f"{test_load_cognito_settings['host_name']}."
+            f"{test_load_cognito_settings['domain']}"
+        )
+        assert config.get("cognito_domain") == cognito_domain
+        stubber.deactivate()
 
 
 def test_env_pool_id_development():
