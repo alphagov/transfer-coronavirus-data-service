@@ -94,3 +94,39 @@ def check_browser_title_step(context, title):
 @then('wait "{seconds}" seconds')
 def wait_step(context, seconds):
     time.sleep(int(seconds))
+
+
+@then('the link "{text}" does exist')
+def link_is_there(context, text):
+    try:
+        context.browser.find_element_by_xpath(
+            "//*[contains(@class, 'govuk-link')][text()[contains(., '{}')]]".format(
+                text
+            )
+        )
+        element_found = True
+    except NoSuchElementException:
+        element_found = False
+
+    assert element_found
+
+
+@then('the link with css selector "{selector}" and text "{text}" does exist')
+def link_with_selector_is_there(context, text, selector):
+    try:
+        context.browser.find_element_by_xpath(
+            "//*[contains(@class, 'govuk-link')][text()[contains(., '{}')]]".format(
+                text
+            )
+        )
+        link_found = True
+    except NoSuchElementException:
+        link_found = False
+
+    try:
+        context.browser.find_element_by_css_selector(selector)
+        selector_found = True
+    except NoSuchElementException:
+        selector_found = False
+
+    assert link_found and selector_found
