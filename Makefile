@@ -97,3 +97,6 @@ concourse_e2e_lambda:
 	export LOG_LEVEL=DEBUG && cd behave && behave
 
 concourse_e2e: concourse_e2e_paas
+
+e2e_scenario: rebuild
+	docker-compose run chrome-driver bash -c "python3 run.py admin testing & cd behave && behave -n \"$(scenario)\""

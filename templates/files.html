@@ -21,24 +21,38 @@
 
   <section class="covid-transfer-download-section">
     <div>
-      {% if files|length == 0 %}
+      {% if files.count == 0 %}
         There are no files currently available to download.
-      {% elif files|length == 1 %}
+      {% elif files.count == 1 %}
         There is 1 file available to download:
       {% else %}
-        There are {{ files|length }} files available to download:
+        There are {{ files.count }} files available to download:
       {% endif %}
     </div>
 
     <div>
-      <ul class="govuk-list">
-      {% for file in files %}
+      <ul class="app-task-list govuk-list">
+        {% for file_date in files.by_date %}
+        {% set date_files = files.by_date[file_date] %}
         <li>
-          <a target="_blank" class="govuk-link covid-tranfer-file-link" href="{{ file.url }}">
-            {{ file.key | s3_remove_root_path }}
-          </a> ({{ file.size|filesizeformat }})
+          <h3 class="app-task-list__section">
+            {{ file_date }}
+          </h3>
+          <ul class="app-task-list__items govuk-list">
+            {% for file in date_files %}
+            <li class="app-task-list__item">
+
+              <span class="app-task-list__task-name">
+                <span>{{ file.category }} ({{ file.size|filesizeformat }})</span><br/>
+                <a target="_blank" class="govuk-link covid-tranfer-file-link" href="{{ file.url }}">
+                  {{ file.key | s3_remove_root_path }}
+                </a>
+              </span>
+            </li>
+            {% endfor %}
+          </ul>
         </li>
-      {% endfor %}
+        {% endfor %}
       </ul>
     </div>
   </section>
