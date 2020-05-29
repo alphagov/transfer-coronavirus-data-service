@@ -15,7 +15,6 @@ from main import (
     key_has_granted_prefix,
     load_user_lookup,
     return_attribute,
-    setup_talisman,
     upload_form_validate,
     user_custom_paths,
     validate_access_to_s3_path,
@@ -200,10 +199,10 @@ def test_auth_flow(test_client, test_session, test_mfa_user, **args):
     token = "abc123"
     domain = "test.cognito.domain.com"
     token_endpoint_url = f"https://{domain}/oauth2/token"
-    app.cognito_domain = domain
-    app.client_id = "123456"
-    app.client_secret = "987654"
-    app.redirect_host = "test.domain.com"
+    app.config["cognito_domain"] = domain
+    app.config["client_id"] = "123456"
+    app.config["client_secret"] = "987654"
+    app.config["redirect_host"] = "test.domain.com"
     stubber = stubs.mock_cognito_auth_flow(token, test_mfa_user)
 
     with test_client.session_transaction() as client_session:
@@ -231,11 +230,11 @@ def test_auth_flow_with_no_mfa_user(
     token = "abc123"
     domain = "test.cognito.domain.com"
     token_endpoint_url = f"https://{domain}/oauth2/token"
-    app.cognito_domain = domain
-    app.cf_space = "production"
-    app.client_id = "123456"
-    app.client_secret = "987654"
-    app.redirect_host = "test.domain.com"
+    app.config["cognito_domain"] = domain
+    app.app_environment = "production"
+    app.config["client_id"] = "123456"
+    app.config["client_secret"] = "987654"
+    app.config["redirect_host"] = "test.domain.com"
     stubber = stubs.mock_cognito_auth_flow(token, test_no_mfa_user)
 
     with test_client.session_transaction() as client_session:
@@ -481,18 +480,6 @@ def test_is_mfa_configured(test_mfa_user, test_no_mfa_user):
     test_wrong_preferred_device.update(test_mfa_user)
     test_wrong_preferred_device["PreferredMfaSetting"] = "Email_MFA"
     assert not is_mfa_configured(test_wrong_preferred_device)
-
-
-def test_setup_talisman():
-    app.cf_space = "testing"
-    talisman = setup_talisman(app)
-    assert not talisman.force_https
-    app.cf_space = "staging"
-    talisman = setup_talisman(app)
-    assert talisman.force_https
-    app.cf_space = "production"
-    talisman = setup_talisman(app)
-    assert talisman.force_https
 
 
 @pytest.mark.usefixtures("test_get_object")

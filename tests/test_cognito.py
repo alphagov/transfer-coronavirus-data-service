@@ -4,31 +4,6 @@ import cognito
 import stubs
 
 
-def test_env_pool_id_development():
-    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
-    stubber = stubs.mock_cognito_list_pools()
-    with stubber:
-        assert cognito.env_pool_id() == user_pool_id
-
-
-def test_env_pool_id_production(monkeypatch):
-    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
-    monkeypatch.setenv("CF_SPACE", "production")
-    stubber = stubs.mock_cognito_list_pools(env="prod")
-    with stubber:
-        assert cognito.env_pool_id() == user_pool_id
-
-
-def test_list_pools():
-    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
-    stubber = stubs.mock_cognito_list_pools()
-
-    with stubber:
-        pools = cognito.list_pools()
-        assert pools[0]["id"] == user_pool_id
-        stubber.deactivate()
-
-
 @pytest.mark.usefixtures("admin_user", "create_user_arguments")
 def test_create_user(admin_user, create_user_arguments):
     stubber = stubs.mock_cognito_admin_create_user(admin_user, create_user_arguments)

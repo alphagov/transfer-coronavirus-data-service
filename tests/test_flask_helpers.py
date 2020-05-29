@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from flask import session
 
@@ -10,6 +8,7 @@ from flask_helpers import (
     user_has_a_valid_role,
 )
 from main import app
+import config
 
 
 @pytest.mark.usefixtures("test_session", "test_upload_session")
@@ -25,24 +24,22 @@ def test_route_index_logged_in(test_session, test_upload_session):
 
 
 def test_is_admin_interface():
-    os.environ["ADMIN"] = "true"
+    config.set("admin", "true")
     assert is_admin_interface()
-    os.environ["ADMIN"] = "false"
+    config.set("admin", "false")
     assert not is_admin_interface()
-    del os.environ["ADMIN"]
+    config.delete("admin")
     assert not is_admin_interface()
 
 
 def test_is_development():
-    os.environ["CF_SPACE"] = "development"
+    config.set("app_environment", "staging")
     assert is_development()
-    os.environ["CF_SPACE"] = "staging"
+    config.set("app_environment", "testing")
     assert is_development()
-    os.environ["CF_SPACE"] = "testing"
-    assert is_development()
-    os.environ["CF_SPACE"] = "production"
+    config.set("app_environment", "production")
     assert not is_development()
-    del os.environ["CF_SPACE"]
+    config.delete("app_environment")
     assert not is_development()
 
 

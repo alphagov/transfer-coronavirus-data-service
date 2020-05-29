@@ -24,7 +24,6 @@ test: checks
 checks: clean
 	echo "⏳ running pipeline..."
 	set -e
-	isort --atomic -yq
 	black -q .
 	flake8 . --max-line-length=91
 	echo "✔️ Checks pipeline passed!"

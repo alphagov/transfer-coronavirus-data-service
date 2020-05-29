@@ -6,8 +6,9 @@ from datetime import datetime
 
 import pytest
 
-from main import app, load_environment
+from main import app
 from user import User
+from config import load_environment
 
 
 def get_standard_download_group():
@@ -168,12 +169,12 @@ def user_confirm_form():
 
 @pytest.fixture
 def mock_env_staging(monkeypatch):
-    monkeypatch.setenv("CF_SPACE", "staging")
+    monkeypatch.setenv("APP_ENVIRONMENT", "staging")
 
 
 @pytest.fixture
 def mock_env_production(monkeypatch):
-    monkeypatch.setenv("CF_SPACE", "production")
+    monkeypatch.setenv("APP_ENVIRONMENT", "production")
 
 
 @pytest.fixture
@@ -343,3 +344,23 @@ def test_mfa_user():
 @pytest.fixture()
 def test_get_object():
     return {"Body": "test,the,csv", "ResponseMetadata": {"HTTPStatusCode": 200}}
+
+
+@pytest.fixture()
+def test_ssm_parameters():
+    return {
+        "/cognito/client_id": "abc123",
+        "/cognito/client_secret": "def456",  # pragma: allowlist secret
+        "/cognito/domain": "example.com",
+        "/s3/bucket_name": "my_bucket",
+    }
+
+
+@pytest.fixture()
+def test_load_cognito_settings():
+    return {
+        "client_id": "abc123",
+        "client_secret": "def456",  # pragma: allowlist secret
+        "host_name": "example",
+        "domain": "auth.eu-west-2.amazoncognito.com",
+    }

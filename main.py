@@ -9,12 +9,12 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from flask import Flask, redirect, request, send_file, send_from_directory, session
-from flask_talisman import Talisman
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 
 import admin
 import cognito
+import config
 from flask_helpers import (
     admin_interface,
     end_user_interface,
@@ -28,51 +28,8 @@ from logger import LOG
 from user import User
 
 app = Flask(__name__)
-app.cf_space = os.getenv("CF_SPACE", "testing")
+app.app_environment = os.getenv("APP_ENVIRONMENT", "testing")
 app.logger = LOG
-
-
-def setup_talisman(app):
-    csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
-    is_https = app.cf_space != "testing"
-    log_message = (
-        "loading Talisman with HTTPS"
-        if is_https
-        else "loading Talisman for testing - no HTTPS"
-    )
-    app.logger.info(log_message)
-    return Talisman(
-        app,
-        force_https=is_https,
-        strict_transport_security=is_https,
-        session_cookie_secure=is_https,
-        content_security_policy=csp,
-    )
-
-
-def load_environment(app):
-    """
-    Load environment vars into flask app attributes
-    """
-    app.secret_key = os.getenv("APPSECRET", "secret")
-    app.client_id = os.getenv("CLIENT_ID", None)
-    app.cognito_domain = os.getenv("COGNITO_DOMAIN", None)
-    app.client_secret = os.getenv("CLIENT_SECRET", None)
-    app.redirect_host = os.getenv("REDIRECT_HOST")
-    app.bucket_name = os.getenv("BUCKET_NAME")
-    app.region = os.getenv("REGION")
-    set_app_settings(app)
-
-
-def set_app_settings(app):
-    """
-    Use existing env vars if loaded
-    """
-    if None in [app.client_id, app.cognito_domain, app.client_secret]:
-        cognito_credentials = cognito.load_app_settings()
-        app.cognito_domain = cognito_credentials["cognito_domain"]
-        app.client_id = cognito_credentials["client_id"]
-        app.client_secret = cognito_credentials["client_secret"]
 
 
 def exchange_code_for_session_user(code, code_verifier=None) -> dict:
@@ -85,17 +42,17 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
 
     payload = {
         "grant_type": "authorization_code",
-        "client_id": app.client_id,
-        "redirect_uri": "{}".format(app.redirect_host),
+        "client_id": app.config["client_id"],
+        "redirect_uri": "{}".format(app.config["redirect_host"]),
         "code": code,
     }
-    token_endpoint_url = "https://{}/oauth2/token".format(app.cognito_domain)
+    token_endpoint_url = "https://{}/oauth2/token".format(app.config["cognito_domain"])
 
     oauth_response = requests.post(
         token_endpoint_url,
         data=payload,
         headers=headers,
-        auth=HTTPBasicAuth(app.client_id, app.client_secret),
+        auth=HTTPBasicAuth(app.config["client_id"], app.config["client_secret"]),
     )
 
     oauth_response_body = oauth_response.json()
@@ -105,7 +62,7 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
     client = boto3.client("cognito-idp")
     cognito_user = client.get_user(AccessToken=oauth_response_body["access_token"])
 
-    is_not_production = app.cf_space != "production"
+    is_not_production = app.app_environment != "production"
     # only get these attributes if the MFA is present
     if is_not_production or is_mfa_configured(cognito_user):
         session["attributes"] = cognito_user["UserAttributes"]
@@ -265,10 +222,10 @@ def index():
         )
     else:
         login_url = (
-            f"https://{app.cognito_domain}/oauth2/authorize?"
-            f"client_id={app.client_id}&"
+            f"https://{app.config['cognito_domain']}/oauth2/authorize?"
+            f"client_id={app.config['client_id']}&"
             "response_type=code&"
-            f"redirect_uri={app.redirect_host}&"
+            f"redirect_uri={app.config['redirect_host']}&"
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
         return render_template_custom(
@@ -290,7 +247,9 @@ def logout():
 
     return redirect(
         "https://{}/logout?client_id={}&logout_uri={}".format(
-            app.cognito_domain, app.client_id, app.redirect_host
+            app.config["cognito_domain"],
+            app.config["client_id"],
+            app.config["redirect_host"],
         )
     )
 
@@ -308,12 +267,12 @@ def download(path):
     prefixes = load_user_lookup(session)
 
     user_can_see_object_path = key_has_granted_prefix(path, prefixes)
-    lambda_can_get_object = validate_access_to_s3_path(app.bucket_name, path)
+    lambda_can_get_object = validate_access_to_s3_path(app.config["bucket_name"], path)
 
     app.logger.debug("User granted access to path: %s", str(user_can_see_object_path))
     app.logger.debug("Lambda can get object: %s", str(lambda_can_get_object))
     if user_can_see_object_path and lambda_can_get_object:
-        redirect_url = create_presigned_url(app.bucket_name, path, 60)
+        redirect_url = create_presigned_url(app.config["bucket_name"], path, 60)
         if redirect_url is not None:
             app.logger.info(
                 "User {}: generated url for: {}".format(session["user"], path)
@@ -321,7 +280,7 @@ def download(path):
 
             if "details" in session and "attributes" in session:
                 if redirect_url.startswith(
-                    "https://{}.s3.amazonaws.com/".format(app.bucket_name)
+                    "https://{}.s3.amazonaws.com/".format(app.config["bucket_name"])
                 ):
                     app.logger.info(
                         "User {}: downloaded: {}".format(session["user"], path)
@@ -446,7 +405,7 @@ def create_presigned_post(object_name, expiration=3600):
     s3_client = boto3.client("s3")
     try:
         response = s3_client.generate_presigned_post(
-            app.bucket_name, object_name, ExpiresIn=expiration
+            app.config["bucket_name"], object_name, ExpiresIn=expiration
         )
 
         csvw = {
@@ -459,7 +418,7 @@ def create_presigned_post(object_name, expiration=3600):
 
         s3_client.put_object(
             Body=json.dumps(csvw),
-            Bucket=app.bucket_name,
+            Bucket=app.config["bucket_name"],
             Key="{}-metadata.json".format(object_name),
         )
     except ClientError as e:
@@ -476,12 +435,17 @@ def create_presigned_post(object_name, expiration=3600):
 @end_user_interface
 @requires_group_in_list(["standard-download", "standard-upload"])
 def files():
-    files = get_files(app.bucket_name, session)
+    files = get_files(app.config["bucket_name"], session)
 
     # TODO sorting
 
     return render_template_custom(
-        app, "files.html", user=session["user"], email=session["email"], files=files, is_la=return_attribute(session, "custom:is_la")
+        app,
+        "files.html",
+        user=session["user"],
+        email=session["email"],
+        files=files,
+        is_la=return_attribute(session, "custom:is_la"),
     )
 
 
@@ -581,7 +545,7 @@ def create_presigned_url(bucket_name: str, object_name: str, expiration=3600) ->
     # Generate a presigned URL for the S3 object
     s3_client = boto3.client(
         "s3",
-        region_name=app.region,
+        region_name=app.config["region"],
         config=boto3.session.Config(signature_version="s3v4"),
     )
     try:
@@ -645,8 +609,8 @@ def return_attribute(session: dict, get_attribute: str) -> str:
 def user_custom_paths(session, is_upload=False):
     # paths = []
 
-    app_download_path = os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data")
-    app_upload_path = os.getenv("BUCKET_UPLOAD_PREFIX", "web-app-upload")
+    app_download_path = config.get("bucket_main_prefix", "web-app-prod-data")
+    app_upload_path = config.get("bucket_upload_prefix", "web-app-upload")
 
     user_paths_attribute = return_attribute(session, "custom:paths")
     user_paths = user_paths_attribute.split(";")
@@ -688,16 +652,3 @@ def s3_remove_root_path(key):
     """
     file_link_path = re.sub(r"^[^/]+\/", "", key)
     return file_link_path
-
-
-def run():
-    """
-    Run a local server
-    """
-    setup_talisman(app)
-    load_environment(app)
-    app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
-
-
-if __name__ == "__main__":
-    run()

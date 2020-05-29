@@ -1,13 +1,13 @@
-import os
 from functools import wraps
 
 from flask import redirect, render_template, session
 
 from logger import LOG
+import config
 
 
 def is_admin_interface():
-    return os.getenv("ADMIN", "false") == "true"
+    return config.get("admin", "false") == "true"
 
 
 def has_admin_role():
@@ -42,7 +42,7 @@ def current_group_name():
 
 
 def is_development():
-    return os.getenv("CF_SPACE", "production") != "production"
+    return config.get("app_environment", "production") != "production"
 
 
 def admin_interface(flask_route):
@@ -155,9 +155,9 @@ def render_template_custom(app, template, hide_logout=False, **args):
     args["show_logout"] = show_logout
     args["display_username"] = display_username
 
-    page_title = os.getenv("PAGE_TITLE", "GOV.UK")
+    page_title = config.get("page_title", "Data Transfer")
     if is_development():
-        page_title = "{} - {}".format(app.cf_space.upper(), page_title)
+        page_title = "{} - {}".format(app.app_environment.upper(), page_title)
     args["title"] = page_title
 
     return render_template(template, **args)

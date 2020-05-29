@@ -1,59 +1,20 @@
 import os
 import sys
 
-import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
-
-from logger import LOG
-from main import run
+import config
+from main import app
 
 
-def setup_local_environment(
-    host="localhost", port=8000, is_admin=False, environment=None
-):
-
-    region = "eu-west-2"
-
-    os.environ["ADMIN"] = "true" if is_admin else "false"
-    # TODO remove once admin app running online
-    os.environ["ADMIN_AWS_AUTH"] = "true" if is_admin else "false"
-
-    if environment:
-        os.environ["CF_SPACE"] = environment
-        if environment == "testing":
-            os.environ["BUCKET_NAME"] = "backend-consumer-service-test"
-
-    os.environ["PAGE_TITLE"] = "LOCAL COVID-19 Data Transfer"
-    os.environ["FLASK_ENV"] = "development"
-    os.environ["LOG_LEVEL"] = "DEBUG"
-    os.environ["REDIRECT_HOST"] = f"http://{host}:{port}"
-    os.environ["AWS_DEFAULT_REGION"] = region
-    os.environ["REGION"] = region
-
-    ssm_prefix = "/transfer-coronavirus-data-service"
-    ssm_parameter_map = {
-        "/cognito/client_id": "CLIENT_ID",
-        "/cognito/client_secret": "CLIENT_SECRET",
-        "/cognito/domain": "COGNITO_DOMAIN",
-        "/s3/bucket_name": "BUCKET_NAME",
-    }
-
-    ssm_client = boto3.client("ssm")
-
-    try:
-        ssm_parameters = ssm_client.get_parameters_by_path(
-            Path=ssm_prefix, Recursive=True, WithDecryption=True
-        )
-
-        for param in ssm_parameters["Parameters"]:
-            for param_name, env_var_name in ssm_parameter_map.items():
-                if param["Name"].endswith(param_name):
-                    os.environ[env_var_name] = param["Value"]
-                    LOG.debug("Set env var: %s from ssm", env_var_name)
-
-    except ClientError as error:
-        LOG.error(error)
-    except NoCredentialsError:
+def run():
+    """
+    Run a local server
+    """
+    config.setup_talisman(app)
+    config.load_environment(app)
+    ssm_loaded = config.load_ssm_parameters()
+    if ssm_loaded:
+        app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
+    else:
         green_char = "\033[92m"
         end_charac = "\033[0m"
         print("-" * 35)
@@ -64,14 +25,7 @@ def setup_local_environment(
         exit()
 
 
-if __name__ == "__main__":
-
-    if len(sys.argv) == 3:
-        is_admin = sys.argv[1] == "admin"
-        env_load = sys.argv[2]
-    else:
-        is_admin = False
-        env_load = "testing"
+def handle_args(is_admin, env_load):
 
     green_char = "\033[92m"
     end_charac = "\033[0m"
@@ -104,5 +58,16 @@ if __name__ == "__main__":
             exit()
     print("-" * 35)
 
-    setup_local_environment(is_admin=is_admin, environment=env_load)
+
+if __name__ == "__main__":
+
+    if len(sys.argv) == 3:
+        is_admin = sys.argv[1] == "admin"
+        env_load = sys.argv[2]
+    else:
+        is_admin = False
+        env_load = "testing"
+
+    handle_args(is_admin, env_load)
+    config.setup_local_environment(is_admin=is_admin, environment=env_load)
     run()
