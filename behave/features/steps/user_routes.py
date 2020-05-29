@@ -8,9 +8,10 @@ from behave import given, then, when
 
 def get_plus_string(group_name):
     # To keep things short I've truncated the stage name
-    # in the plus string from the APP_ENVIRONMENT env var
+    # in the plus string from the longer name used in the
+    # ENVIRONMENT env var
     stages = {"testing": "test", "staging": "stage"}
-    env = stages[os.environ.get("APP_ENVIRONMENT", "testing")]
+    env = stages[os.environ.get("ENVIRONMENT", "testing")]
 
     # for a stupid reason I created all the test users
     # with a slightly different naming convention
