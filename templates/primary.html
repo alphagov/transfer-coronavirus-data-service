@@ -94,22 +94,29 @@
 
     <main class="govuk-main-wrapper govuk-body" id="main-content" role="main">
 
-      {% if show_back_link %}
-      <a href="/" class="govuk-back-link">Back</a>
-      {% endif %}
-
-      {% if show_logout %}
-        <p>
-          You're currently logged in as
-          <span class="covid-transfer-username">{{ display_username }}</span>.
-        </p>
-        <p>
-          <a href="/logout" class="covid-transfer-logout-button">
-            <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">Logout</button>
-          </a>
-        </p>
-      {% endif %}
-      {% block content %}{% endblock %}
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          {% if show_back_link %}
+          <a href="/" class="govuk-back-link">Back</a>
+          {% endif %}
+          {% block content %}{% endblock %}
+        </div>
+        <div class="govuk-grid-column-one-third">
+        {% if show_logout %}
+          <p>
+            You're currently logged in as
+            <span class="covid-transfer-username">
+              {{ display_username }}
+            </span>.
+          </p>
+          <p>
+            <a href="/logout" class="covid-transfer-logout-button">
+              <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">Logout</button>
+            </a>
+          </p>
+        {% endif %}
+        </div>
+      </div>
     </main>
   </div>
 
