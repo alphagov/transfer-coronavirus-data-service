@@ -42,7 +42,7 @@ def current_group_name():
 
 
 def is_development():
-    return config.get("app_environment", "production") != "production"
+    return config.get("app_environment", "prod") != "prod"
 
 
 def admin_interface(flask_route):

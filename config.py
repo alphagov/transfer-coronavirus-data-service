@@ -174,12 +174,14 @@ def get_cognito_pool_name():
         suffix = environment
 
     pool_name = f"{pool_name_prefix}-{suffix}"
-    LOG.debug({
-        "pool_name": pool_name,
-        "pool_name_prefix": pool_name_prefix,
-        "suffix": suffix,
-        "environment": environment
-    })
+    LOG.debug(
+        {
+            "pool_name": pool_name,
+            "pool_name_prefix": pool_name_prefix,
+            "suffix": suffix,
+            "environment": environment,
+        }
+    )
 
     set("cognito_pool_name", pool_name)
 
@@ -196,10 +198,7 @@ def env_pool_id():
                 pool_id = pool["id"]
                 break
 
-    LOG.debug({
-        "pool_name": pool_name,
-        "pool_id": pool_id
-    })
+    LOG.debug({"pool_name": pool_name, "pool_id": pool_id})
 
     return pool_id
 

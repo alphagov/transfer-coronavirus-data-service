@@ -37,7 +37,7 @@ def test_is_development():
     assert is_development()
     config.set("app_environment", "testing")
     assert is_development()
-    config.set("app_environment", "production")
+    config.set("app_environment", "prod")
     assert not is_development()
     config.delete("app_environment")
     assert not is_development()
