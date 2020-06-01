@@ -149,7 +149,7 @@ def render_template_custom(template, hide_logout=False, **args):
     display_username = ""
     if "details" in session and not hide_logout:
         show_logout = True
-        display_username = session["email"]
+        display_username = session.get("name", session.get("email"))
 
     args["show_back_link"] = show_back_link
     args["show_logout"] = show_logout

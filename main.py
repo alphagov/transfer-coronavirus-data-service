@@ -68,6 +68,7 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
         session["attributes"] = cognito_user["UserAttributes"]
         session["user"] = cognito_user["Username"]
         session["email"] = return_attribute(session, "email")
+        session["name"] = return_attribute(session, "name")
         session["details"] = id_token
         session["group"] = User.group(cognito_user["Username"])
         app.logger.info(
