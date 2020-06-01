@@ -65,7 +65,15 @@ def admin_user(app):
 
 
 def admin_user_error(app):
-    return render_template_custom(app, "admin/user-error.html")
+    error_message = session.get("error_message", "Something went wrong")
+    app.logger.error(f"Server error: {error_message}")
+    del session["error_message"]
+    return (
+        render_template_custom(
+            app, "error.html", hide_logout=True, error=error_message
+        ),
+        403,
+    )
 
 
 def sanitise_string(instr):
@@ -138,6 +146,8 @@ def admin_confirm_user(app):
             target = "/admin/user?done={}&email={}".format(
                 state, quote(admin_user_object["email"])
             )
+        # If this fails an error message should have been added to the session
+        # by the user.create or user.update methods.
         clear_session(app)
         return redirect(target)
 
