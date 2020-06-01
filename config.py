@@ -96,7 +96,7 @@ def setup_local_environment(
     os.environ["REGION"] = region
 
 
-def load_ssm_parameters():
+def load_ssm_parameters(app):
     ssm_parameters_retrieved = True
     ssm_prefix = "/transfer-coronavirus-data-service"
     ssm_parameter_map = {
@@ -104,6 +104,7 @@ def load_ssm_parameters():
         "/cognito/client_secret": "client_secret",  # pragma: allowlist secret
         "/cognito/domain": "cognito_domain",
         "/s3/bucket_name": "bucket_name",
+        "/flask/secret_key": "secret_key"
     }
 
     ssm_client = boto3.client("ssm")
@@ -114,10 +115,17 @@ def load_ssm_parameters():
         )
 
         for param in ssm_parameters["Parameters"]:
-            for param_name, env_var_name in ssm_parameter_map.items():
+            for param_name, config_var_name in ssm_parameter_map.items():
                 if param["Name"].endswith(param_name):
-                    set(env_var_name, param["Value"])
-                    LOG.debug("Set env var: %s from ssm", env_var_name)
+
+                    # The flask secret_key is attached directly to app
+                    # instead of set in app.config
+                    if config_var_name == "secret_key":
+                        LOG.debug("Set app property: %s from ssm", config_var_name)
+                        app.secret_key = param["Value"]
+
+                    set(config_var_name, param["Value"])
+                    LOG.debug("Set config var: %s from ssm", config_var_name)
 
     except ClientError as error:
         LOG.error(error)
