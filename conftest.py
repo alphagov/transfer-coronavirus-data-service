@@ -365,6 +365,7 @@ def test_ssm_parameters():
         "/cognito/client_secret": "def456",  # pragma: allowlist secret
         "/cognito/domain": "example.com",
         "/s3/bucket_name": "my_bucket",
+        "/flask/secret_key": "my_secret_key",
     }
 
 

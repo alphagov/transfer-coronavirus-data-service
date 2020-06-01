@@ -38,10 +38,11 @@ def test_read_env_variables():
 
 @pytest.mark.usefixtures("test_ssm_parameters")
 def test_load_ssm_parameters(test_ssm_parameters):
+    app = Flask(__name__)
     path = "/transfer-coronavirus-data-service"
     stubber = stubs.mock_config_load_ssm_parameters(path, test_ssm_parameters)
     with stubber:
-        config.load_ssm_parameters()
+        config.load_ssm_parameters(app)
         assert config.get("client_id") == test_ssm_parameters["/cognito/client_id"]
         assert (
             config.get("client_secret") == test_ssm_parameters["/cognito/client_secret"]

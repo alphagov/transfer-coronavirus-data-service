@@ -104,7 +104,7 @@ def load_ssm_parameters(app):
         "/cognito/client_secret": "client_secret",  # pragma: allowlist secret
         "/cognito/domain": "cognito_domain",
         "/s3/bucket_name": "bucket_name",
-        "/flask/secret_key": "secret_key"
+        "/flask/secret_key": "secret_key",
     }
 
     ssm_client = boto3.client("ssm")
