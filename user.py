@@ -63,27 +63,47 @@ class User:
     """
 
     def create(self, name, phone_number, custom_paths, is_la, group_name):
-        phone_number = self.sanitise_phone(phone_number)
+        """
+        Create a new user in Cognito user pool
 
-        steps = {"created": False}
+        Validate the inputs.
+        A user is only valid if their MFA and group settings
+        are correct.
+        Return True only if all steps are processed successfully.
+        """
+        error = None
+        steps = {}
 
+        # Validate email
         if not self.email_address_is_valid():
-            return False
+            steps["email_valid"] = False
+            error = "Email address is invalid."
+
+        # Validate phone number
+        phone_number = self.sanitise_phone(phone_number)
         if phone_number == "":
-            return False
+            steps["phone_valid"] = False
+            error = "Phone number is empty."
+
+        # Validate user custom settings
         if not self.user_paths_are_valid(is_la, custom_paths, group_name):
-            return False
+            steps["paths_valid"] = False
+            error = "The granted access permissions are not valid."
 
-        steps["created"] = cognito.create_user(
-            name, self.email_address, phone_number, is_la, custom_paths
-        )
+        if all(steps.values()):
+            steps["created"] = cognito.create_user(
+                name, self.email_address, phone_number, is_la, custom_paths
+            )
 
-        if steps["created"]:
+        if steps.get("created"):
             steps["set_mfa"] = self.set_mfa_preferences()
             steps["set_settings"] = self.set_user_settings()
             steps["added_to_group"] = self.add_to_group(group_name)
         else:
-            config.set_session_var("error_message", "Failed to create user.")
+            error = "Failed to create user."
+
+        if error:
+            config.set_session_var("error_message", error)
         # Return True only if all settings were successfully set
         return all(steps.values())
 
@@ -135,9 +155,15 @@ class User:
         return re.sub(r"[^a-zA-Z0-9-_\']", "", name)
 
     def update(self, name, phone_number, custom_paths, is_la, group):
+        """
+        Validate the input fields and existing user settings.
 
-        steps = {"updated": False}
+        Perform update only if all validation steps pass.
+        Return True only if all steps pass.
+        """
+
         error = None
+        steps = {}
 
         # Check user exists
         steps["user_found"] = self.get_details() == {}
