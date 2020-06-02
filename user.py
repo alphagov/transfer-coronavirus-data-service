@@ -103,6 +103,13 @@ class User:
         else:
             error = "Failed to create user."
 
+        if steps.get("created") and not all(steps.values()):
+            # If the user was created successfully
+            # but the group or SMS 2FA operations fail
+            # the user should be disabled.
+            if steps.get("created"):
+                cognito.disable_user(self.email_address)
+
         if error:
             config.set_session_var("error_message", error)
             LOG.error(
@@ -112,6 +119,7 @@ class User:
                     "status": steps,
                 }
             )
+
         # Return True only if all settings were successfully set
         return all(steps.values())
 

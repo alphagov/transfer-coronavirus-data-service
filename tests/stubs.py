@@ -108,6 +108,8 @@ def mock_cognito_create_user_set_mfa_fails(admin_user, create_user_arguments):
     stub_response_cognito_admin_add_user_to_group(
         stubber, admin_user["email"], group_name
     )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -143,6 +145,8 @@ def mock_cognito_create_user_set_user_settings_fails(admin_user, create_user_arg
     stub_response_cognito_admin_add_user_to_group(
         stubber, admin_user["email"], group_name
     )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
 
     stubber.activate()
     # override boto.client to return the mock client
@@ -178,6 +182,9 @@ def mock_cognito_create_user_add_user_to_group_fails(admin_user, create_user_arg
             "GroupName": group_name,
         },
     )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
+
     stubber.activate()
     # override boto.client to return the mock client
     boto3.client = lambda service, region_name=None: client
