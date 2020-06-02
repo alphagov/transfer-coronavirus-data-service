@@ -136,7 +136,7 @@ class User:
 
     def update(self, name, phone_number, custom_paths, is_la, group):
 
-        steps = {"valid": True}
+        steps = {"updated": False}
         error = None
 
         # Check user exists
