@@ -105,6 +105,13 @@ class User:
 
         if error:
             config.set_session_var("error_message", error)
+            LOG.error(
+                {
+                    "message": "User operation failed",
+                    "action": "user.create",
+                    "status": steps,
+                }
+            )
         # Return True only if all settings were successfully set
         return all(steps.values())
 
@@ -205,6 +212,13 @@ class User:
 
         if error:
             config.set_session_var("error_message", error)
+            LOG.error(
+                {
+                    "message": "User operation failed",
+                    "action": "user.update",
+                    "status": steps,
+                }
+            )
 
         # Return True if valid and updated
         return all(steps.values())
