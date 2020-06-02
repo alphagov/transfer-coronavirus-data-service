@@ -253,7 +253,7 @@ class User:
 
         # All non-admin users should have a non-empty path in custom:paths
         if "admin" not in group_name and paths_semicolon_separated == "":
-            LOG.info(
+            LOG.error(
                 {
                     "user": self.email_address,
                     "group": group_name,
@@ -276,7 +276,7 @@ class User:
                 user_is_local_authority = is_la == "1"
                 path_is_local_authority = path.startswith(la_path)
                 if user_is_local_authority != path_is_local_authority:
-                    LOG.info(
+                    LOG.error(
                         {
                             "user": self.email_address,
                             "group": group_name,
