@@ -90,6 +90,7 @@ class User:
             steps["paths_valid"] = False
             error = "The granted access permissions are not valid."
 
+        # Only attempt create if all previous steps passed
         if all(steps.values()):
             steps["created"] = cognito.create_user(
                 name, self.email_address, phone_number, is_la, custom_paths
