@@ -273,3 +273,66 @@ def test_reinvite_create_user_fails(
     with stubber:
         assert not valid_user.reinvite()
         stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user", "create_user_arguments")
+def test_user_create_fails_if_admin_set_mfa_preference_fails(
+    admin_user, create_user_arguments
+):
+    group_name = admin_user["group"]["value"]
+    stubber = stubs.mock_cognito_create_user_set_mfa_fails(
+        admin_user, create_user_arguments
+    )
+
+    with stubber:
+        test_user = User(admin_user["email"])
+        assert not test_user.create(
+            admin_user["name"],
+            admin_user["phone_number"],
+            admin_user["custom:paths"],
+            admin_user["custom:is_la"],
+            group_name,
+        )
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user", "create_user_arguments")
+def test_user_create_fails_if_admin_set_user_settings_fails(
+    admin_user, create_user_arguments
+):
+    group_name = admin_user["group"]["value"]
+    stubber = stubs.mock_cognito_create_user_set_user_settings_fails(
+        admin_user, create_user_arguments
+    )
+
+    with stubber:
+        test_user = User(admin_user["email"])
+        assert not test_user.create(
+            admin_user["name"],
+            admin_user["phone_number"],
+            admin_user["custom:paths"],
+            admin_user["custom:is_la"],
+            group_name,
+        )
+        stubber.deactivate()
+
+
+@pytest.mark.usefixtures("admin_user", "create_user_arguments")
+def test_user_create_fails_if_admin_add_user_to_group_fails(
+    admin_user, create_user_arguments
+):
+    group_name = admin_user["group"]["value"]
+    stubber = stubs.mock_cognito_create_user_add_user_to_group_fails(
+        admin_user, create_user_arguments
+    )
+
+    with stubber:
+        test_user = User(admin_user["email"])
+        assert not test_user.create(
+            admin_user["name"],
+            admin_user["phone_number"],
+            admin_user["custom:paths"],
+            admin_user["custom:is_la"],
+            group_name,
+        )
+        stubber.deactivate()
