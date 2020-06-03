@@ -196,7 +196,7 @@ def server_error_400(error):
 def index():
 
     # Log user-agent for browser use analysis
-    app.logger.debug({
+    app.logger.info({
         "user-agent": request.headers.get("User-Agent")
     })
 
