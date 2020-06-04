@@ -61,6 +61,9 @@ copy_dir:
 
 build: clean target_dir add_deps copy_dir
 
+s3paths:
+	bash s3paths.sh
+
 run: rebuild
 	docker-compose run --service-ports chrome-driver python3 run.py main testing
 
