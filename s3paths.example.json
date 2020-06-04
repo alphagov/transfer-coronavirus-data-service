@@ -1,0 +1,12 @@
+[
+  {
+    "type": "[access-type]",
+    "main": "root-path",
+    "subs": [
+      {
+        "disp": "[Access Permission Name]",
+        "val": "root-path/path/to/desired/folder"
+      }
+    ]
+  }
+]
