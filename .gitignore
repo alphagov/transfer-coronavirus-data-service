@@ -36,3 +36,6 @@ venv.bak/
 behave_env.sh
 builds/*
 .target/*
+
+# Generated files
+s3paths.json
