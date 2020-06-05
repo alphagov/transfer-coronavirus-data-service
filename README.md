@@ -144,3 +144,17 @@ eval $(gds aws security-test -e); make e2e
 The tests are automatically run against staging in the 
 pipeline but can be run manually by assuming a 
 different role and setting different credentials. 
+
+## Configuration
+
+The config.py module provides an interface to the  
+standard Flask app.config. The reason for this is 
+by setting this up in config functions in modules 
+that don't have access to the flask app object can 
+get and set config settings without having to 
+import app.
+
+A number of settings are passed into the app as 
+environment variables and these are loaded into 
+app.config as the first step of the local run module 
+and the lambda lambda_handler module.   
