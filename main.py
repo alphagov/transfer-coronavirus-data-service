@@ -195,6 +195,11 @@ def server_error_400(error):
 @app.route("/index")
 def index():
 
+    # Log user-agent for browser use analysis
+    app.logger.info({
+        "user-agent": request.headers.get("User-Agent")
+    })
+
     args = request.args
 
     # TODO remove below if statement once admin app running online
