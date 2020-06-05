@@ -157,7 +157,7 @@ def render_template_custom(app, template, hide_logout=False, **args):
 
     page_title = config.get("page_title", "Data Transfer")
     if is_development():
-        page_title = "{} - {}".format(app.app_environment.upper(), page_title)
+        page_title = "{} - {}".format(config.get("app_environment").upper(), page_title)
     args["title"] = page_title
 
     return render_template(template, **args)

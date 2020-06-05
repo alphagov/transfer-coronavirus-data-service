@@ -3,6 +3,7 @@ import os
 import pytest
 
 import stubs
+import config
 from user import User
 
 
@@ -85,6 +86,7 @@ def test_sanitise_name(valid_user):
 def test_update_returns_false_if_user_not_found(valid_user):
     email = valid_user.email_address
     stubber = stubs.mock_user_not_found(email)
+    config.set("app_environment", "testing")
     with stubber:
         assert not valid_user.update(
             "new name", "+441234567890", "web-app-prod-data", "0", "standard-upload"

@@ -32,7 +32,7 @@ def admin(event, context):
 
 
 def run(event, context):
-    config.setup_talisman(app)
     config.load_environment(app)
+    config.setup_talisman(app)
     config.load_ssm_parameters(app)
     return serverless_wsgi.handle_request(app, event, context)

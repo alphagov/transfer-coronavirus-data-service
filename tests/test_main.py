@@ -7,6 +7,7 @@ import pytest
 import requests_mock
 
 import stubs
+import config
 from main import (
     app,
     categorise_file,
@@ -237,7 +238,7 @@ def test_auth_flow_with_no_mfa_user(
     domain = "test.cognito.domain.com"
     token_endpoint_url = f"https://{domain}/oauth2/token"
     app.config["cognito_domain"] = domain
-    app.app_environment = "production"
+    config.set("app_environment", "production")
     app.config["client_id"] = "123456"
     app.config["client_secret"] = "987654"
     app.config["redirect_host"] = "test.domain.com"

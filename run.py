@@ -9,8 +9,8 @@ def run():
     """
     Run a local server
     """
-    config.setup_talisman(app)
     config.load_environment(app)
+    config.setup_talisman(app)
     ssm_loaded = config.load_ssm_parameters(app)
     if ssm_loaded:
         app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
