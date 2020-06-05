@@ -231,7 +231,7 @@ def list_pools():
 
 def load_s3_paths():
     try:
-        with open("s3paths.json", 'r') as s3paths_file:
+        with open("s3paths.json", "r") as s3paths_file:
             s3paths = json.load(s3paths_file)
     except (FileNotFoundError, json.JSONDecodeError) as error:
         LOG.error(error)
