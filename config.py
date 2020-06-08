@@ -12,7 +12,7 @@ CONFIG = {}
 
 def setup_talisman(app):
     csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
-    is_https = app.app_environment != "testing"
+    is_https = get("app_environment", "testing") != "testing"
     log_message = (
         "loading Talisman with HTTPS"
         if is_https

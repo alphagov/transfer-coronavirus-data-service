@@ -9,17 +9,17 @@ import config
 
 def test_setup_talisman():
     app = Flask(__name__)
-    app.app_environment = "testing"
+    config.set("app_environment", "testing")
     talisman = config.setup_talisman(app)
     assert not talisman.force_https
 
     app = Flask(__name__)
-    app.app_environment = "staging"
+    config.set("app_environment", "staging")
     talisman = config.setup_talisman(app)
     assert talisman.force_https
 
     app = Flask(__name__)
-    app.app_environment = "production"
+    config.set("app_environment", "production")
     talisman = config.setup_talisman(app)
     assert talisman.force_https
 

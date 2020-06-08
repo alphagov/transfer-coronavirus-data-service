@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import json
-import os
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -29,7 +28,6 @@ from logger import LOG
 from user import User
 
 app = Flask(__name__)
-app.app_environment = os.getenv("APP_ENVIRONMENT", "testing")
 app.logger = LOG
 
 
@@ -63,7 +61,7 @@ def exchange_code_for_session_user(code, code_verifier=None) -> dict:
     client = boto3.client("cognito-idp")
     cognito_user = client.get_user(AccessToken=oauth_response_body["access_token"])
 
-    is_not_production = app.app_environment != "production"
+    is_not_production = config.get("app_environment") != "production"
     # only get these attributes if the MFA is present
     if is_not_production or is_mfa_configured(cognito_user):
         session["attributes"] = cognito_user["UserAttributes"]
