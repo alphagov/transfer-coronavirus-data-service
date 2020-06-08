@@ -148,11 +148,12 @@ different role and setting different credentials.
 ## Configuration
 
 The config.py module provides an interface to the  
-standard Flask app.config. The reason for this is 
-by setting this up in config functions in modules 
-that don't have access to the flask app object can 
-get and set config settings without having to 
-import app.
+standard Flask app.config. The interface makes it 
+easier and more effective to set and get 
+configuration values. We retrieve configuration 
+settings without having to import the app every 
+time by using config functions in modules which 
+don't have access to the flask app object.
 
 A number of settings are passed into the app as 
 environment variables and these are loaded into 
