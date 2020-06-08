@@ -4,10 +4,11 @@
 from flask import Flask, escape, redirect, request, session, url_for
 from requests.utils import quote, unquote
 
-import s3paths
 from cognito_groups import get_group_by_name, return_users_group, user_groups
 from flask_helpers import render_template_custom, user_has_a_valid_role
 from user import User
+import config
+
 
 local_valid_paths_var = []
 
@@ -15,7 +16,7 @@ local_valid_paths_var = []
 def _local_valid_paths():
     global local_valid_paths_var
     if local_valid_paths_var == []:
-        local_valid_paths_var = s3paths.valid_paths()
+        local_valid_paths_var = config.load_s3_paths()
     return local_valid_paths_var
 
 

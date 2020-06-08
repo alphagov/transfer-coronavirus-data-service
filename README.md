@@ -25,12 +25,15 @@ The links are presigned URLs to S3 with a short expiration time.
 
 ## S3 folder layout
 
-- web-app-prod-data
+- web-app-[env]-data
   - local_authority (only accessed if `is_la` is true)
     - blackpool
   - wholesaler
   - dwp
 
+This configuration is handled via an ignored file called `s3paths.json`
+
+GDS users can generate this file by running `make s3paths` 
 
 ## Admin interface
 Using the admin interface:

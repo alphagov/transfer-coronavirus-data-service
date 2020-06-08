@@ -1,4 +1,5 @@
 import os
+import json
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
@@ -226,6 +227,16 @@ def list_pools():
             for pool in response["UserPools"]
         ]
     return pool_list
+
+
+def load_s3_paths():
+    try:
+        with open("s3paths.json", "r") as s3paths_file:
+            s3paths = json.load(s3paths_file)
+    except (FileNotFoundError, json.JSONDecodeError) as error:
+        LOG.error(error)
+        s3paths = []
+    return s3paths
 
 
 def get(setting_name, default=None):
