@@ -3,6 +3,7 @@ import json
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from flask import session
 
 from flask_talisman import Talisman
 
@@ -249,3 +250,19 @@ def set(setting_name, value=None):
 
 def delete(setting_name):
     del CONFIG[setting_name]
+
+
+def set_session_var(name, value=None):
+    try:
+        session[name] = value
+    except RuntimeError as err:
+        LOG.error("Failed to set variable is session: " + str(err))
+
+
+def get_session_var(name, default=None):
+    try:
+        value = session.get(name, default)
+    except RuntimeError as err:
+        LOG.error("Failed to get variable from session: " + str(err))
+        value = None
+    return value

@@ -80,6 +80,117 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
     return stubber
 
 
+def mock_cognito_create_user_set_mfa_fails(admin_user, create_user_arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    group_name = admin_user["group"]["value"]
+
+    stubber = Stubber(client)
+
+    # Add responses
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
+    stub_response_cognito_list_user_pools(stubber)
+    # Replace admin_set_user_mfa_preference response with ClientError
+    # stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
+    stubber.add_client_error(
+        "admin_set_user_mfa_preference",
+        expected_params={
+            "SMSMfaSettings": {"Enabled": True, "PreferredMfa": True},
+            "UserPoolId": MOCK_COGNITO_USER_POOL_ID,
+            "Username": admin_user["email"],
+        },
+    )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_add_user_to_group(
+        stubber, admin_user["email"], group_name
+    )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_create_user_set_user_settings_fails(admin_user, create_user_arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    group_name = admin_user["group"]["value"]
+
+    stubber = Stubber(client)
+
+    # Add responses
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
+    stub_response_cognito_list_user_pools(stubber)
+    # stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
+    stubber.add_client_error(
+        "admin_set_user_settings",
+        expected_params={
+            "MFAOptions": [{"DeliveryMedium": "SMS", "AttributeName": "phone_number"}],
+            "UserPoolId": MOCK_COGNITO_USER_POOL_ID,
+            "Username": admin_user["email"],
+        },
+    )
+
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_add_user_to_group(
+        stubber, admin_user["email"], group_name
+    )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
+def mock_cognito_create_user_add_user_to_group_fails(admin_user, create_user_arguments):
+    _keep_it_real()
+    client = boto3.real_client("cognito-idp")
+
+    group_name = admin_user["group"]["value"]
+
+    stubber = Stubber(client)
+
+    # Add responses
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
+    stub_response_cognito_list_user_pools(stubber)
+
+    # stub_response_cognito_admin_add_user_to_group(
+    #     stubber, admin_user["email"], group_name
+    # )
+    stubber.add_client_error(
+        "admin_add_user_to_group",
+        expected_params={
+            "UserPoolId": MOCK_COGNITO_USER_POOL_ID,
+            "Username": admin_user["email"],
+            "GroupName": group_name,
+        },
+    )
+    stub_response_cognito_list_user_pools(stubber)
+    stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
+
+    stubber.activate()
+    # override boto.client to return the mock client
+    boto3.client = lambda service, region_name=None: client
+    return stubber
+
+
 def mock_cognito_list_pools(env="development"):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")

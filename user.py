@@ -63,37 +63,87 @@ class User:
     """
 
     def create(self, name, phone_number, custom_paths, is_la, group_name):
-        phone_number = self.sanitise_phone(phone_number)
+        """
+        Create a new user in Cognito user pool
 
-        set_mfa = False
-        set_settings = False
-        added_to_group = False
+        Validate the inputs.
+        A user is only valid if their MFA and group settings
+        are correct.
+        Return True only if all steps are processed successfully.
+        """
+        error = None
+        steps = {}
 
+        # Validate email
         if not self.email_address_is_valid():
-            return False
+            steps["email_valid"] = False
+            error = "Email address is invalid."
+
+        # Validate phone number
+        phone_number = self.sanitise_phone(phone_number)
         if phone_number == "":
-            return False
+            steps["phone_valid"] = False
+            error = "Phone number is empty."
+
+        # Validate user custom settings
         if not self.user_paths_are_valid(is_la, custom_paths, group_name):
-            return False
+            steps["paths_valid"] = False
+            error = "The granted access permissions are not valid."
 
-        created = cognito.create_user(
-            name, self.email_address, phone_number, is_la, custom_paths
-        )
+        # Only attempt create if all previous steps passed
+        if all(steps.values()):
+            steps["created"] = cognito.create_user(
+                name, self.email_address, phone_number, is_la, custom_paths
+            )
 
-        if created:
-            set_mfa = self.set_mfa_preferences()
-            set_settings = self.set_user_settings()
-            added_to_group = self.add_to_group(group_name)
-        return set_mfa and set_settings and added_to_group
+        if steps.get("created"):
+            steps["set_mfa"] = self.set_mfa_preferences()
+            steps["set_settings"] = self.set_user_settings()
+            steps["added_to_group"] = self.add_to_group(group_name)
+        else:
+            error = "Failed to create user."
+
+        if steps.get("created") and not all(steps.values()):
+            # If the user was created successfully
+            # but the group or SMS 2FA operations fail
+            # the user should be disabled.
+            if steps.get("created"):
+                cognito.disable_user(self.email_address)
+
+        if error:
+            config.set_session_var("error_message", error)
+            LOG.error(
+                {
+                    "message": "User operation failed",
+                    "action": "user.create",
+                    "status": steps,
+                }
+            )
+
+        # Return True only if all settings were successfully set
+        return all(steps.values())
 
     def set_mfa_preferences(self):
-        return cognito.set_mfa_preferences(self.email_address)
+        is_set = cognito.set_mfa_preferences(self.email_address)
+        if not is_set:
+            config.set_session_var("error_message", "Failed to set MFA preferences.")
+        return is_set
 
     def set_user_settings(self):
-        return cognito.set_user_settings(self.email_address)
+        is_set = cognito.set_user_settings(self.email_address)
+        if not is_set:
+            config.set_session_var(
+                "error_message", "Failed to set preferred MFA to mobile."
+            )
+        return is_set
 
     def add_to_group(self, group_name=None):
-        return cognito.add_to_group(self.email_address, group_name)
+        is_set = cognito.add_to_group(self.email_address, group_name)
+        if not is_set:
+            config.set_session_var(
+                "error_message", f"Failed to add user to {group_name} group."
+            )
+        return is_set
 
     def set_group(self, new_group_name):
         if new_group_name is None:
@@ -121,27 +171,65 @@ class User:
         return re.sub(r"[^a-zA-Z0-9-_\']", "", name)
 
     def update(self, name, phone_number, custom_paths, is_la, group):
-        if self.get_details() == {}:
-            return False
+        """
+        Validate the input fields and existing user settings.
 
-        if (
+        Perform update only if all validation steps pass.
+        Return True only if all steps pass.
+        """
+
+        error = None
+        steps = {}
+
+        # Check user exists
+        steps["user_found"] = self.get_details() == {}
+        if not steps.get("user_found"):
+            error = "Failed to get user details to update."
+
+        # Check input parameters are all set
+        steps["inputs_valid"] = (
             name is None
             and phone_number is None
             and custom_paths is None
             and is_la is None
             and group is None
-        ):
-            return False
-        user_attributes = []
-        try:
-            user_attributes += self.__attribute("custom:is_la", is_la)
-            user_attributes += self.__attribute("name", self.sanitise_name(name))
-            user_attributes += self.__custom_path_attribute(is_la, custom_paths, group)
-            user_attributes += self.__phone_number_attribute(phone_number)
-            self.set_group(group)
-        except ValueError:
-            return False
-        return cognito.update_user(self.email_address, user_attributes)
+        )
+        if not steps.get("inputs_valid"):
+            error = "The new value for a field is missing or blank."
+
+        # Check the earlier steps have passed
+        if all(steps.values()):
+            user_attributes = []
+            try:
+                user_attributes += self.__attribute("custom:is_la", is_la)
+                user_attributes += self.__attribute("name", self.sanitise_name(name))
+                user_attributes += self.__custom_path_attribute(
+                    is_la, custom_paths, group
+                )
+                user_attributes += self.__phone_number_attribute(phone_number)
+                self.set_group(group)
+            except ValueError:
+                error = "The current value for a field is missing or blank."
+                steps["current_valid"] = False
+
+        # If all tests have passed try the update
+        if all(steps.values()):
+            steps["updated"] = cognito.update_user(self.email_address, user_attributes)
+            if not steps.get("updated"):
+                error = "The fields were valid but the user failed to update."
+
+        if error:
+            config.set_session_var("error_message", error)
+            LOG.error(
+                {
+                    "message": "User operation failed",
+                    "action": "user.update",
+                    "status": steps,
+                }
+            )
+
+        # Return True if valid and updated
+        return all(steps.values())
 
     def __attribute(self, field_name, value):
         if value is None:
@@ -173,7 +261,7 @@ class User:
 
         # All non-admin users should have a non-empty path in custom:paths
         if "admin" not in group_name and paths_semicolon_separated == "":
-            LOG.info(
+            LOG.error(
                 {
                     "user": self.email_address,
                     "group": group_name,
@@ -196,7 +284,7 @@ class User:
                 user_is_local_authority = is_la == "1"
                 path_is_local_authority = path.startswith(la_path)
                 if user_is_local_authority != path_is_local_authority:
-                    LOG.info(
+                    LOG.error(
                         {
                             "user": self.email_address,
                             "group": group_name,
