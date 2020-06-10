@@ -182,17 +182,19 @@ class User:
         steps = {}
 
         # Check user exists
-        steps["user_found"] = self.get_details() == {}
+        steps["user_found"] = self.get_details() != {}
         if not steps.get("user_found"):
             error = "Failed to get user details to update."
 
         # Check input parameters are all set
-        steps["inputs_valid"] = (
-            name is None
-            and phone_number is None
-            and custom_paths is None
-            and is_la is None
-            and group is None
+        steps["inputs_valid"] = all(
+            [
+                name is not None,
+                phone_number is not None,
+                custom_paths is not None,
+                is_la is not None,
+                group is not None
+            ]
         )
         if not steps.get("inputs_valid"):
             error = "The new value for a field is missing or blank."
