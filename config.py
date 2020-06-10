@@ -88,6 +88,7 @@ def setup_local_environment(
 
     if environment:
         os.environ["APP_ENVIRONMENT"] = environment
+        os.environ["BUCKET_MAIN_PREFIX"] = f"web-app-{environment}-data"
         if environment == "testing":
             os.environ["BUCKET_NAME"] = "backend-consumer-service-test"
 
