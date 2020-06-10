@@ -92,12 +92,14 @@
   <div id="uploading_panel" class="hidden">
     <div id="uploading_spinner" class="govuk-!-margin-bottom-7 loading-spinner"></div>
     <div id="upload_success" class="hidden">
-      <p>Uploaded successfully.</p>
+      <h3>Upload received.</h3>
+      <p>We will send you a confirmation email when your file has been processed.</p>
       <a href="/upload" role="button" draggable="false" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button">Upload another file</a>
       <a href="/" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">Back to start</a>
     </div>
     <div id="upload_failure" class="hidden">
-      <p>Upload failed.</p>
+      <h3>Upload failed.</h3>
+      {% include 'components/support.html' %}
       <a href="/upload" role="button" draggable="false" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button">Try again</a>
       <a href="/" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">Back to start</a>
     </div>
