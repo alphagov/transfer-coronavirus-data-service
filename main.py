@@ -195,9 +195,7 @@ def server_error_400(error):
 def index():
 
     # Log user-agent for browser use analysis
-    app.logger.info({
-        "user-agent": request.headers.get("User-Agent")
-    })
+    app.logger.info({"user-agent": request.headers.get("User-Agent")})
 
     args = request.args
 
@@ -306,6 +304,7 @@ def upload():
     preupload = True
     file_path_to_upload = ""
     presigned_object = ""
+    upload_history = []
 
     file_extensions = {"csv": {"ext": "csv", "display": "CSV"}}
 
@@ -333,6 +332,10 @@ def upload():
             else:
                 return redirect("/upload?error=True")
 
+    else:
+        upload_history = get_upload_history(config.get("bucket_name"), session)
+        app.logger.debug({"uploads": upload_history})
+
     return render_template_custom(
         app,
         "upload.html",
@@ -344,6 +347,7 @@ def upload():
         filepathtoupload=file_path_to_upload,
         file_extensions=list(file_extensions.values()) if preupload else {},
         upload_keys=user_upload_paths if preupload else [],
+        upload_history=collect_files_by_date(upload_history),
     )
 
 
@@ -570,13 +574,44 @@ def create_presigned_url(bucket_name: str, object_name: str, expiration=3600) ->
 
 def get_files(bucket_name: str, user_session: dict):
 
+    prefixes = load_user_lookup(user_session)
+    app.logger.debug({"prefixes": prefixes})
+
+    file_keys = list_s3_bucket_matching_prefixes(bucket_name, prefixes)
+
+    resp = []
+
+    for file_key in file_keys:
+        app.logger.info(
+            "User {}: file_key: {}".format(user_session["user"], file_key["key"])
+        )
+
+        url_string = f"/download/{file_key['key']}"
+        file_key["url"] = url_string
+        resp.append(file_key)
+
+    app.logger.info(resp)
+
+    return resp
+
+
+def get_upload_history(bucket_name: str, user_session: dict) -> list:
+    prefixes = user_custom_paths(user_session, True)
+    app.logger.debug({"prefixes": prefixes})
+
+    file_keys = list_s3_bucket_matching_prefixes(bucket_name, prefixes)
+    file_keys = list(
+        filter(lambda item: not item["key"].endswith("-metadata.json"), file_keys)
+    )
+    return file_keys
+
+
+def list_s3_bucket_matching_prefixes(bucket_name, prefixes):
     conn = boto3.client(
         "s3", region_name="eu-west-2"
     )  # again assumes boto.cfg setup, assume AWS S3
 
     file_keys = []
-    prefixes = load_user_lookup(user_session)
-    app.logger.debug({"prefixes": prefixes})
 
     for prefix in prefixes:
         paginator = conn.get_paginator("list_objects")
@@ -595,22 +630,9 @@ def get_files(bucket_name: str, user_session: dict):
                             {key.lower(): value for key, value in file_item.items()}
                         )
 
-    resp = []
-
     # sort in reverse date order
     file_keys = sorted(file_keys, key=lambda file: file["sorttime"], reverse=True)
-
-    for file_key in file_keys:
-        app.logger.info(
-            "User {}: file_key: {}".format(user_session["user"], file_key["key"])
-        )
-
-        url_string = f"/download/{file_key['key']}"
-        file_key["url"] = url_string
-        resp.append(file_key)
-    app.logger.info(resp)
-
-    return resp
+    return file_keys
 
 
 def categorise_file(file_item, prefix):

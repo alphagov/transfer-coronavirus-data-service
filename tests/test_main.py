@@ -165,13 +165,25 @@ def test_route_upload_denied(test_client, test_session):
 
 @pytest.mark.usefixtures("test_client", "test_upload_session")
 def test_route_upload_allowed(test_client, test_upload_session):
+
+    bucket_name = "test_bucket"
+    paths = user_custom_paths(test_upload_session, True)
+
     with test_client.session_transaction() as client_session:
         client_session.update(test_upload_session)
 
-    response = test_client.get("/upload")
-    body = response.data.decode()
-    assert response.status_code == 200
-    assert '<h3 class="govuk-heading-m">File settings</h3>' in body
+    stubber = stubs.mock_s3_list_objects(bucket_name, paths, True)
+    with stubber:
+
+        response = test_client.get("/upload")
+        body = response.data.decode()
+        assert response.status_code == 200
+        assert '<h3 class="govuk-heading-m">File settings</h3>' in body
+        assert '<h2 class="govuk-heading-m">Upload history</h2>' in body
+        assert "local_authority/haringey/people1.csv" in body
+        assert "local_authority/haringey/nested/nested_people1.csv" in body
+        assert "local_authority/barnet/people4.csv" in body
+        assert "local_authority/haringey/people1.csv-metadata.json" not in body
 
 
 @pytest.mark.usefixtures("test_client")

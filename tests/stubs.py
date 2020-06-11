@@ -13,16 +13,19 @@ def _keep_it_real():
         boto3.real_client = boto3.client
 
 
-def mock_s3_list_objects(bucket_name, prefixes):
+def mock_s3_list_objects(bucket_name, prefixes, is_upload=False):
     _keep_it_real()
     client = boto3.real_client("s3")
 
     stubber = Stubber(client)
 
     for prefix in prefixes:
-
-        stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix)
-        stub_response_s3_list_objects_page_2(stubber, bucket_name, prefix)
+        if is_upload:
+            stub_response_s3_list_upload_objects_page_1(stubber, bucket_name, prefix)
+            stub_response_s3_list_upload_objects_page_2(stubber, bucket_name, prefix)
+        else:
+            stub_response_s3_list_objects_page_1(stubber, bucket_name, prefix)
+            stub_response_s3_list_objects_page_2(stubber, bucket_name, prefix)
 
     # replace the get_presigned_url so it runs without AWS creds
     client.generate_presigned_url = lambda op, Params, ExpiresIn, HttpMethod: fake_url(
@@ -617,6 +620,68 @@ def stub_response_s3_list_objects_page_2(stubber, bucket_name, prefix):
         "Contents": [
             {"Key": f"{prefix}/people3.csv", "Size": 100, "LastModified": now},
             {"Key": f"{prefix}/people4.csv", "Size": 200, "LastModified": now},
+        ]
+    }
+
+    stubber.add_response(
+        "list_objects",
+        mock_list_objects_2,
+        {"Bucket": bucket_name, "Prefix": prefix, "Marker": "page-2"},
+    )
+
+
+def stub_response_s3_list_upload_objects_page_1(stubber, bucket_name, prefix):
+    now = datetime.utcnow()
+    mock_list_objects_1 = {
+        "Contents": [
+            {"Key": f"{prefix}/people1.csv", "Size": 100, "LastModified": now},
+            {
+                "Key": f"{prefix}/people1.csv-metadata.json",
+                "Size": 100,
+                "LastModified": now,
+            },
+            {"Key": f"{prefix}/people2.csv", "Size": 200, "LastModified": now},
+            {
+                "Key": f"{prefix}/people2.csv-metadata.json",
+                "Size": 200,
+                "LastModified": now,
+            },
+            {
+                "Key": f"{prefix}/nested/nested_people1.csv",
+                "Size": 300,
+                "LastModified": now,
+            },
+            {
+                "Key": f"{prefix}/nested/nested_people1.csv-metadata.json",
+                "Size": 300,
+                "LastModified": now,
+            },
+        ],
+        "IsTruncated": True,
+        "NextMarker": "page-2",
+    }
+
+    stubber.add_response(
+        "list_objects", mock_list_objects_1, {"Bucket": bucket_name, "Prefix": prefix},
+    )
+
+
+def stub_response_s3_list_upload_objects_page_2(stubber, bucket_name, prefix):
+    now = datetime.utcnow()
+    mock_list_objects_2 = {
+        "Contents": [
+            {"Key": f"{prefix}/people3.csv", "Size": 100, "LastModified": now},
+            {
+                "Key": f"{prefix}/people3.csv-metadata.json",
+                "Size": 100,
+                "LastModified": now,
+            },
+            {"Key": f"{prefix}/people4.csv", "Size": 200, "LastModified": now},
+            {
+                "Key": f"{prefix}/people4.csv-metadata.json",
+                "Size": 200,
+                "LastModified": now,
+            },
         ]
     }
 

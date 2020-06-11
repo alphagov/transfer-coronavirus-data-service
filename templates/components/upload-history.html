@@ -1,0 +1,30 @@
+{% if upload_history|length > 0 %}
+<section class="covid-transfer-upload-section">
+    <h2 class="govuk-heading-m">Upload history</h2>
+    <div>
+      <ul class="app-task-list govuk-list">
+        {% for file_date in upload_history.by_date %}
+        {% set date_files = upload_history.by_date[file_date] %}
+        <li>
+          <h3 class="govuk-heading-m app-task-list__section">
+            {{ file_date }}
+          </h3>
+          <ul class="app-task-list__items govuk-list">
+            {% for file in date_files %}
+            <li class="app-task-list__item">
+
+              <span class="app-task-list__task-name">
+                <span>{{ file.category }} ({{ file.size|filesizeformat }})</span><br/>
+                <p>
+                  {{ file.key | s3_remove_root_path }}
+                </p>
+              </span>
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+</section>
+{% endif %}
