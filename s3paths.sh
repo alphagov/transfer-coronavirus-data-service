@@ -5,6 +5,7 @@ if [[ -d "../covid-engineering" ]]; then
   cd ../covid-engineering/reliability-engineering/terraform/modules/coronavirus-transfer-service-s3-config/local
   terraform init
   terraform plan
+  terraform apply -auto-approve
   cp s3paths.json $curdir
   cd $curdir
 else
