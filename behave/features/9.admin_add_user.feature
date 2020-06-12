@@ -5,7 +5,7 @@ Feature: COVID19 Data Transfer - Admin add users
         Given credentials for the "admin-full" group
         When you login with these credentials
         Then you can go to the admin page
-        When I click on button "New user"
+        When you click on button "New user"
         Then wait "5" seconds
         When you see the new user page
         Then you can see the options to allow the new user to download data
@@ -23,7 +23,7 @@ Feature: COVID19 Data Transfer - Admin add users
         Given credentials for the "admin-full" group
         When you login with these credentials
         When you enter the email address of an existing user
-        When I click on button "Go to user"
+        When you click on button "Go to user"
         Then you see the manage user page
 
 
