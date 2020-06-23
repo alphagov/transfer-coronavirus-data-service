@@ -18,6 +18,7 @@ services:
       - E2E_STAGING_PASSWORD=$E2E_STAGING_PASSWORD
       - LOG_LEVEL=$LOG_LEVEL
       - PYTHONIOENCODING=UTF-8
-      - APP_ENVIRONMENT=testing
+      - APP_ENVIRONMENT=dev-four
+      - BUCKET_NAME=gds-ons-covid-19-query-results-dev-four
     ports:
       - "8000:8000"

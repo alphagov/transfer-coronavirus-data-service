@@ -89,8 +89,6 @@ def setup_local_environment(
     if environment:
         os.environ["APP_ENVIRONMENT"] = environment
         os.environ["BUCKET_MAIN_PREFIX"] = f"web-app-{environment}-data"
-        if environment == "testing":
-            os.environ["BUCKET_NAME"] = "backend-consumer-service-test"
 
     os.environ["PAGE_TITLE"] = "LOCAL COVID-19 Data Transfer"
     os.environ["FLASK_ENV"] = "development"
@@ -179,8 +177,8 @@ def get_cognito_pool_name():
     pool_name_prefix = "corona-cognito-pool"
     if environment == "production":
         suffix = "prod"
-    elif environment == "testing":
-        suffix = "development"
+    elif environment in ("dev-four", "testing"):
+        suffix = "dev-four"
     else:
         suffix = environment
 

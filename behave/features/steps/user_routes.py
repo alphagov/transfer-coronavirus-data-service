@@ -10,7 +10,7 @@ def get_plus_string(group_name):
     # To keep things short I've truncated the stage name
     # in the plus string from the longer name used in the
     # ENVIRONMENT env var
-    stages = {"testing": "test", "staging": "stage"}
+    stages = {"testing": "test", "staging": "stage", "dev-four": "test"}
     env = stages[os.environ.get("ENVIRONMENT", "testing")]
 
     # for a stupid reason I created all the test users
