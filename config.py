@@ -177,7 +177,7 @@ def get_cognito_pool_name():
     pool_name_prefix = "corona-cognito-pool"
     if environment == "production":
         suffix = "prod"
-    elif environment in ("dev-four", "testing"):
+    elif environment == "testing":
         suffix = "dev-four"
     else:
         suffix = environment
@@ -226,6 +226,7 @@ def list_pools():
             {key.lower(): value for key, value in pool.items()}
             for pool in response["UserPools"]
         ]
+    LOG.debug(pool_list)
     return pool_list
 
 
