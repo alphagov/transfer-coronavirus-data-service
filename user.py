@@ -193,7 +193,7 @@ class User:
                 phone_number is not None,
                 custom_paths is not None,
                 is_la is not None,
-                group is not None
+                group is not None,
             ]
         )
         if not steps.get("inputs_valid"):

@@ -42,7 +42,7 @@ def handle_args(is_admin, env_load):
 
     if sys.argv[0] == "run.py":
         cont = "y"
-        if env_load != "testing":
+        if env_load not in ("testing", "dev-four"):
             try:
                 cont = input(
                     "Not {}testing{}; do you want to continue? (Y/n) ".format(

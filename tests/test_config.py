@@ -104,4 +104,4 @@ def test_get_cognito_pool_name():
     config.set("app_environment", "staging")
     assert config.get_cognito_pool_name() == "corona-cognito-pool-staging"
     config.set("app_environment", "testing")
-    assert config.get_cognito_pool_name() == "corona-cognito-pool-development"
+    assert config.get_cognito_pool_name() == "corona-cognito-pool-dev-four"

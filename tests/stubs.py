@@ -4,6 +4,8 @@ from datetime import datetime
 import boto3
 from botocore.stub import Stubber
 
+from logger import LOG
+
 MOCK_COGNITO_USER_POOL_ID = "eu-west-2_poolid"
 
 
@@ -194,7 +196,7 @@ def mock_cognito_create_user_add_user_to_group_fails(admin_user, create_user_arg
     return stubber
 
 
-def mock_cognito_list_pools(env="development"):
+def mock_cognito_list_pools(env="dev-four"):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")
 
@@ -693,12 +695,13 @@ def stub_response_s3_list_upload_objects_page_2(stubber, bucket_name, prefix):
 
 
 # Client: cognito-idp
-def stub_response_cognito_list_user_pools(stubber, env="development"):
+def stub_response_cognito_list_user_pools(stubber, env="dev-four"):
     mock_list_user_pools = {
         "UserPools": [
             {"Id": MOCK_COGNITO_USER_POOL_ID, "Name": f"corona-cognito-pool-{env}"}
         ]
     }
+    LOG.debug(mock_list_user_pools)
     stubber.add_response("list_user_pools", mock_list_user_pools, {"MaxResults": 10})
 
 
