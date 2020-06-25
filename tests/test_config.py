@@ -43,22 +43,20 @@ def test_load_ssm_parameters(test_ssm_parameters):
     stubber = stubs.mock_config_load_ssm_parameters(path, test_ssm_parameters)
     with stubber:
         config.load_ssm_parameters(app)
-        assert config.get("client_id") == test_ssm_parameters["/cognito/client_id"]
         assert (
-            config.get("client_secret") == test_ssm_parameters["/cognito/client_secret"]
+            config.get("cognito_pool_name") == test_ssm_parameters["/cognito/pool/name"]
         )
-        assert config.get("cognito_domain") == test_ssm_parameters["/cognito/domain"]
+        assert config.get("cognito_pool_id") == test_ssm_parameters["/cognito/pool/id"]
         assert config.get("bucket_name") == test_ssm_parameters["/s3/bucket_name"]
         stubber.deactivate()
 
 
 @pytest.mark.usefixtures("test_load_cognito_settings")
 def test_set_app_settings(test_load_cognito_settings):
-    app = Flask(__name__)
     stubber = stubs.mock_config_set_app_settings(test_load_cognito_settings)
     with stubber:
         config.delete("client_id")
-        config.set_app_settings(app)
+        config.load_cognito_settings()
         assert config.get("client_id") == test_load_cognito_settings["client_id"]
         assert (
             config.get("client_secret") == test_load_cognito_settings["client_secret"]
@@ -71,21 +69,6 @@ def test_set_app_settings(test_load_cognito_settings):
         stubber.deactivate()
 
 
-def test_env_pool_id_development():
-    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
-    stubber = stubs.mock_cognito_list_pools()
-    with stubber:
-        assert config.env_pool_id() == user_pool_id
-
-
-def test_env_pool_id_production():
-    user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
-    config.set("app_environment", "production")
-    stubber = stubs.mock_cognito_list_pools(env="prod")
-    with stubber:
-        assert config.env_pool_id() == user_pool_id
-
-
 def test_list_pools():
     user_pool_id = stubs.MOCK_COGNITO_USER_POOL_ID
     stubber = stubs.mock_cognito_list_pools()
@@ -94,14 +77,3 @@ def test_list_pools():
         pools = config.list_pools()
         assert pools[0]["id"] == user_pool_id
         stubber.deactivate()
-
-
-def test_get_cognito_pool_name():
-    config.set("app_environment", "prod")
-    assert config.get_cognito_pool_name() == "corona-cognito-pool-prod"
-    config.set("app_environment", "production")
-    assert config.get_cognito_pool_name() == "corona-cognito-pool-prod"
-    config.set("app_environment", "staging")
-    assert config.get_cognito_pool_name() == "corona-cognito-pool-staging"
-    config.set("app_environment", "testing")
-    assert config.get_cognito_pool_name() == "corona-cognito-pool-dev-four"

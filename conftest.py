@@ -361,9 +361,8 @@ def test_list_object_file():
 @pytest.fixture()
 def test_ssm_parameters():
     return {
-        "/cognito/client_id": "abc123",
-        "/cognito/client_secret": "def456",  # pragma: allowlist secret
-        "/cognito/domain": "example.com",
+        "/cognito/pool/name": "cognito_pool_name",
+        "/cognito/pool/id": "eu-west-2_poolid",
         "/s3/bucket_name": "my_bucket",
         "/flask/secret_key": "my_secret_key",
     }

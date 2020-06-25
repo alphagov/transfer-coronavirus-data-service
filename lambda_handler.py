@@ -33,6 +33,5 @@ def admin(event, context):
 
 def run(event, context):
     config.load_environment(app)
-    config.setup_talisman(app)
-    config.load_ssm_parameters(app)
+    config.load_settings(app)
     return serverless_wsgi.handle_request(app, event, context)

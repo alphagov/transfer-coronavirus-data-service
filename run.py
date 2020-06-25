@@ -10,9 +10,8 @@ def run():
     Run a local server
     """
     config.load_environment(app)
-    config.setup_talisman(app)
-    ssm_loaded = config.load_ssm_parameters(app)
-    if ssm_loaded:
+    settings_loaded = config.load_settings(app)
+    if settings_loaded:
         app.run(host="0.0.0.0", port=os.getenv("PORT", "8000"))
     else:
         green_char = "\033[92m"

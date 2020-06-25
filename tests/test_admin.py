@@ -12,6 +12,7 @@ from admin import (
 )
 from helpers import body_has_element_with_attributes, flatten_html
 from main import app
+import config
 
 
 @pytest.mark.usefixtures("admin_user", "user_confirm_form")
@@ -133,6 +134,7 @@ def test_route_admin_user_query(
     with test_client.session_transaction() as client_session:
         client_session.update(test_admin_session)
 
+    config.set("cognito_pool_id", stubs.MOCK_COGNITO_USER_POOL_ID)
     email = admin_user["email"]
     stubber = stubs.mock_user_get_details(email, admin_get_user)
     with stubber:
