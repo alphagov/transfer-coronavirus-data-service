@@ -97,6 +97,7 @@ def load_ssm_parameters(app):
         "/cognito/pool/name": "cognito_pool_name",
         "/cognito/pool/id": "cognito_pool_id",
         "/s3/bucket_name": "bucket_name",
+        "/s3/bucket_main_prefix": "bucket_main_prefix",
         "/flask/secret_key": "secret_key",
     }
 

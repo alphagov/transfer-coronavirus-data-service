@@ -364,6 +364,7 @@ def test_ssm_parameters():
         "/cognito/pool/name": "cognito_pool_name",
         "/cognito/pool/id": "eu-west-2_poolid",
         "/s3/bucket_name": "my_bucket",
+        "/s3/bucket_main_prefix": "web-app-testing-data",
         "/flask/secret_key": "my_secret_key",
     }
 

@@ -48,6 +48,7 @@ def test_load_ssm_parameters(test_ssm_parameters):
         )
         assert config.get("cognito_pool_id") == test_ssm_parameters["/cognito/pool/id"]
         assert config.get("bucket_name") == test_ssm_parameters["/s3/bucket_name"]
+        assert config.get("bucket_main_prefix") == test_ssm_parameters["/s3/bucket_main_prefix"]
         stubber.deactivate()
 
 
