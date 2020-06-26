@@ -64,25 +64,7 @@ s3paths:
 	bash s3paths.sh
 
 run: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py main dev-four
-
-run_test: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py main dev-four
-
-run_staging: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py main staging
-
-run_prod: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py main production
-
-admin_test: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py admin dev-four
-
-admin_staging: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py admin staging
-
-admin_prod: rebuild
-	docker-compose run --service-ports chrome-driver python3 run.py admin production
+	docker-compose run --service-ports chrome-driver python3 run.py
 
 zip: build
 	mkdir -p builds
@@ -90,7 +72,7 @@ zip: build
 	echo "✔️ zip file built!"
 
 e2e: rebuild
-	docker-compose run chrome-driver bash -c "python3 run.py admin dev-four & cd behave && behave"
+	docker-compose run chrome-driver bash -c "python3 run.py & cd behave && behave"
 
 concourse_e2e_paas:
 	cd behave && behave --tags='@user'
@@ -101,4 +83,4 @@ concourse_e2e_lambda:
 concourse_e2e: concourse_e2e_paas
 
 e2e_scenario: rebuild
-	docker-compose run chrome-driver bash -c "python3 run.py admin dev-four & cd behave && behave -n \"$(scenario)\""
+	docker-compose run chrome-driver bash -c "python3 run.py & cd behave && behave -n \"$(scenario)\""

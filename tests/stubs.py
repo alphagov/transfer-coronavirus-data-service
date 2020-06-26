@@ -176,7 +176,7 @@ def mock_cognito_create_user_add_user_to_group_fails(admin_user, create_user_arg
     return stubber
 
 
-def mock_cognito_list_pools(env="dev-four"):
+def mock_cognito_list_pools(env="testing"):
     _keep_it_real()
     client = boto3.real_client("cognito-idp")
 
@@ -643,7 +643,7 @@ def stub_response_s3_list_upload_objects_page_2(stubber, bucket_name, prefix):
 
 
 # Client: cognito-idp
-def stub_response_cognito_list_user_pools(stubber, env="dev-four"):
+def stub_response_cognito_list_user_pools(stubber, env="testing"):
     mock_list_user_pools = {
         "UserPools": [
             {"Id": MOCK_COGNITO_USER_POOL_ID, "Name": f"corona-cognito-pool-{env}"}
