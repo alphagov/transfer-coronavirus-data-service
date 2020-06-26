@@ -141,7 +141,7 @@ def upload_rights_required(flask_route):
     return decorated_function
 
 
-def render_template_custom(app, template, hide_logout=False, **args):
+def render_template_custom(template, hide_logout=False, **args):
     args["is_admin_interface"] = is_admin_interface()
     show_back_link = template not in ["welcome.html", "login.html"]
 

@@ -24,6 +24,8 @@ from flask_helpers import (
     render_template_custom,
     requires_group_in_list,
 )
+from jinja2 import TemplateError
+
 from logger import LOG
 from user import User
 
@@ -165,29 +167,33 @@ def server_error_403():
     app.logger.error(f"Server error: {error_message}")
     del session["error_message"]
     return (
-        render_template_custom(
-            app, "error.html", hide_logout=True, error=error_message
-        ),
+        render_template_custom("error.html", hide_logout=True, error=error_message),
         403,
     )
+
+
+@app.errorhandler(TemplateError)
+def server_error_template_render(error):
+    app.logger.error(f"Server error: {request.url}")
+    return render_template_custom("error.html", hide_logout=True, error=error), 500
 
 
 @app.errorhandler(500)
 def server_error_500(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=error), 500
+    return render_template_custom("error.html", hide_logout=True, error=error), 500
 
 
 @app.errorhandler(404)
 def server_error_404(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=error), 404
+    return render_template_custom("error.html", hide_logout=True, error=error), 404
 
 
 @app.errorhandler(400)
 def server_error_400(error):
     app.logger.error(f"Server error: {request.url}")
-    return render_template_custom(app, "error.html", hide_logout=True, error=error), 400
+    return render_template_custom("error.html", hide_logout=True, error=error), 400
 
 
 @app.route("/")
@@ -216,7 +222,6 @@ def index():
         upload_rights = has_upload_rights()
         is_admin_role = has_admin_role()
         return render_template_custom(
-            app,
             "welcome.html",
             user=session["user"],
             email=session["email"],
@@ -232,7 +237,7 @@ def index():
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
         return render_template_custom(
-            app, "login.html", login_url=login_url, hide_logout=True
+            "login.html", hide_logout=True, login_url=login_url
         )
 
 
@@ -337,7 +342,6 @@ def upload():
         app.logger.debug({"uploads": upload_history})
 
     return render_template_custom(
-        app,
         "upload.html",
         user=session["user"],
         email=session["email"],
@@ -449,7 +453,6 @@ def files():
     # TODO sorting
 
     return render_template_custom(
-        app,
         "files.html",
         user=session["user"],
         email=session["email"],
