@@ -8,9 +8,6 @@ API operations prefixed with admin_ are operations administrators
 perform on behalf of other users.
 """
 
-import os
-import re
-
 import boto3
 from botocore.exceptions import ClientError, ParamValidationError
 
