@@ -11,7 +11,7 @@ perform on behalf of other users.
 import boto3
 from botocore.exceptions import ClientError, ParamValidationError
 
-from cognito_groups import get_group_by_name, get_group_map
+from cognito_groups import get_group_map
 from logger import LOG
 import config
 

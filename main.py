@@ -13,7 +13,6 @@ from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 
 import admin
-import cognito
 import config
 from flask_helpers import (
     admin_interface,
