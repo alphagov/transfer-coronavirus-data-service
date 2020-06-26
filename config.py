@@ -11,6 +11,8 @@ from logger import LOG
 
 CONFIG = {}
 
+DEFAULTS = {"app_environment": "testing"}
+
 
 def setup_talisman(app):
     csp = {"default-src": ["'self'", "https://*.s3.amazonaws.com"]}
@@ -37,7 +39,13 @@ def load_environment(app):
     global CONFIG
     CONFIG = app.config
     read_env_variables(app)
-    set_app_settings(app)
+
+
+def load_settings(app):
+    ssm_loaded = load_ssm_parameters(app)
+    load_cognito_settings()
+    setup_talisman(app)
+    return ssm_loaded
 
 
 def read_env_variables(app):
@@ -60,21 +68,6 @@ def read_env_variables(app):
         "flask_env", "production" if get("app_environment" == "prod") else "development"
     )
     os.environ["FLASK_ENV"] = get("flask_env")
-
-
-def set_app_settings(app):
-    """
-    Use existing env vars if loaded
-    """
-    if None in [
-        get("client_id"),
-        get("cognito_domain"),
-        get("client_secret"),
-    ]:
-        cognito_credentials = load_cognito_settings()
-        set("cognito_domain", cognito_credentials["cognito_domain"])
-        set("client_id", cognito_credentials["client_id"])
-        set("client_secret", cognito_credentials["client_secret"])
 
 
 def setup_local_environment(
@@ -101,9 +94,8 @@ def load_ssm_parameters(app):
     ssm_parameters_retrieved = True
     ssm_prefix = "/transfer-coronavirus-data-service"
     ssm_parameter_map = {
-        "/cognito/client_id": "client_id",
-        "/cognito/client_secret": "client_secret",  # pragma: allowlist secret
-        "/cognito/domain": "cognito_domain",
+        "/cognito/pool/name": "cognito_pool_name",
+        "/cognito/pool/id": "cognito_pool_id",
         "/s3/bucket_name": "bucket_name",
         "/flask/secret_key": "secret_key",
     }
@@ -140,12 +132,11 @@ def load_ssm_parameters(app):
 
 def load_cognito_settings():
     client = boto3.client("cognito-idp", region_name="eu-west-2")
-    pool_id = env_pool_id()
+    pool_id = get("cognito_pool_id")
 
     client_id = ""
     client_secret = ""
     cognito_domain = ""
-    estimated_num_users = 0
 
     pool_client_resp = client.list_user_pool_clients(UserPoolId=pool_id, MaxResults=2)
 
@@ -162,54 +153,10 @@ def load_cognito_settings():
     desc_pool = client.describe_user_pool(UserPoolId=pool_id)
     if "UserPool" in desc_pool:
         cognito_domain = desc_pool["UserPool"]["Domain"]
-        estimated_num_users = desc_pool["UserPool"]["EstimatedNumberOfUsers"]
 
-    return {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "cognito_domain": "{}.auth.eu-west-2.amazoncognito.com".format(cognito_domain),
-        "estimated_num_users": estimated_num_users,
-    }
-
-
-def get_cognito_pool_name():
-    environment = get("app_environment", "testing")
-    pool_name_prefix = "corona-cognito-pool"
-    if environment == "production":
-        suffix = "prod"
-    elif environment == "testing":
-        suffix = "dev-four"
-    else:
-        suffix = environment
-
-    pool_name = f"{pool_name_prefix}-{suffix}"
-    LOG.debug(
-        {
-            "pool_name": pool_name,
-            "pool_name_prefix": pool_name_prefix,
-            "suffix": suffix,
-            "environment": environment,
-        }
-    )
-
-    set("cognito_pool_name", pool_name)
-
-    return pool_name
-
-
-def env_pool_id():
-    pool_id = None
-    pool_name = get_cognito_pool_name()
-
-    if pool_name is not None:
-        for pool in list_pools():
-            if pool["name"] == pool_name:
-                pool_id = pool["id"]
-                break
-
-    LOG.debug({"pool_name": pool_name, "pool_id": pool_id})
-
-    return pool_id
+    set("cognito_domain", f"{cognito_domain}.auth.eu-west-2.amazoncognito.com")
+    set("client_id", client_id)
+    set("client_secret", client_secret)
 
 
 def list_pools():

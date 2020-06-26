@@ -49,7 +49,6 @@ def mock_cognito_auth_flow(token, test_user):
 
     # Add responses
     stub_response_cognito_get_user(stubber, token, test_user)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, test_user["Username"])
 
     stubber.activate()
@@ -68,13 +67,9 @@ def mock_cognito_create_user(admin_user, create_user_arguments):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_add_user_to_group(
         stubber, admin_user["email"], group_name
     )
@@ -94,9 +89,7 @@ def mock_cognito_create_user_set_mfa_fails(admin_user, create_user_arguments):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
-    stub_response_cognito_list_user_pools(stubber)
     # Replace admin_set_user_mfa_preference response with ClientError
     # stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
     stubber.add_client_error(
@@ -107,13 +100,10 @@ def mock_cognito_create_user_set_mfa_fails(admin_user, create_user_arguments):
             "Username": admin_user["email"],
         },
     )
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_add_user_to_group(
         stubber, admin_user["email"], group_name
     )
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
 
     stubber.activate()
@@ -131,11 +121,8 @@ def mock_cognito_create_user_set_user_settings_fails(admin_user, create_user_arg
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     # stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
     stubber.add_client_error(
         "admin_set_user_settings",
@@ -146,11 +133,9 @@ def mock_cognito_create_user_set_user_settings_fails(admin_user, create_user_arg
         },
     )
 
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_add_user_to_group(
         stubber, admin_user["email"], group_name
     )
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
 
     stubber.activate()
@@ -168,13 +153,9 @@ def mock_cognito_create_user_add_user_to_group_fails(admin_user, create_user_arg
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
 
     # stub_response_cognito_admin_add_user_to_group(
     #     stubber, admin_user["email"], group_name
@@ -187,7 +168,6 @@ def mock_cognito_create_user_add_user_to_group_fails(admin_user, create_user_arg
             "GroupName": group_name,
         },
     )
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_disable_user(stubber, admin_user["email"])
 
     stubber.activate()
@@ -223,7 +203,6 @@ def mock_cognito_admin_create_user(user, arguments):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_create_user(stubber, user, params_admin_create_user)
 
     stubber.activate()
@@ -239,7 +218,6 @@ def mock_cognito_admin_update_user_attributes(user, attributes):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_update_user_attributes(
         stubber, user["email"], attributes
     )
@@ -257,7 +235,6 @@ def mock_cognito_admin_delete_user(email):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_delete_user(stubber, email)
 
     stubber.activate()
@@ -273,7 +250,6 @@ def mock_cognito_admin_disable_user(email):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_disable_user(stubber, email)
 
     stubber.activate()
@@ -289,7 +265,6 @@ def mock_cognito_admin_enable_user(email):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_enable_user(stubber, email)
 
     stubber.activate()
@@ -305,7 +280,6 @@ def mock_cognito_admin_set_user_settings(email):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_settings(stubber, email)
 
     stubber.activate()
@@ -320,7 +294,6 @@ def mock_cognito_admin_set_user_mfa_preference(email):
 
     stubber = Stubber(client)
 
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_mfa_preference(stubber, email)
 
     stubber.activate()
@@ -336,7 +309,6 @@ def mock_cognito_admin_add_user_to_group(email, group_name):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_add_user_to_group(stubber, email, group_name)
 
     stubber.activate()
@@ -352,7 +324,6 @@ def mock_cognito_admin_remove_user_from_group(email, group_name):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_remove_user_from_group(stubber, email, group_name)
 
     stubber.activate()
@@ -368,7 +339,6 @@ def mock_cognito_admin_get_user(email, admin_get_user):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_get_user(stubber, email, admin_get_user)
 
     stubber.activate()
@@ -384,7 +354,6 @@ def mock_cognito_admin_list_groups_for_user(admin_user):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, admin_user["email"])
 
     stubber.activate()
@@ -401,9 +370,7 @@ def mock_user_get_details(email, admin_get_user):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_get_user(stubber, email, admin_get_user)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, email)
 
     stubber.activate()
@@ -419,7 +386,6 @@ def mock_user_not_found(email):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stubber.add_client_error(
         "admin_get_user",
         expected_params={"UserPoolId": MOCK_COGNITO_USER_POOL_ID, "Username": email},
@@ -438,11 +404,8 @@ def mock_user_update(email, admin_get_user, attributes):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_get_user(stubber, email, admin_get_user)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, email)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_update_user_attributes(stubber, email, attributes)
 
     stubber.activate()
@@ -461,23 +424,16 @@ def mock_user_reinvite(admin_user, admin_get_user, create_user_arguments):
 
     # Add responses
     # get user
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_get_user(stubber, admin_user["email"], admin_get_user)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, admin_user["email"])
 
     # delete user
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_delete_user(stubber, admin_user["email"])
 
     # create user
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_create_user(stubber, admin_user, create_user_arguments)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_mfa_preference(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_set_user_settings(stubber, admin_user["email"])
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_add_user_to_group(
         stubber, admin_user["email"], group_name
     )
@@ -496,13 +452,10 @@ def mock_delete_user_failure(admin_user, admin_get_user):
 
     # Add responses
     # get user
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_get_user(stubber, admin_user["email"], admin_get_user)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, admin_user["email"])
 
     # delete user
-    stub_response_cognito_list_user_pools(stubber)
     stubber.add_client_error(
         "admin_delete_user",
         expected_params={
@@ -525,17 +478,13 @@ def mock_create_user_failure(admin_user, admin_get_user, create_user_arguments):
 
     # Add responses
     # get user
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_get_user(stubber, admin_user["email"], admin_get_user)
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_list_groups_for_user(stubber, admin_user["email"])
 
     # delete user
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_admin_delete_user(stubber, admin_user["email"])
 
     # create user
-    stub_response_cognito_list_user_pools(stubber)
     stubber.add_client_error(
         "admin_create_user", expected_params=create_user_arguments,
     )
@@ -553,7 +502,6 @@ def mock_config_set_app_settings(parameters):
     stubber = Stubber(client)
 
     # Add responses
-    stub_response_cognito_list_user_pools(stubber)
     stub_response_cognito_list_user_pool_clients(stubber, parameters)
     stub_response_cognito_describe_user_pool_client(stubber, parameters)
     stub_response_cognito_describe_user_pool(stubber, parameters)
