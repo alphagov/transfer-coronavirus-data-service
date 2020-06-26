@@ -221,8 +221,13 @@ def index():
     if "details" in session:
         upload_rights = has_upload_rights()
         is_admin_role = has_admin_role()
-        return render_template_custom("welcome.html", user=session["user"], email=session["email"],
-                                      upload_rights=upload_rights, is_admin_role=is_admin_role)
+        return render_template_custom(
+            "welcome.html",
+            user=session["user"],
+            email=session["email"],
+            upload_rights=upload_rights,
+            is_admin_role=is_admin_role,
+        )
     else:
         login_url = (
             f"https://{app.config['cognito_domain']}/oauth2/authorize?"
@@ -231,7 +236,9 @@ def index():
             f"redirect_uri={app.config['redirect_host']}&"
             "scope=profile+email+phone+openid+aws.cognito.signin.user.admin"
         )
-        return render_template_custom("login.html", hide_logout=True, login_url=login_url)
+        return render_template_custom(
+            "login.html", hide_logout=True, login_url=login_url
+        )
 
 
 @app.route("/logout")
@@ -334,12 +341,18 @@ def upload():
         upload_history = get_upload_history(config.get("bucket_name"), session)
         app.logger.debug({"uploads": upload_history})
 
-    return render_template_custom("upload.html", user=session["user"], email=session["email"],
-                                  is_la=return_attribute(session, "custom:is_la"), presigned_object=presigned_object,
-                                  preupload=preupload, filepathtoupload=file_path_to_upload,
-                                  file_extensions=list(file_extensions.values()) if preupload else {},
-                                  upload_keys=user_upload_paths if preupload else [],
-                                  upload_history=collect_files_by_date(upload_history))
+    return render_template_custom(
+        "upload.html",
+        user=session["user"],
+        email=session["email"],
+        is_la=return_attribute(session, "custom:is_la"),
+        presigned_object=presigned_object,
+        preupload=preupload,
+        filepathtoupload=file_path_to_upload,
+        file_extensions=list(file_extensions.values()) if preupload else {},
+        upload_keys=user_upload_paths if preupload else [],
+        upload_history=collect_files_by_date(upload_history),
+    )
 
 
 def generate_upload_file_path(form_fields):
@@ -439,8 +452,13 @@ def files():
 
     # TODO sorting
 
-    return render_template_custom("files.html", user=session["user"], email=session["email"],
-                                  files=collect_files_by_date(files), is_la=return_attribute(session, "custom:is_la"))
+    return render_template_custom(
+        "files.html",
+        user=session["user"],
+        email=session["email"],
+        files=collect_files_by_date(files),
+        is_la=return_attribute(session, "custom:is_la"),
+    )
 
 
 # ----------- ADMIN ROUTES -----------

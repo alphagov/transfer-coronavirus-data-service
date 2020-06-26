@@ -58,7 +58,9 @@ def admin_user(app):
 
             user_group = return_users_group(user)
 
-            return render_template_custom("admin/user.html", user=user, user_group=user_group, done=done)
+            return render_template_custom(
+                "admin/user.html", user=user, user_group=user_group, done=done
+            )
 
     return redirect("/admin/user/not-found")
 
@@ -96,7 +98,9 @@ def admin_list_users(app):
 
 def admin_main(app):
     clear_session(app)
-    return render_template_custom("admin/index.html", can_create_users=user_has_a_valid_role(["admin-full"]))
+    return render_template_custom(
+        "admin/index.html", can_create_users=user_has_a_valid_role(["admin-full"])
+    )
 
 
 def admin_confirm_user(app):
@@ -151,8 +155,12 @@ def admin_confirm_user(app):
     session["admin_user_email"] = admin_user_object["email"]
     session["admin_user_object"] = admin_user_object
 
-    return render_template_custom("admin/confirm-user.html", user=admin_user_object, new_user=new_user,
-                                  user_group=admin_user_object["group"])
+    return render_template_custom(
+        "admin/confirm-user.html",
+        user=admin_user_object,
+        new_user=new_user,
+        user_group=admin_user_object["group"],
+    )
 
 
 def parse_edit_form_fields(post_fields: dict, admin_user_object: dict, app: Flask):
@@ -286,12 +294,18 @@ def admin_edit_user(app):
         admin_user_object = remove_invalid_user_paths(admin_user_object)
         user_custom_paths = admin_user_object["custom:paths"].split(";")
 
-    return render_template_custom("admin/edit-user.html", user=admin_user_object, new_user=new_user,
-                                  user_custom_paths=user_custom_paths,
-                                  local_authority=value_paths_by_type("local_authority"), is_la=is_local_authority_user,
-                                  other=value_paths_by_type("other"), is_other=is_other_user,
-                                  allowed_domains=(User(admin_user_email).allowed_domains() if new_user else []),
-                                  available_groups=user_groups())
+    return render_template_custom(
+        "admin/edit-user.html",
+        user=admin_user_object,
+        new_user=new_user,
+        user_custom_paths=user_custom_paths,
+        local_authority=value_paths_by_type("local_authority"),
+        is_la=is_local_authority_user,
+        other=value_paths_by_type("other"),
+        is_other=is_other_user,
+        allowed_domains=(User(admin_user_email).allowed_domains() if new_user else []),
+        available_groups=user_groups(),
+    )
 
 
 def admin_reinvite_user(app):
@@ -310,8 +324,11 @@ def admin_reinvite_user(app):
         session["admin_user_email"] = email
         return redirect("/admin/user?done=reinvited")
 
-    return render_template_custom("admin/confirm-reinvite.html", email=quote(admin_user_object["email"]),
-                                  user_email=admin_user_object["email"])
+    return render_template_custom(
+        "admin/confirm-reinvite.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
 
 
 def admin_enable_user(app):
@@ -331,8 +348,11 @@ def admin_enable_user(app):
         session["admin_user_email"] = email
         return redirect("/admin/user?done=enabled")
 
-    return render_template_custom("admin/confirm-enable.html", email=quote(admin_user_object["email"]),
-                                  user_email=admin_user_object["email"])
+    return render_template_custom(
+        "admin/confirm-enable.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
 
 
 def admin_disable_user(app):
@@ -352,8 +372,11 @@ def admin_disable_user(app):
         session["admin_user_email"] = email
         return redirect("/admin/user?done=disabled")
 
-    return render_template_custom("admin/confirm-disable.html", email=quote(admin_user_object["email"]),
-                                  user_email=admin_user_object["email"])
+    return render_template_custom(
+        "admin/confirm-disable.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
 
 
 def admin_delete_user(app):
@@ -372,8 +395,11 @@ def admin_delete_user(app):
         User(email).delete()
         return redirect("/admin?done=deleted")
 
-    return render_template_custom("admin/confirm-delete.html", email=quote(admin_user_object["email"]),
-                                  user_email=admin_user_object["email"])
+    return render_template_custom(
+        "admin/confirm-delete.html",
+        email=quote(admin_user_object["email"]),
+        user_email=admin_user_object["email"],
+    )
 
 
 def admin_user_not_found(app):
