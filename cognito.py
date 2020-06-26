@@ -25,54 +25,6 @@ def get_boto3_client():
     return boto3.client("cognito-idp", region_name=config.get("region"))
 
 
-# TODO remove below once admin app running online
-def is_aws_authenticated():
-    """
-    If the app is being run locally for staging or production
-    you can't redirect through cognito to login
-    """
-    is_aws_auth = os.getenv("ADMIN_AWS_AUTH", "false") == "true"
-    is_testing = config.get("app_environment", "testing") not in [
-        "staging",
-        "production",
-        "prod",
-    ]
-    return is_aws_auth and not is_testing
-
-
-# TODO remove below once admin app running online
-def delegate_auth_to_aws(session):
-    """
-    When running the admin interface locally delegate the
-    authentication step to get the user credentials and
-    role from the assumed IAM role
-    """
-
-    client = boto3.client("sts")
-    caller = client.get_caller_identity()
-    role_arn = caller.get("Arn", "")
-    matched = re.search("assumed-role/([^/]+)/", role_arn)
-    # role_name should look like `first.last-role_type`
-    role_name = matched.group(1)
-    role_name_components = role_name.split("-")
-    user_name = role_name_components[0]
-    role_type = role_name_components[1]
-
-    if role_type in ["admin", "cognito"]:
-        user_group = get_group_by_name("admin-full")
-        user_email = f"{user_name}@aws"
-
-        session["attributes"] = {
-            "custom:is_la": "0",
-            "custom:paths": "",
-            "email": user_email,
-        }
-        session["user"] = user_email
-        session["email"] = user_email
-        session["details"] = "yes"
-        session["group"] = user_group
-
-
 def create_user(name, email_address, phone_number, is_la, custom_paths):
     client = get_boto3_client()
     try:
