@@ -2,6 +2,7 @@
 {% block content %}
 
   {% if is_admin_role %}
+  <h1 class="govuk-heading-l">Administration</h1>
   <p>
     You have been granted access to manage users of this service.
   </p>
@@ -14,6 +15,7 @@
     </a>
   </p>
   {% else %}
+  <h1 class="govuk-heading-l">Vulnerable people data access</h1>
   <p>
     This service allows you to access data on people who have asked for help and who are considered medically vulnerable to a COVID-19 infection.
   </p>
@@ -21,7 +23,7 @@
     By using this service you agree to be bound by the Memorandum of Understanding and terms of your employment contract under which these files are provided.
   </p>
 
-  <h3>Downloads</h3>
+  <h2 class="govuk-heading-m">Downloads</h2>
   <p>
     You will only use this data for these agreed purposes and will ensure use is secure and appropriate.
   </p>
@@ -39,7 +41,7 @@
 
   {% if upload_rights %}
 
-  <h3>Upload</h3>
+  <h2 class="govuk-heading-m">Upload</h2>
 
   <p>Click the following button upload file(s):</p>
 
