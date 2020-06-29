@@ -70,9 +70,8 @@ def test_route_index_logged_in(test_client, test_session):
 
     assert response.status_code == 200
     assert "You're currently logged in as" in body
-    assert (
-        '<span class="covid-transfer-username">test-user@test-domain.com</span>' in body
-    )
+    assert '<span class="covid-transfer-username">Test User</span>' in body
+    assert '<span class="covid-transfer-email">test-user@test-domain.com</span>' in body
 
 
 @pytest.mark.usefixtures("test_client", "test_upload_session")
@@ -83,7 +82,7 @@ def test_route_index_logged_in_upload(test_client, test_upload_session):
     response = test_client.get("/")
     body = response.data.decode()
     assert response.status_code == 200
-    assert "<h3>Upload</h3>" in body
+    assert '<h2 class="govuk-heading-m">Upload</h2>' in body
 
 
 @pytest.mark.usefixtures("test_client", "test_session")
@@ -103,7 +102,7 @@ def test_route_files(test_client, test_session):
         assert response.status_code == 200
         assert "You're currently logged in as" in body
         assert (
-            '<span class="covid-transfer-username">test-user@test-domain.com</span>'
+            '<span class="covid-transfer-email">test-user@test-domain.com</span>'
             in body
         )
         # Check the root path is removed from the presented link  text
@@ -178,7 +177,7 @@ def test_route_upload_allowed(test_client, test_upload_session):
         response = test_client.get("/upload")
         body = response.data.decode()
         assert response.status_code == 200
-        assert '<h3 class="govuk-heading-m">File settings</h3>' in body
+        assert '<h2 class="govuk-heading-m">File settings</h2>' in body
         assert '<h2 class="govuk-heading-m">Upload history</h2>' in body
         assert "local_authority/haringey/people1.csv" in body
         assert "local_authority/haringey/nested/nested_people1.csv" in body

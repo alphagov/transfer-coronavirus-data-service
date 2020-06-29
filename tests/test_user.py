@@ -77,9 +77,10 @@ def test_sanitise_phone(valid_user):
 
 @pytest.mark.usefixtures("valid_user")
 def test_sanitise_name(valid_user):
-    assert valid_user.sanitise_name("joe bloggs") == "joebloggs"
+    assert valid_user.sanitise_name("joe bloggs") == "joe bloggs"
+    assert valid_user.sanitise_name("joe (bloggs)") == "joe bloggs"
     assert valid_user.sanitise_name("joe_bloggs") == "joe_bloggs"
-    assert valid_user.sanitise_name("joe bloggs 2") == "joebloggs2"
+    assert valid_user.sanitise_name("joe bloggs 2") == "joe bloggs 2"
 
 
 @pytest.mark.usefixtures("valid_user")
