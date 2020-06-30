@@ -45,6 +45,7 @@ def get_default_session():
             "user": "test-user@test-domain.com",
             "email": "test-user@test-domain.com",
         },
+        "name": "Test User",
         "user": "test-user@test-domain.com",
         "email": "test-user@test-domain.com",
         "attributes": [

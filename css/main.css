@@ -41,3 +41,7 @@
 .app-task-list__task-name {
   display: block;
 }
+
+.covid-transfer-username {
+    font-weight: bold;
+}

@@ -18,7 +18,7 @@ def can_go_to_admin_page(context):
         + """ ".covid-transfer-page-title" contains "COVID-19 Data Transfer" """
         + """
         Then the content of element with selector"""
-        + """ "#main-content .covid-transfer-username" contains username"""
+        + """ "#main-content .covid-transfer-email" contains username"""
         + """
         Then the content of element with selector"""
         + """ "#main-content .govuk-heading-l" contains "User administration"

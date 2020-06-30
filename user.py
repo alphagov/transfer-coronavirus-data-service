@@ -168,7 +168,13 @@ class User:
         return ""
 
     def sanitise_name(self, name):
-        return re.sub(r"[^a-zA-Z0-9-_\']", "", name)
+        # remove invalid characters
+        name = re.sub(r"[^a-zA-Z0-9-_\']", " ", name)
+        # remove multiple spaces
+        name = re.sub(r"\s+", " ", name)
+        # remove leading / trailing spaces
+        name = name.strip()
+        return name
 
     def update(self, name, phone_number, custom_paths, is_la, group):
         """

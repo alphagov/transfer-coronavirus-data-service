@@ -7,6 +7,6 @@ Feature: COVID19 Data Transfer - User upload file history
         When I click on button "Upload"
         Then wait "5" seconds
         Then the content of element with selector ".covid-transfer-page-title" contains "COVID-19 Data Transfer"
-        Then the content of element with selector "#main-content .covid-transfer-username" contains username
+        Then the content of element with selector "#main-content .covid-transfer-email" contains username
         Then the content of element with selector "#main-content .covid-transfer-upload-section" contains "other/gds/MOCK_DATA.csv"
 

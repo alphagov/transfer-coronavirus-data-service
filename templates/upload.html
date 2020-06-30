@@ -1,6 +1,6 @@
 {% extends 'primary.html' %}
 {% block content %}
-
+  <h1 class="govuk-heading-l">Upload feedback data</h1>
   <p>
     <b>Note:</b> uploading files works best in the Chrome, Microsoft Edge or Firefox browser.
     <br/>Uploading also uses JavaScript to let you know whether an upload was successful or not.
@@ -11,7 +11,7 @@
 
   {% if preupload %}
 
-  <h3 class="govuk-heading-m">File settings</h3>
+  <h2 class="govuk-heading-m">File settings</h2>
 
   <form id="preupload_form" method="post">
     <div class="govuk-form-group">
@@ -52,7 +52,7 @@
 
     <p>&nbsp;</p>
 
-    <h3 class="govuk-heading-m">The following filename will be uploaded</h3>
+    <h2 class="govuk-heading-m">The following filename will be uploaded</h2>
     <p id="dynamic_file_path">web-app-upload/path/yyyymmdd-hhMMss_{file name}.ext</p>
 
     <p>&nbsp;</p>
@@ -65,7 +65,7 @@
   {% else %}
 
   <div id="upload_panel">
-    <h3 class="govuk-heading-m">The following filename will be uploaded</h3>
+    <h2 class="govuk-heading-m">The following filename will be uploaded</h2>
     <p id="full_file_path">{{ filepathtoupload }}</p>
 
     <p>&nbsp;</p>
@@ -92,13 +92,13 @@
   <div id="uploading_panel" class="hidden">
     <div id="uploading_spinner" class="govuk-!-margin-bottom-7 loading-spinner"></div>
     <div id="upload_success" class="hidden">
-      <h3>Upload received.</h3>
+      <h2>Upload received.</h2>
       <p>We will send you a confirmation email when your file has been processed.</p>
       <a href="/upload" role="button" draggable="false" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button">Upload another file</a>
       <a href="/" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">Back to start</a>
     </div>
     <div id="upload_failure" class="hidden">
-      <h3>Upload failed.</h3>
+      <h2>Upload failed.</h2>
       {% include 'components/support.html' %}
       <a href="/upload" role="button" draggable="false" class="govuk-button govuk-!-margin-right-1" data-module="govuk-button">Try again</a>
       <a href="/" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">Back to start</a>

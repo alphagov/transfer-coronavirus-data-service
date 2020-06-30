@@ -178,7 +178,7 @@ def login_with_credentials(context):
     Then the content of element with selector"""
         + """ ".covid-transfer-page-title" contains "COVID-19 Data Transfer"
     Then the content of element with selector"""
-        + """ "#main-content .covid-transfer-username" contains username"""
+        + """ "#main-content .covid-transfer-email" contains username"""
     )
 
 

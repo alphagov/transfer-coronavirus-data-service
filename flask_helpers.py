@@ -147,13 +147,16 @@ def render_template_custom(template, hide_logout=False, **args):
 
     show_logout = False
     display_username = ""
+    user_email = ""
     if "details" in session and not hide_logout:
         show_logout = True
-        display_username = session["email"]
+        user_email = session.get("email")
+        display_username = session.get("name", user_email)
 
     args["show_back_link"] = show_back_link
     args["show_logout"] = show_logout
     args["display_username"] = display_username
+    args["user_email"] = user_email
 
     page_title = config.get("page_title", "Data Transfer")
     if is_development():

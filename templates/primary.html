@@ -42,7 +42,7 @@
     <script src="/dist/html5shiv.min.js"></script>
   <![endif]-->
 
-  <link href="/css/main.css?update=20200527-1000" rel="stylesheet">
+  <link href="/css/main.css?update=20200629-1640" rel="stylesheet">
 
   <meta property="og:image" content="/assets/images/govuk-opengraph-image.png">
 </head>
@@ -92,24 +92,39 @@
       </p>
     </div>
 
-    <main class="govuk-main-wrapper govuk-body" id="main-content" role="main">
 
-      {% if show_back_link %}
-      <a href="/" class="govuk-back-link">Back</a>
-      {% endif %}
+    <main class="govuk-body" id="main-content" role="main">
 
-      {% if show_logout %}
-        <p>
-          You're currently logged in as
-          <span class="covid-transfer-username">{{ display_username }}</span>.
-        </p>
-        <p>
-          <a href="/logout" class="covid-transfer-logout-button">
-            <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">Logout</button>
-          </a>
-        </p>
-      {% endif %}
-      {% block content %}{% endblock %}
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          {% if show_back_link %}
+          <a href="/" class="govuk-back-link">Back</a>
+          {% else %}
+          <p class="govuk-body-s govuk-!-margin-3">&nbsp;</p>
+          {% endif %}
+          <div class="govuk-main-wrapper">
+          {% block content %}{% endblock %}
+          </div>
+        </div>
+        <div class="govuk-grid-column-one-third">
+        {% if show_logout %}
+          <p class="govuk-body-s govuk-!-margin-top-3 govuk-!-margin-bottom-1">
+            You're currently logged in as:
+          </p>
+          <p class="govuk-body-s govuk-!-margin-top-1 govuk-!-margin-bottom-1">
+            <span class="covid-transfer-username">{{ display_username }}</span>
+          </p>
+          <p class="govuk-body-s govuk-!-margin-top-1">
+            <span class="covid-transfer-email">{{ user_email }}</span>
+          </p>
+          <p class="govuk-body-m">
+            <a href="/logout" class="covid-transfer-logout-button">
+              <button class="govuk-button govuk-button--secondary" data-module="govuk-button" title="Logout">Logout</button>
+            </a>
+          </p>
+        {% endif %}
+        </div>
+      </div>
     </main>
   </div>
 
