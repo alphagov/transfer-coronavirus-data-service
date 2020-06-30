@@ -27,9 +27,9 @@
         {% for file_date in files.by_date %}
         {% set date_files = files.by_date[file_date] %}
         <li>
-          <h3 class="app-task-list__section">
+          <h2 class="app-task-list__section govuk-heading-m">
             {{ file_date }}
-          </h3>
+          </h2>
           <ul class="app-task-list__items govuk-list">
             {% for file in date_files %}
             <li class="app-task-list__item">
