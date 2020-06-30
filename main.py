@@ -13,7 +13,6 @@ from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 
 import admin
-import cognito
 import config
 from flask_helpers import (
     admin_interface,
@@ -204,10 +203,6 @@ def index():
     app.logger.info({"user-agent": request.headers.get("User-Agent")})
 
     args = request.args
-
-    # TODO remove below if statement once admin app running online
-    if "details" not in session and cognito.is_aws_authenticated():
-        cognito.delegate_auth_to_aws(session)
 
     if "code" in args:
         oauth_code = args["code"]
