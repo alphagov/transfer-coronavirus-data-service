@@ -36,7 +36,7 @@
 
               <span class="app-task-list__task-name">
                 <span>{{ file.category }} ({{ file.size|filesizeformat }})</span><br/>
-                <a target="_blank" class="govuk-link covid-tranfer-file-link" href="{{ file.url }}">
+                <a target="_blank" class="govuk-link covid-tranfer-file-link" rel="noopener noreferrer" href="{{ file.url }}">
                   {{ file.key | s3_remove_root_path }}
                 </a>
               </span>
