@@ -161,4 +161,17 @@ don't have access to the flask app object.
 A number of settings are passed into the app as 
 environment variables and these are loaded into 
 app.config as the first step of the local run module 
-and the lambda lambda_handler module.   
+and the lambda lambda_handler module.
+
+## Docker base image
+
+The build for the `gdscyber/concourse-chrome-driver`
+base image used to live here but has been transfered 
+to the Cyber Security team. 
+
+For questions about the base image please ask in 
+#cyber-security-help or email 
+[cyber.security@digital.cabinet-office.gov.uk](mailto:cyber.security@digital.cabinet-office.gov.uk) 
+
+
+   
