@@ -33,15 +33,18 @@ def setup_talisman(app):
     )
 
 
-def setup_sentry():
+def setup_sentry(app):
     sentry_dsn = get("sentry_dsn")
     if sentry_dsn:
-        sentry_sdk.init(
-            dsn=sentry_dsn,
-            integrations=[FlaskIntegration()],
-            with_locals=False,
-            request_bodies='never',
-        )
+        try:
+            sentry_sdk.init(
+                dsn=sentry_dsn,
+                integrations=[FlaskIntegration()],
+                with_locals=False,
+                request_bodies='never',
+            )
+        except Exception as e:
+            app.logger.info(f'sentry integration failed with excption {e}')
 
 
 def load_environment(app):
@@ -57,7 +60,7 @@ def load_settings(app):
     ssm_loaded = load_ssm_parameters(app)
     load_cognito_settings()
     setup_talisman(app)
-    setup_sentry()
+    setup_sentry(app)
     return ssm_loaded
 
 
