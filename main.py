@@ -9,6 +9,7 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from flask import Flask, redirect, request, send_file, send_from_directory, session
+from jinja2 import TemplateError
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 
@@ -23,8 +24,6 @@ from flask_helpers import (
     render_template_custom,
     requires_group_in_list,
 )
-from jinja2 import TemplateError
-
 from logger import LOG
 from user import User
 
@@ -199,7 +198,6 @@ def server_error_400(error):
 @app.route("/")
 @app.route("/index")
 def index():
-
     # Log user-agent for browser use analysis
     app.logger.info({"user-agent": request.headers.get("User-Agent")})
 
@@ -235,6 +233,12 @@ def index():
         return render_template_custom(
             "login.html", hide_logout=True, login_url=login_url
         )
+
+
+@app.route("/error_test")
+def error_test():
+    print(1 / 0)
+    return redirect("/500")
 
 
 @app.route("/logout")
@@ -284,7 +288,7 @@ def download(path):
 
             if "details" in session and "attributes" in session:
                 if redirect_url.startswith(
-                    "https://{}.s3.amazonaws.com/".format(app.config["bucket_name"])
+                        "https://{}.s3.amazonaws.com/".format(app.config["bucket_name"])
                 ):
                     app.logger.info(
                         "User {}: downloaded: {}".format(session["user"], path)
@@ -538,6 +542,12 @@ def admin_user_not_found():
     return admin.admin_user_not_found(app)
 
 
+@app.route("/admin/error-test")
+def admin_error_test():
+    print(1 / 0)
+    return redirect("/500")
+
+
 # ====================================
 
 
@@ -572,7 +582,6 @@ def create_presigned_url(bucket_name: str, object_name: str, expiration=3600) ->
 
 
 def get_files(bucket_name: str, user_session: dict):
-
     prefixes = load_user_lookup(user_session)
     app.logger.debug({"prefixes": prefixes})
 
