@@ -1,11 +1,12 @@
-import os
 import json
+import os
 
 import boto3
+import sentry_sdk
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from flask import session
-
 from flask_talisman import Talisman
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 from logger import LOG
 
@@ -32,6 +33,20 @@ def setup_talisman(app):
     )
 
 
+def setup_sentry(app):
+    sentry_dsn = get("sentry_dsn")
+    if sentry_dsn:
+        try:
+            sentry_sdk.init(
+                dsn=sentry_dsn,
+                integrations=[FlaskIntegration()],
+                with_locals=False,
+                request_bodies='never',
+            )
+        except Exception as e:
+            app.logger.info(f'sentry integration failed with excption {e}')
+
+
 def load_environment(app):
     """
     Load environment vars into flask app attributes
@@ -45,6 +60,7 @@ def load_settings(app):
     ssm_loaded = load_ssm_parameters(app)
     load_cognito_settings()
     setup_talisman(app)
+    setup_sentry(app)
     return ssm_loaded
 
 
@@ -61,6 +77,7 @@ def read_env_variables(app):
     set("bucket_main_prefix", os.getenv("BUCKET_MAIN_PREFIX", "web-app-prod-data"))
     set("bucket_upload_prefix", os.getenv("BUCKET_UPLOAD_PREFIX", "web-app-upload"))
     set("region", os.getenv("REGION", "eu-west-2"))
+    set("sentry_dsn", os.getenv("SENTRY_DSN"))
 
     # temporary references to existing env vars
     set("cf_space", get("app_environment"))
@@ -71,7 +88,7 @@ def read_env_variables(app):
 
 
 def setup_local_environment(
-    host="localhost", port=8000, is_admin=False, environment=None
+        host="localhost", port=8000, is_admin=False, environment=None
 ):
     region = "eu-west-2"
 
