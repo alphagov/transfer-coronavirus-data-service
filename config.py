@@ -35,10 +35,12 @@ def setup_talisman(app):
 
 def setup_sentry(app):
     sentry_dsn = get("sentry_dsn")
+    app_environment = get("app_environment")
     if sentry_dsn:
         try:
             sentry_sdk.init(
                 dsn=sentry_dsn,
+                environment=app_environment,
                 integrations=[FlaskIntegration()],
                 with_locals=False,
                 request_bodies='never',
