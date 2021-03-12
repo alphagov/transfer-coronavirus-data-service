@@ -640,7 +640,9 @@ def list_s3_bucket_matching_prefixes(bucket_name, prefixes):
 
     # sort in reverse date order
     file_keys = sorted(file_keys, key=lambda file: file["sorttime"], reverse=True)
-    return file_keys
+
+    max_files_to_display = 1000
+    return file_keys[:max_files_to_display]
 
 
 def categorise_file(file_item, prefix):
