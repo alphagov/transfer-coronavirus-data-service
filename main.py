@@ -584,7 +584,6 @@ def create_presigned_url(bucket_name: str, object_name: str, expiration=3600) ->
 def get_files(bucket_name: str, user_session: dict):
     prefixes = load_user_lookup(user_session)
     app.logger.debug({"prefixes": prefixes})
-    username = user_session["user"]
 
     file_keys = list_s3_bucket_matching_prefixes(bucket_name, prefixes)
 
@@ -592,7 +591,7 @@ def get_files(bucket_name: str, user_session: dict):
 
     for file_key in file_keys:
         app.logger.info(
-            "User {}: file_key: {}".format(username, file_key["key"])
+            "User {}: file_key: {}".format(user_session["user"], file_key["key"])
         )
 
         url_string = f"/download/{file_key['key']}"
