@@ -6,4 +6,4 @@ blinker==1.4
 sentry-sdk==0.17.3
 py3-validate-email == 0.2.0
 idna >= 2.8
-serverless_wsgi == 1.7.4
+serverless_wsgi == 1.7.6
