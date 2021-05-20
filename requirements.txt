@@ -1,4 +1,4 @@
-Flask == 2.0.*
+Flask == 1.1.*
 boto3 == 1.12.*
 requests == 2.23.*
 flask-talisman == 0.7.0
