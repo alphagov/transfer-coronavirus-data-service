@@ -20,7 +20,7 @@ def before_scenario(context, _scenario):
     options.add_argument("--single-process")
     options.add_argument("--disable-dev-shm-usage")
 
-    context.browser = webdriver.Chrome("/opt/chromedriver", chrome_options=options)
+    context.browser = webdriver.Chrome("/usr/bin/chromedriver", chrome_options=options)
     context.browser.set_window_size(1080, 800)
     context.config.setup_logging(os.environ.get("LOG_LEVEL", "ERROR"))
     context.logger = logging.getLogger("behave")
