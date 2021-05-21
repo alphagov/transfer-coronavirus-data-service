@@ -14,8 +14,8 @@ def before_scenario(context, _scenario):
     # context.browser.set_window_size(1080,800)
 
     options = Options()
-    options.binary = "bin/headless-chromium"
-    options.add_argument("-headless")
+    options.binary = "/usr/bin/google-chrome-stable"
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--single-process")
     options.add_argument("--disable-dev-shm-usage")
