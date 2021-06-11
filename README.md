@@ -161,4 +161,19 @@ don't have access to the flask app object.
 A number of settings are passed into the app as 
 environment variables and these are loaded into 
 app.config as the first step of the local run module 
-and the lambda lambda_handler module.   
+and the lambda lambda_handler module.  These are
+
+- `APPSECRET` - configures the flask app secret key
+- `ADMIN` - controls whether the app is in admin mode or not
+- `PAGE_TITLE` - The page title of the app
+- `APP_ENVIRONMENT` - 
+- `CLIENT_ID` - cognito client id
+- `COGNITO_DOMAIN` - cognito domain
+- `CLIENT_SECRET` - cognito client secret
+- `REDIRECT_HOST` - the host to redirect to after cognito login
+- `BUCKET_NAME` - the bucket name for data to be transferred to
+- `BUCKET_MAIN_PREFIX` - the prefix to download from
+- `BUCKET_UPLOAD_PREFIX` - the prefix to upload to
+- `REGION` - the aws region
+- `SENTRY_DSN` - configuration for sentry
+- `FLASK_ENV` - derived from app_environment
