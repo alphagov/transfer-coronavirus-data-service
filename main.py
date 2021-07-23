@@ -164,7 +164,7 @@ def send_browser_config():
 def server_error_403():
     error_message = session.get("error_message", "Access denied")
     app.logger.error(f"Server error: {error_message}")
-    del session["error_message"]
+    session.pop("error_message", None)
     return (
         render_template_custom("error.html", hide_logout=True, error=error_message),
         403,
