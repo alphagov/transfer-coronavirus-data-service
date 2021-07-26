@@ -5,6 +5,7 @@ updates:
   schedule:
     interval: weekly
     time: "03:00"
+    day: friday
   open-pull-requests-limit: 10
   allow:
   - dependency-type: production
